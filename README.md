@@ -1,4 +1,4 @@
-jct (Java to C++ Translator)
+jct 
 =====================
 
 Requirements
