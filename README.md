@@ -1,7 +1,7 @@
 jct 
 =====================
 
-Requirements
+Prerequisites
 -------------
 eXTensible Compiler 2.4.0 http://cs.nyu.edu/rgrimm/xtc/
 
