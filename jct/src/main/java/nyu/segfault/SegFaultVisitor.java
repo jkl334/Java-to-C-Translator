@@ -53,7 +53,7 @@ public class SegFaultVisitor extends Visitor {
 	        
 	        impFile.createNewFile();
 
-	        headFile = new File("output", fileName + ".h"); 
+	        headFile = new File("output", fileName + ".hpp"); 
 
 	        headFile.createNewFile(); 
 
@@ -91,10 +91,46 @@ public class SegFaultVisitor extends Visitor {
 	}
 
   	public void visitMethodDeclaration(GNode n) {
-    	Node body = n.getNode(7);
-    	if (null != body) visit(body);
-	}
+		//extract function prototype
+		final GNode root=n;
+		new Visitor(){
+			String fp=""; /**@var function prototype*/
+			//function return type + function name
+			public void visitQualifiedIdentifier(GNode n){
+				fp+=n.getString(0)+" "+root.getString(3)+"(";	
+			}
+			//function parameters
+			public void visitFormalParameters(GNode n){
+				for(int i=0; i< n.size(); i++){
+					Node fparam=n.getNode(i);
+						
+					//retrieve argument type
+					fp+=fparam.getNode(1).getNode(0).getString(0)+" ";
 
+					//retrieve argument name
+					fp+=fparam.getString(3);
+
+					if(i+1 < n.size()) fp+=",";
+					else fp+=")";
+				}
+				//runtime.console().pln(fp);
+			}
+			public void visit(Node n){
+				for (Object o : n)
+					if(o instanceof Node) dispatch((Node)o);
+
+			}
+		}.dispatch(n);
+		
+		//write function definitions to hpp and cpp files
+		
+		
+		
+		//body
+		Node body = n.getNode(7);
+		if (null != body) visit(body);
+				
+	}
 	public void visitExpressionStatement(GNode n) {
 		//System.out.println(n.getNode(0).toString());
 		count = 0;
