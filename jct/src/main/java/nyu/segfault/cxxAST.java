@@ -6,7 +6,13 @@ import java.util.*;
 import xtc.tree.*;
 import xtc.util.*;
 
-public class cxxAST extends Visitor{
+public class CxxAST extends Visitor {
+	
+	PrintWriter headWriter;  // The PrintWriter that will write to the C++ header file.
+	PrintWriter impWriter;  // The PrintWriter that will write to the C++ implementation file.
+	
+	StringBuilder headText = new StringBuilder();  // The text that will be writen to the C++ header file.
+	StringBuilder impText = new StringBuilder();  // The text that will be written to the C++ implementation file.
 	
 	ArrayList<GNode> cxx_class_roots=new ArrayList<GNode>();; /**@var root nodes of classes in linear container*/
 	int index=-1; /**@var root node of class subtree index*/
@@ -40,9 +46,7 @@ public class cxxAST extends Visitor{
 			 *
 			 */
 			public void visitClassDeclaration(GNode n){
-				index++; cxx_class_roots[index]=new GNode(n.getString(0)); //c++ class root
-				class_node=n; 
-				table.enter(class_node); visit(n); table.exit();
+				
 			}
 			public void visitExpressionStatement(GNode n){
 
@@ -68,5 +72,18 @@ public class cxxAST extends Visitor{
 				for( Object o : n) if (o instanceof Node) dispatch((GNode)o);
 			}
 		}
+	}
+	
+	public static void main(String[] args) {
+		String fileName = args[0].substring(0, args[0].length() - 5);  // The file name without ".java".
+		
+		String headFileName = fileName + ".hpp";
+		this.headWriter = new PrintWriter(headFileName);
+		
+		String impFileName = fileName + ".cpp";
+		this.impWriter = new PrintWriter(impFileName);
+		
+		CxxAST cxxast = new CxxAST();
+		cxxAST.run(args);
 	}
 }
