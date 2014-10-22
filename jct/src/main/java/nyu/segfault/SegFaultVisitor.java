@@ -29,6 +29,8 @@ public class SegFaultVisitor extends Visitor {
 	ArrayList<GNode> cxx_class_roots=new ArrayList<GNode>(); /**@var root nodes of classes in linear container*/
 	int index=-1; /**@var root node of class subtree index*/
 
+	String cc_name; /**@var current class name (this) */
+
 	SymbolTable table; /**@var node symbols*/
 
 
@@ -76,9 +78,10 @@ public class SegFaultVisitor extends Visitor {
   	GNode class_node; /**@var java class node */
 
   	public void visitClassDeclaration(GNode n){
-				
+		index++;
+		cxx_class_roots.add(n);
+		String cc_name=cxx_class_roots.get(index).getString(3);
 	}
-			
 	public void visitAdditiveExpression(GNode n){
 
 	}
@@ -114,6 +117,12 @@ public class SegFaultVisitor extends Visitor {
 					else fp+=")";
 				}
 				//runtime.console().pln(fp);
+				
+				//write function prototype to cpp file
+				impWriter.append(cc_name+"::"+fp+"{");
+
+				//write function prototype to hpp file within struct <cc_name>
+				headWriter.append(fp);
 			}
 			public void visit(Node n){
 				for (Object o : n)
@@ -122,11 +131,6 @@ public class SegFaultVisitor extends Visitor {
 			}
 		}.dispatch(n);
 		
-		//write function definitions to hpp and cpp files
-		
-		
-		
-		//body
 		Node body = n.getNode(7);
 		if (null != body) visit(body);
 				
