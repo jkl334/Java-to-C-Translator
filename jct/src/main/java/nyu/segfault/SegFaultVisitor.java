@@ -71,8 +71,9 @@ public class SegFaultVisitor extends Visitor {
 	        impWriter.pln();
 	        impWriter.pln();
 
-	    } catch (Exception e) {}
+	    } catch (Exception e) {System.out.println("Exception");}
     	visit(n);
+    	impWriter.pln("//SegFault");
     	impWriter.flush();
 	    headWriter.flush();
     }
@@ -83,16 +84,13 @@ public class SegFaultVisitor extends Visitor {
 		index++;
 		cxx_class_roots.add(n);
 		String cc_name=cxx_class_roots.get(index).getString(3);
+		visit(n);
 	}
 	public void visitAdditiveExpression(GNode n){
-
 	}
 	public void visitBlock(GNode n){
-
-
 	}
 	public void visitCallExpression(GNode n){
-
 	}
 
 	public void visitMethodDeclaration(GNode n){
@@ -125,11 +123,11 @@ public class SegFaultVisitor extends Visitor {
 				//runtime.console().pln(cpp_prototype);
 				//write function prototype to hpp file within struct <cc_name>
 				// <return_type> <function_name>(arg[0]...arg[n]);
-				
+
 				headWriter.pln(hpp_prototype);
 				//write function prototype to cpp file
 				// <return type> <class name> :: <function name> (arg[0]...arg[n]){
-				
+
 				impWriter.pln(cpp_prototype);
 
 			}
@@ -255,16 +253,12 @@ public class SegFaultVisitor extends Visitor {
 	}
 
 	public void visitFieldDeclaration(GNode n){
-
-
 	}
 
 	public void visitForStatement(GNode n){
-
 	}
 
 	public void visitPrimaryIdentifier(GNode n){
-
 	}
 
 	public void visitBreakStatement(GNode n) {
@@ -276,13 +270,9 @@ public class SegFaultVisitor extends Visitor {
 	}
 
 	public void visitReturnStatement(GNode n) {
-
 	}
 
 	public void visit(Node n) {
-		for (Object o : n) {
-			if (o instanceof Node) dispatch((Node)o);
-		}
-    		for (Object o : n) if (o instanceof Node) dispatch((Node)o);
+		for (Object o : n) if (o instanceof Node) dispatch((Node)o);
 	}
 }
