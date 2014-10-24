@@ -114,7 +114,7 @@ public class SegFaultVisitor extends Visitor {
 				else if(return_type.equals("Type(PrimitiveType(\"int\"), null)")) rType = "int";
 
 				String hpp_prototype= rType +" "+ fp;
-				String cpp_prototype= rType+" "+cc_name+ "::" + fp+"{\n";
+				String cpp_prototype= rType+" "+cc_name+ "::" + fp+" {";
 				//runtime.console().pln(cpp_prototype);
 				//write function prototype to hpp file within struct <cc_name>
 				// <return_type> <function_name>(arg[0]...arg[n]);
@@ -140,7 +140,7 @@ public class SegFaultVisitor extends Visitor {
 			}
 		}.dispatch(n);
 		
-		impWriter.pln("}");
+		impWriter.pln("}\n");
 		Node body = n.getNode(7);
 		if (null != body) visit(body);
 	}
