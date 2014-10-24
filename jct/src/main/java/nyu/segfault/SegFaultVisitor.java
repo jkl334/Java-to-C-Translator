@@ -71,8 +71,6 @@ public class SegFaultVisitor extends Visitor {
 		
 		}
     	visit(n);
-    	impWriter.flush();
-    	headWriter.flush();
   	}
 
   	GNode class_node; /**@var java class node */
