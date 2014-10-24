@@ -92,18 +92,16 @@ public class SegFaultVisitor extends Visitor {
 	public void visitCallExpression(GNode n){
 
 	}
-
-  	public void visitMethodDeclaration(GNode n){
-		//extract function prototype
+  	
+	public void visitMethodDeclaration(GNode n){
 		final GNode root=n;
+		final String return_type=n.getNode(2).toString();
+		//runtime.console().pln(return_type);
 		new Visitor(){
-			String fp=""; /**@var function prototype*/
-			//function return type + function name
-			public void visitQualifiedIdentifier(GNode n){
-				fp+=n.getString(0)+" "+root.getString(3)+"(";	
-			}
-			//function parameters
+			String fp="";
 			public void visitFormalParameters(GNode n){
+				fp+=root.getString(3)+"(";	
+				if( n.size() == 0 ) fp+=")"; 
 				for(int i=0; i< n.size(); i++){
 					Node fparam=n.getNode(i);
 						
@@ -116,25 +114,27 @@ public class SegFaultVisitor extends Visitor {
 					if(i+1 < n.size()) fp+=",";
 					else fp+=")";
 				}
-				//runtime.console().pln(fp);
-
-
-				////write function prototype to hpp file within struct <cc_name>
+				String rType="";
+				if(return_type.equals("VoidType()")) rType="void";
+				else if( return_type.equals("String")) rType="string";
+				
+				String hpp_prototype= rType + fp;
+				String cpp_prototype= rType+" "+cc_name+ "::" + fp;
+				//runtime.console().pln(cpp_prototype);
+				//write function prototype to hpp file within struct <cc_name>
 				// <return_type> <function_name>(arg[0]...arg[n]);
-				headWriter.append(fp);
-
+				headWriter.append(hpp_prototype);
 				
 				//write function prototype to cpp file
 				// <return type> <class name> :: <function name> (arg[0]...arg[n]){
-				impWriter.append(cc_name+"::"+fp+"{");
-				
+				impWriter.append(cpp_prototype);
 			}
 			public void visit(Node n){
-				for (Object o : n)
-					if(o instanceof Node) dispatch((Node)o);
+				for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+
 			}
 		}.dispatch(n);
-		
+
 		Node body = n.getNode(7);
 		if (null != body) visit(body);
 	}
