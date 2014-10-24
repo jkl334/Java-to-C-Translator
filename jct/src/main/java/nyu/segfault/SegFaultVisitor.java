@@ -22,9 +22,12 @@ public class SegFaultVisitor extends Visitor {
 	private String fileName; // name of the file to be translated
 
 	private int count;
-	
-	public PrintWriter impWriter; // prints to the method body
-	public PrintWriter headWriter; // prints to the header
+
+	public PrintWriter cWriter; // prints to the method body
+	public PrintWriter hWriter; // prints to the header
+	public Printer impWriter;
+	public Printer headWriter;
+
 
 	ArrayList<GNode> cxx_class_roots=new ArrayList<GNode>(); /**@var root nodes of classes in linear container*/
 	int index=-1; /**@var root node of class subtree index*/
@@ -41,37 +44,38 @@ public class SegFaultVisitor extends Visitor {
 	public void visitCompilationUnit(GNode n) {
 
 		//creates the new output files to be written to
-
 		fileName = files[0];
 		fileName = fileName.replace(".java", "");
-		File impFile; 
-		File headFile; 
-		try { 
-
-	        // File I/O to folder titled "output"
-	        impFile = new File("output", fileName + ".cpp");
-	        
-	        // create a new file 
-	        
+		File impFile = null;
+		File headFile = null;
+		try {
+	        String hppName = fileName+".cpp";
+	        String cppName = fileName+".hpp";
+	        impFile = new File(cppName);
 	        impFile.createNewFile();
+	        headFile = new File(hppName);
+	        headFile.createNewFile();
+	        cWriter = new PrintWriter(impFile);
+	        hWriter = new PrintWriter(headFile);
+	        impWriter = new Printer(cWriter);
+	        headWriter = new Printer(hWriter);
+	        // System.out.println(hppName);
+	        // System.out.println(cppName);
+	        // System.out.println("@@@@");
+	        // System.out.println(impFile);
+	        // System.out.println(headFile);
+	        // impWriter = new PrintWriter(impFile);
+	        // headWriter = new PrintWriter(headFile);
+	        impWriter.pln("//SegFault");
+	        impWriter.pln();
+	        impWriter.pln();
+	        impWriter.pln();
 
-	        headFile = new File("output", fileName + ".hpp"); 
-
-	        headFile.createNewFile(); 
-
-	        impWriter = new PrintWriter(impFile); 
-	        headWriter = new PrintWriter(headFile);
-
-	        impWriter.println("//SegFault");
-	        impWriter.println();
-	        impWriter.println();
-	        impWriter.println();
-
-	    } catch (Exception e) { 
-		
-		}
+	    } catch (Exception e) {}
     	visit(n);
-  	}
+    	impWriter.flush();
+	    headWriter.flush();
+    }
 
   	GNode class_node; /**@var java class node */
 
@@ -90,7 +94,7 @@ public class SegFaultVisitor extends Visitor {
 	public void visitCallExpression(GNode n){
 
 	}
-  	
+
 	public void visitMethodDeclaration(GNode n){
 		final GNode root=n;
 		final String return_type=n.getNode(2).toString();
@@ -98,11 +102,11 @@ public class SegFaultVisitor extends Visitor {
 		new Visitor(){
 			String fp="";
 			public void visitFormalParameters(GNode n){
-				fp+=root.getString(3)+"(";	
-				if( n.size() == 0 ) fp+=")"; 
+				fp+=root.getString(3)+"(";
+				if( n.size() == 0 ) fp+=")";
 				for(int i=0; i< n.size(); i++){
 					Node fparam=n.getNode(i);
-						
+
 					//retrieve argument type
 					fp+=fparam.getNode(1).getNode(0).getString(0)+" ";
 
@@ -115,17 +119,19 @@ public class SegFaultVisitor extends Visitor {
 				String rType="";
 				if(return_type.equals("VoidType()")) rType="void";
 				else if( return_type.equals("String")) rType="string";
-				
+
 				String hpp_prototype= rType + fp;
 				String cpp_prototype= rType+" "+cc_name+ "::" + fp;
 				//runtime.console().pln(cpp_prototype);
 				//write function prototype to hpp file within struct <cc_name>
 				// <return_type> <function_name>(arg[0]...arg[n]);
-				headWriter.append(hpp_prototype);
 				
+				headWriter.pln(hpp_prototype);
 				//write function prototype to cpp file
 				// <return type> <class name> :: <function name> (arg[0]...arg[n]){
-				impWriter.append(cpp_prototype);
+				
+				impWriter.pln(cpp_prototype);
+
 			}
 			public void visit(Node n){
 				for (Object o : n) if(o instanceof Node) dispatch((Node)o);
@@ -139,12 +145,12 @@ public class SegFaultVisitor extends Visitor {
 	public void visitExpressionStatement(GNode n) {
 		//System.out.println(n.getNode(0).toString());
 		count = 0;
-		boolean isEndLine = false; // used to check if the print statement has an ln 
+		boolean isEndLine = false; // used to check if the print statement has an ln
 		if (n.getNode(0).toString().contains("println")) isEndLine = true;
   		if (n.getNode(0).getName().equals("CallExpression")) { // checks if a call expression is being made
-  			impWriter.print("printf(");
-    		final ArrayList<String> vars = new ArrayList<String>(); 
-        	new Visitor() { 
+  			impWriter.pln("printf(");
+    		final ArrayList<String> vars = new ArrayList<String>();
+        	new Visitor() {
 		    	public void visitSelectionExpression(GNode n) {
 		    		/*
 		    		*
@@ -152,99 +158,99 @@ public class SegFaultVisitor extends Visitor {
 		    		*/
 			    }
 
-			    public void visitStringLiteral(GNode n) { 
+			    public void visitStringLiteral(GNode n) {
 			    	if (count > 0) {
-			    		impWriter.print(" + ");
+			    		impWriter.pln(" + ");
 			    	}
 			    	else {
 			    		count++;
 			    	}
-                    impWriter.print(n.getString(0));
+                    impWriter.pln(n.getString(0));
                 }
 
 				public void visitIntegerLiteral(GNode n) {
 					if (count > 0) {
-			    		impWriter.print(" + ");
+			    		impWriter.pln(" + ");
 			    	}
 			    	else {
 			    		count++;
 			    	}
-					impWriter.print(n.getString(0));
+					impWriter.pln(n.getString(0));
 					}
 
 					public void visitFloatingPointLiteral(GNode n) {
 					if (count > 0) {
-			    		impWriter.print(" + ");
+			    		impWriter.pln(" + ");
 			    	}
 			    	else {
 			    		count++;
 			    	}
-					impWriter.print(n.getString(0));
+					impWriter.pln(n.getString(0));
     	        }
 
     	        public void visitCharacterLiteral(GNode n) {
 					if (count > 0) {
-			    		impWriter.print(" + ");
+			    		impWriter.pln(" + ");
 			    	}
 			    	else {
 			    		count++;
 			    	}
-					impWriter.print(n.getString(0));
-    	        }  
+					impWriter.pln(n.getString(0));
+    	        }
 
     	        public void visitBooleanLiteral(GNode n) {
 					if (count > 0) {
-			    		impWriter.print(" + ");
+			    		impWriter.pln(" + ");
 			    	}
 			    	else {
 			    		count++;
 			    	}
-					impWriter.print(n.getString(0));
-    	        }            
+					impWriter.pln(n.getString(0));
+    	        }
 
     	        public void visitNullLiteral(GNode n) {
 					if (count > 0) {
-			    		impWriter.print(" + ");
+			    		impWriter.pln(" + ");
 			    	}
 			    	else {
 			    		count++;
 			    	}
-					impWriter.print("null");
-    	        }            	        	                  	        
+					impWriter.pln("null");
+    	        }
 
                 public void visitPrimaryIdentifier(GNode n) { 
 	                vars.add(n.getString(0));
 	           		if (count > 0) {
-			    		impWriter.print(" + ");
+			    		impWriter.pln(" + ");
 			    	}
 			    	else {
 			    		count++;
 			    	}
-	                impWriter.print("%s");
+	                impWriter.pln("%s");
     	        }
 
-    	        public void visit(GNode n) { 
+    	        public void visit(GNode n) {
         	        for (Object o : n) if (o instanceof Node) dispatch((Node) o);
             	}
 
         	}.dispatch(n.getNode(0));
 
         	if (isEndLine != false) {
-        		impWriter.print(" + " + "\"" + " + " + "\\" + "n" + "\"");
+        		impWriter.pln(" + " + "\"" + " + " + "\\" + "n" + "\"");
         	}
 
         	if (!vars.isEmpty()){
         		for (String var : vars) {
-        			impWriter.print(", " + "to_string(" + var + ")");
+        			impWriter.pln(", " + "to_string(" + var + ")");
         		}
         	}
 
-        	impWriter.print(");");
-        	impWriter.println();
+        	impWriter.pln(");");
+        	impWriter.pln();
 		}
 
     	else {
-        	visit(n);                     
+        	visit(n);
     	}
 	}
 
@@ -260,19 +266,19 @@ public class SegFaultVisitor extends Visitor {
 	public void visitPrimaryIdentifier(GNode n){
 
 	}
-	
+
 	public void visitBreakStatement(GNode n) {
-		impWriter.print("break;\n");
+		impWriter.pln("break;\n");
 	}
 
 	public void visitContinueStatement(GNode n) {
-		impWriter.print("continue;\n");
+		impWriter.pln("continue;\n");
 	}
-	
+
 	public void visitReturnStatement(GNode n) {
-		
+
 	}
-	
+
 	public void visit(Node n) {
 		for (Object o : n) {
 			if (o instanceof Node) dispatch((Node)o);
