@@ -86,6 +86,7 @@ public class SegFaultVisitor extends Visitor {
 	}
 
 	public void visitMethodDeclaration(GNode n){
+
 		final GNode root=n;
 		final String return_type=n.getNode(2).toString();
 		//runtime.console().pln(return_type);
@@ -262,6 +263,8 @@ public class SegFaultVisitor extends Visitor {
 	}
 
 	public void visitReturnStatement(GNode n) {
+		System.out.println("return" + " " + n.getNode(0).getString(0) : ";");
+
 	}
 
 	public void visit(Node n) {
