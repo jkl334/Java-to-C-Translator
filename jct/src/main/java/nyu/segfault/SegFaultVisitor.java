@@ -93,7 +93,7 @@ public class SegFaultVisitor extends Visitor {
 
 	}
 
-  	public void visitMethodDeclaration(GNode n) {
+  	public void visitMethodDeclaration(GNode n){
 		//extract function prototype
 		final GNode root=n;
 		new Visitor(){
@@ -117,24 +117,27 @@ public class SegFaultVisitor extends Visitor {
 					else fp+=")";
 				}
 				//runtime.console().pln(fp);
+
+
+				////write function prototype to hpp file within struct <cc_name>
+				// <return_type> <function_name>(arg[0]...arg[n]);
+				headWriter.append(fp);
+
 				
 				//write function prototype to cpp file
+				// <return type> <class name> :: <function name> (arg[0]...arg[n]){
 				impWriter.append(cc_name+"::"+fp+"{");
-
-				//write function prototype to hpp file within struct <cc_name>
-				headWriter.append(fp);
+				
 			}
 			public void visit(Node n){
 				for (Object o : n)
 					if(o instanceof Node) dispatch((Node)o);
-
 			}
 		}.dispatch(n);
 		
 		Node body = n.getNode(7);
 		if (null != body) visit(body);
-				
-	}
+	}				
 	public void visitExpressionStatement(GNode n) {
 		//System.out.println(n.getNode(0).toString());
 		count = 0;
@@ -261,9 +264,8 @@ public class SegFaultVisitor extends Visitor {
 	}
 
 	public void visit(Node n) {
-    	for (Object o : n) {
-      	if (o instanceof Node) dispatch((Node)o);
-    	}
+		for (Object o : n) {
+			if (o instanceof Node) dispatch((Node)o);
+		}
 	}
-
 }
