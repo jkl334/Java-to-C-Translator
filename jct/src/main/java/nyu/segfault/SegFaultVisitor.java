@@ -125,7 +125,10 @@ public class SegFaultVisitor extends Visitor {
 
 			}
 			public void visitReturnStatement(GNode n) {
-				impWriter.pln("return" + " " + n.getNode(0).getString(0) + ";");
+				if (n.getNode(0) != null) {
+					impWriter.pln("return" + " " + n.getNode(0).getString(0) + ";");
+				}
+
 			}
 			public void visit(Node n){
 				for (Object o : n) if(o instanceof Node) dispatch((Node)o);
