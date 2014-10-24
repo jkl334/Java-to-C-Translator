@@ -137,7 +137,7 @@ public class SegFaultVisitor extends Visitor {
 		
 		Node body = n.getNode(7);
 		if (null != body) visit(body);
-	}				
+	}
 	public void visitExpressionStatement(GNode n) {
 		//System.out.println(n.getNode(0).toString());
 		count = 0;
@@ -262,10 +262,23 @@ public class SegFaultVisitor extends Visitor {
 	public void visitPrimaryIdentifier(GNode n){
 
 	}
+	
+	public void visitBreakStatement(GNode n) {
+		impWriter.print("break;\n");
+	}
 
+	public void visitContinueStatement(GNode n) {
+		impWriter.print("continue;\n");
+	}
+	
+	public void visitReturnStatement(GNode n) {
+		
+	}
+	
 	public void visit(Node n) {
 		for (Object o : n) {
 			if (o instanceof Node) dispatch((Node)o);
 		}
+    		for (Object o : n) if (o instanceof Node) dispatch((Node)o);
 	}
 }
