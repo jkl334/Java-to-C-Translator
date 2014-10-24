@@ -49,8 +49,8 @@ public class SegFaultVisitor extends Visitor {
 		File impFile = null;
 		File headFile = null;
 		try {
-	        String hppName = fileName+".cpp";
-	        String cppName = fileName+".hpp";
+	        String hppName = fileName + ".hpp";
+	        String cppName = fileName + ".cpp";
 	        impFile = new File(cppName);
 	        impFile.createNewFile();
 	        headFile = new File(hppName);
@@ -59,13 +59,6 @@ public class SegFaultVisitor extends Visitor {
 	        hWriter = new PrintWriter(headFile);
 	        impWriter = new Printer(cWriter);
 	        headWriter = new Printer(hWriter);
-	        // System.out.println(hppName);
-	        // System.out.println(cppName);
-	        // System.out.println("@@@@");
-	        // System.out.println(impFile);
-	        // System.out.println(headFile);
-	        // impWriter = new PrintWriter(impFile);
-	        // headWriter = new PrintWriter(headFile);
 	        impWriter.pln("//SegFault");
 	        impWriter.pln();
 	        impWriter.pln();
@@ -73,7 +66,6 @@ public class SegFaultVisitor extends Visitor {
 
 	    } catch (Exception e) {System.out.println("Exception");}
     	visit(n);
-    	impWriter.pln("//SegFault");
     	impWriter.flush();
 	    headWriter.flush();
     }
