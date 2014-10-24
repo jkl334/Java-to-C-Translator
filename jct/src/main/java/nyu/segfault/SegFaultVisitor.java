@@ -263,8 +263,7 @@ public class SegFaultVisitor extends Visitor {
 	}
 
 	public void visitReturnStatement(GNode n) {
-		System.out.println("return" + " " + n.getNode(0).getString(0) : ";");
-
+		impWriter.pln("return" + " " + n.getNode(0).getString(0) + ";");
 	}
 
 	public void visit(Node n) {
