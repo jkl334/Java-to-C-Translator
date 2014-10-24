@@ -110,7 +110,7 @@ public class SegFaultVisitor extends Visitor {
 				if(return_type.equals("VoidType()")) rType="void";
 				else if( return_type.equals("String")) rType="string";
 
-				String hpp_prototype= rType + fp;
+				String hpp_prototype= rType +" "+ fp;
 				String cpp_prototype= rType+" "+cc_name+ "::" + fp;
 				//runtime.console().pln(cpp_prototype);
 				//write function prototype to hpp file within struct <cc_name>
