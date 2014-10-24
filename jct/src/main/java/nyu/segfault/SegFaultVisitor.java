@@ -86,12 +86,13 @@ public class SegFaultVisitor extends Visitor {
 	}
 
 	public void visitMethodDeclaration(GNode n){
-
 		final GNode root=n;
 		final String return_type=n.getNode(2).toString();
+		System.out.println(return_type);
 		//runtime.console().pln(return_type);
 		new Visitor(){
 			String fp="";
+			int numTabs = 0;  // The number of tabs to include before a statement.
 			public void visitFormalParameters(GNode n){
 				fp+=root.getString(3)+"(";
 				if( n.size() == 0 ) fp+=")";
@@ -110,6 +111,7 @@ public class SegFaultVisitor extends Visitor {
 				String rType="";
 				if(return_type.equals("VoidType()")) rType="void";
 				else if( return_type.equals("String")) rType="string";
+				else if(return_type.equals("Type(PrimitiveType(\"int\"), null)")) rType = "int";
 
 				String hpp_prototype= rType +" "+ fp;
 				String cpp_prototype= rType+" "+cc_name+ "::" + fp+"{\n";
@@ -125,10 +127,12 @@ public class SegFaultVisitor extends Visitor {
 
 			}
 			public void visitReturnStatement(GNode n) {
+				numTabs++;  // Increment the number of tabs to be printed before the statement.
 				if (n.getNode(0) != null) {
+					for (int x = 0; x < numTabs; x++) impWriter.p("\t");
 					impWriter.pln("return" + " " + n.getNode(0).getString(0) + ";");
 				}
-
+				numTabs--;  // Decrement the number of tabs to be printed before the statement.
 			}
 			public void visit(Node n){
 				for (Object o : n) if(o instanceof Node) dispatch((Node)o);
