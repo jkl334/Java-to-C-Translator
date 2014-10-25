@@ -218,9 +218,9 @@ public class SegFaultVisitor extends Visitor {
 				new Visitor() {
 					// initializing struct
 					public void visitNewClassExpression(GNode n) {
-						if (n.getNode(3).size() > 0) {
+						if (n.getNode(3).size() > 0) {  // if arguments exist for object initializing
 							System.out.print("Waiting on Constructor imp.");
-						} else {
+						} else { // if arguments do not exist
 						impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + n.getNode(3).toString() + "}");
 						}
 					}
