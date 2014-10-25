@@ -136,6 +136,9 @@ public class SegFaultVisitor extends Visitor {
 	}
 	public void visitAdditiveExpression(GNode n){
 	}
+	public void visitConstructorDeclaration(GNode n){
+		System.out.println(n);
+	}
 	public void visitBlock(GNode n){
 		visit(n);
 	}
