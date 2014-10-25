@@ -50,15 +50,16 @@ public class SegFaultVisitor extends Visitor {
 	}
 	private String[] files; // args passed from the translator
 	private String fileName; // name of the file to be translated
-
+	
 	private int count;
-
+ 
 	public PrintWriter cWriter; // prints to the method body
 	public PrintWriter hWriter; // prints to the header
 	public Printer impWriter;
 	public Printer headWriter;
 
 	public final SegNode<String> inhTree=new SegNode<String>((String)"Object");
+	public SegNode<String> currentClassNode = inhTree;
 
 
 	ArrayList<GNode> cxx_class_roots=new ArrayList<GNode>(); /**@var root nodes of classes in linear container*/
@@ -111,8 +112,12 @@ public class SegFaultVisitor extends Visitor {
 		index++;
 		cxx_class_roots.add(n);
 		String cc_name=cxx_class_roots.get(index).getString(3);
-		visit(n);
 
+		this.currentClassNode.addChild(className);  // Add a child to the parent with the class' name.
+		this.currentClassNode = inhTree.dfs(inhTree, className);  // Get this new node that was just added.
+		visit(n);  // Visit the class body.
+		this.currentClassNode = this.currentClassNode.parent;  // Set currentClassNode back to its original value.
+		
 		headWriter.pln("};\n");
 	}
 	public void visitAdditiveExpression(GNode n){
