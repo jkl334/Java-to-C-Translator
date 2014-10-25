@@ -72,11 +72,16 @@ public class SegFaultVisitor extends Visitor {
 
   	GNode class_node; /**@var java class node */
 
-  	public void visitClassDeclaration(GNode n){
+  	public void visitClassDeclaration(GNode n) {
+		String className = n.getString(1);
+		headWriter.pln("struct " + className + " {");
+
 		index++;
 		cxx_class_roots.add(n);
 		String cc_name=cxx_class_roots.get(index).getString(3);
 		visit(n);
+		
+		headWriter.pln("};\n");
 	}
 	public void visitAdditiveExpression(GNode n){
 	}
@@ -119,7 +124,8 @@ public class SegFaultVisitor extends Visitor {
 				//write function prototype to hpp file within struct <cc_name>
 				// <return_type> <function_name>(arg[0]...arg[n]);
 
-				headWriter.pln(hpp_prototype);
+				headWriter.p("\t");  // Print a tab for method signatures in head file.
+				headWriter.pln(hpp_prototype + ";");
 				//write function prototype to cpp file
 				// <return type> <class name> :: <function name> (arg[0]...arg[n]){
 
@@ -136,7 +142,6 @@ public class SegFaultVisitor extends Visitor {
 			}
 			public void visit(Node n){
 				for (Object o : n) if(o instanceof Node) dispatch((Node)o);
-
 			}
 		}.dispatch(n);
 		
