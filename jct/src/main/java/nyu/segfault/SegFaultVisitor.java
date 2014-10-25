@@ -255,7 +255,7 @@ public class SegFaultVisitor extends Visitor {
                 boolean isEndLine = false; // used to check if the print statement has an ln
                 if (n.getNode(0).toString().contains("println")) isEndLine = true;
                 if (n.getNode(0).getName().equals("CallExpression")) { // checks if a call expression is being made
-                    impWriter.pln("printf(");
+                    impWriter.p("\tprintf(");
                     final ArrayList<String> vars = new ArrayList<String>();
                     new Visitor() {
                         public void visitSelectionExpression(GNode n) {
@@ -267,73 +267,73 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitStringLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.pln(" + ");
+                                impWriter.p(" + ");
                             }
                             else {
                                 count++;
                             }
-                            impWriter.pln(n.getString(0));
+                            impWriter.p(n.getString(0));
                         }
 
                         public void visitIntegerLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.pln(" + ");
+                                impWriter.p(" + ");
                             }
                             else {
                                 count++;
                             }
-                            impWriter.pln(n.getString(0));
+                            impWriter.p(n.getString(0));
                             }
 
                             public void visitFloatingPointLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.pln(" + ");
+                                impWriter.p(" + ");
                             }
                             else {
                                 count++;
                             }
-                            impWriter.pln(n.getString(0));
+                            impWriter.p(n.getString(0));
                         }
 
                         public void visitCharacterLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.pln(" + ");
+                                impWriter.p(" + ");
                             }
                             else {
                                 count++;
                             }
-                            impWriter.pln(n.getString(0));
+                            impWriter.p(n.getString(0));
                         }
 
                         public void visitBooleanLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.pln(" + ");
+                                impWriter.p(" + ");
                             }
                             else {
                                 count++;
                             }
-                            impWriter.pln(n.getString(0));
+                            impWriter.p(n.getString(0));
                         }
 
                         public void visitNullLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.pln(" + ");
+                                impWriter.p(" + ");
                             }
                             else {
                                 count++;
                             }
-                            impWriter.pln("null");
+                            impWriter.p("null");
                         }
 
                         public void visitPrimaryIdentifier(GNode n) { 
                             vars.add(n.getString(0));
                             if (count > 0) {
-                                impWriter.pln(" + ");
+                                impWriter.p(" + ");
                             }
                             else {
                                 count++;
                             }
-                            impWriter.pln("%s");
+                            impWriter.p("%s");
                         }
 
                         public void visit(GNode n) {
@@ -342,18 +342,17 @@ public class SegFaultVisitor extends Visitor {
 
                     }.dispatch(n.getNode(0));
 
-                    if (isEndLine != false) {
-                        impWriter.pln(" + " + "\"" + " + " + "\\" + "n" + "\"");
+                    if (isEndLine) {
+                        impWriter.p(" + \"\\n\"");
                     }
 
                     if (!vars.isEmpty()){
                         for (String var : vars) {
-                            impWriter.pln(", " + "to_string(" + var + ")");
+                            impWriter.p(", " + "to_string(" + var + ")");
                         }
                     }
 
                     impWriter.pln(");");
-                    impWriter.pln();
             } else {
                     visit(n);
             }
