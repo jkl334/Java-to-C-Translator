@@ -143,12 +143,8 @@ public class SegFaultVisitor extends Visitor {
 			public void visit(Node n){
 				for (Object o : n) if(o instanceof Node) dispatch((Node)o);
 			}
-		}.dispatch(n);
-		
-		impWriter.pln("}\n");
-		Node body = n.getNode(7);
-		if (null != body) visit(body);
-	}
+
+
 	public void visitExpressionStatement(GNode n) {
 		//System.out.println(n.getNode(0).toString());
 		count = 0;
@@ -254,11 +250,15 @@ public class SegFaultVisitor extends Visitor {
 
         	impWriter.pln(");");
         	impWriter.pln();
-		}
-
-    	else {
+	} else {
         	visit(n);
     	}
+	}
+		}.dispatch(n);
+		
+		impWriter.pln("}\n");
+		Node body = n.getNode(7);
+		if (null != body) visit(body);
 	}
 
 	public void visitFieldDeclaration(GNode n){
