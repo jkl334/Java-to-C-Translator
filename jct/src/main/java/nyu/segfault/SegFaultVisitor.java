@@ -240,7 +240,7 @@ public class SegFaultVisitor extends Visitor {
 
 					}
 				}.dispatch(n);
-				impWriter.p(";");
+				impWriter.pln(";");
 			}
 
 
