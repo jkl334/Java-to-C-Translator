@@ -286,7 +286,7 @@ public class SegFaultVisitor extends Visitor {
             		new Visitor() {  // Visit assigned value if any
 
             			public void visitExpression(GNode n) {
-            				impWriter.p(n.getNode(0).getString(0) + n.getString(1) + n.getNode(2).getString(0));
+            				impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
             			}
 
 						public void visitStringLiteral(GNode n) {
@@ -331,7 +331,7 @@ public class SegFaultVisitor extends Visitor {
 		    	        	}
 		    	        	impWriter.p(add);
 							*/
-		    	        	impWriter.p(n.getNode(0).getString(0) + n.getString(1) + n.getNode(2).getString(0));
+		    	        	impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
 		    	        //	if (n.getNode(0) != null) visit(n.getNode(0));
 		    	        }
 						public void visit(Node n){
