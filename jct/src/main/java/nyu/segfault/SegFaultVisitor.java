@@ -211,10 +211,10 @@ public class SegFaultVisitor extends Visitor {
 				numTabs++;  // Increment the number of tabs to be printed before the statement.
 				if (n.getNode(0) != null) {
 					for (int x = 0; x < numTabs; x++) impWriter.p("\t");
-					impWriter.p("return ");
+					impWriter.p("return "); // print return keyword
 				}
 				numTabs--;  // Decrement the number of tabs to be printed before the statement.
-				new Visitor() {
+				new Visitor() {  // Visit assigned value if any
 
 					public void visitStringLiteral(GNode n) {
 	                    impWriter.p(n.getString(0));
@@ -245,7 +245,8 @@ public class SegFaultVisitor extends Visitor {
 		                impWriter.p(n.getString(0));
 	    	        }
 			
-	    	        //public void visitAdditiveExpression(GNode n) {
+	    	        public void visitAdditiveExpression(GNode n) {
+	    	        //	Currently only works for 2 vars in expression. hard-coded 
 	    	        //	System.out.println(n.toString());
 	    	        	/*String add = "";
 	    	        	System.out.println(n.size());
@@ -257,9 +258,9 @@ public class SegFaultVisitor extends Visitor {
 	    	        	}
 	    	        	impWriter.p(add);
 						*/
-	    	        //	impWriter.p(n.getNode(0).getString(0) + n.getString(1) + n.getNode(2).getString(0));
+	    	        	impWriter.p(n.getNode(0).getString(0) + n.getString(1) + n.getNode(2).getString(0));
 	    	        //	if (n.getNode(0) != null) visit(n.getNode(0));
-	    	        //}
+	    	        }
 					public void visit(Node n){
 						for (Object o : n) if(o instanceof Node) dispatch((Node)o);
 
