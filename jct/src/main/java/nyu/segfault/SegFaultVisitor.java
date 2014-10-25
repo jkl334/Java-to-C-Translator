@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
 
+import javax.swing.tree.DefaultTreeModel;
+
 import xtc.lang.JavaFiveParser;
 import xtc.parser.ParseException;
 import xtc.parser.Result;
@@ -16,8 +18,33 @@ import xtc.tree.Node;
 import xtc.tree.Printer;
 import xtc.tree.Visitor;
 
+import java.util.ArrayList;
+
 
 public class SegFaultVisitor extends Visitor {
+	//structure for inheritance tree
+	public class SegNode<T>{
+		public T data;
+		public SegNode<T> parent;
+		public ArrayList<SegNode<T>> children;
+
+		public SegNode(T data){ 
+			this.data=data; 
+			children=new ArrayList<SegNode<T>>();
+		}
+		public void addChild(T data){
+			SegNode<T> child=new SegNode<T>(data);
+			child.parent=this;
+			this.children.add(child);
+		}
+		public SegNode<T> dfs(SegNode<T> n, T data){
+			SegNode<T> found=null;	
+			if(n.data == data)  return n;
+			for (SegNode sn : children) 
+				found=dfs(sn,data);
+			return found;
+		}
+	}
 	private String[] files; // args passed from the translator
 	private String fileName; // name of the file to be translated
 
@@ -27,6 +54,8 @@ public class SegFaultVisitor extends Visitor {
 	public PrintWriter hWriter; // prints to the header
 	public Printer impWriter;
 	public Printer headWriter;
+
+	public final SegNode<String> inhTree=new SegNode<String>((String)"Object");
 
 
 	ArrayList<GNode> cxx_class_roots=new ArrayList<GNode>(); /**@var root nodes of classes in linear container*/
@@ -84,15 +113,11 @@ public class SegFaultVisitor extends Visitor {
 	public void visitAdditiveExpression(GNode n){
 	}
 	public void visitBlock(GNode n){
+		visit(n);
 	}
-	public void visitCallExpression(GNode n){
-	}
-
 	public void visitMethodDeclaration(GNode n){
 		final GNode root=n;
 		final String return_type=n.getNode(2).toString();
-		System.out.println(return_type);
-		//runtime.console().pln(return_type);
 		new Visitor(){
 			String fp="";
 			int numTabs = 0;  // The number of tabs to include before a statement.
@@ -130,7 +155,6 @@ public class SegFaultVisitor extends Visitor {
 				impWriter.pln(cpp_prototype);
 
 			}
-
                         public void visitFieldDeclaration(GNode n) {  // Need to add visitMethodDeclaration() to visitor for advanced FieldDeclarations.
                             /* Determine and print the declarator type. */
 			    impWriter.p("\t");
@@ -217,9 +241,10 @@ public class SegFaultVisitor extends Visitor {
 	    	        }
 
 	                public void visitPrimaryIdentifier(GNode n) { 
+
 		                impWriter.p(n.getString(0));
 	    	        }
-
+			
 	    	        //public void visitAdditiveExpression(GNode n) {
 	    	        //	System.out.println(n.toString());
 	    	        	/*String add = "";
