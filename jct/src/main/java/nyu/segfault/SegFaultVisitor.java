@@ -40,8 +40,11 @@ public class SegFaultVisitor extends Visitor {
 		public SegNode<T> dfs(SegNode<T> n, T data){
 			SegNode<T> found=null;	
 			if(n.data == data)  return n;
-			for (SegNode sn : children) 
-				found=dfs(sn,data);
+			if(n.children.size() > 0)
+				for (SegNode<T> sn : n.children){
+					found=dfs(sn,data);
+					if(found != null) break;
+				}
 			return found;
 		}
 	}
