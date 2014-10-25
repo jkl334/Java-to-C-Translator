@@ -206,7 +206,7 @@ public class SegFaultVisitor extends Visitor {
 	            } else if (declarationType.equals("String")) {
 	                impWriter.p("string ");
                 }
-                if (n.getNode(1).getNode(0).getName() == "QualifiedIdentifier") {
+                if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) {
                 	impWriter.p(n.getNode(1).getNode(0).getString(0) + " ");
                 }
 
