@@ -136,9 +136,60 @@ public class SegFaultVisitor extends Visitor {
 				numTabs++;  // Increment the number of tabs to be printed before the statement.
 				if (n.getNode(0) != null) {
 					for (int x = 0; x < numTabs; x++) impWriter.p("\t");
-					impWriter.pln("return" + " " + n.getNode(0).getString(0) + ";");
+					impWriter.p("return ");
 				}
 				numTabs--;  // Decrement the number of tabs to be printed before the statement.
+				new Visitor() {
+
+					public void visitStringLiteral(GNode n) {
+	                    impWriter.p(n.getString(0));
+	                }
+
+					public void visitIntegerLiteral(GNode n) {
+						impWriter.p(n.getString(0));
+					}
+
+					public void visitFloatingPointLiteral(GNode n) {
+						impWriter.p(n.getString(0));
+	    	        }
+
+	    	        public void visitCharacterLiteral(GNode n) {
+						impWriter.p(n.getString(0));
+	    	        }
+
+	    	        public void visitBooleanLiteral(GNode n) {
+						impWriter.p(n.getString(0));
+	    	        }
+
+	    	        public void visitNullLiteral(GNode n) {
+						impWriter.p("null");
+	    	        }
+
+	                public void visitPrimaryIdentifier(GNode n) { 
+		                impWriter.p(n.getString(0));
+	    	        }
+
+	    	        //public void visitAdditiveExpression(GNode n) {
+	    	        //	System.out.println(n.toString());
+	    	        	/*String add = "";
+	    	        	System.out.println(n.size());
+	    	        	for (int i = 0,j=1; i < n.size(); i+=2,j+=2) {
+	    	        		if(i < n.size()) {
+		    	        		add += n.getNode(i).getString(0);
+		    	        	    add += n.getString(j);
+		    	        	}
+	    	        	}
+	    	        	impWriter.p(add);
+						*/
+	    	        //	impWriter.p(n.getNode(0).getString(0) + n.getString(1) + n.getNode(2).getString(0));
+	    	        //	if (n.getNode(0) != null) visit(n.getNode(0));
+	    	        //}
+					public void visit(Node n){
+						for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+
+					}
+				}.dispatch(n);
+				impWriter.p(";");
 			}
 			public void visit(Node n){
 				for (Object o : n) if(o instanceof Node) dispatch((Node)o);
