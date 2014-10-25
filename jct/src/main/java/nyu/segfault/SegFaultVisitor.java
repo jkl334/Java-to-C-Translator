@@ -261,7 +261,7 @@ public class SegFaultVisitor extends Visitor {
 	    	        	}
 	    	        	impWriter.p(add);
 						*/
-	    	        	impWriter.p(n.getNode(0).getString(0) + n.getString(1) + n.getNode(2).getString(0));
+	    	        	impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
 	    	        //	if (n.getNode(0) != null) visit(n.getNode(0));
 	    	        }
 					public void visit(Node n){
