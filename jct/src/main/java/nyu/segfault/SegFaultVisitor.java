@@ -137,7 +137,6 @@ public class SegFaultVisitor extends Visitor {
 	public void visitAdditiveExpression(GNode n){
 	}
 	public void visitConstructorDeclaration(GNode n){
-		System.out.println(n);
 	}
 	public void visitBlock(GNode n){
 		visit(n);
@@ -217,9 +216,13 @@ public class SegFaultVisitor extends Visitor {
 
 				/* Potentially visit the assigned value (if any). */
 				new Visitor() {
-
+					// initializing struct
 					public void visitNewClassExpression(GNode n) {
+						if (n.getNode(3).size() > 0) {
+							System.out.print("Waiting on Constructor imp.");
+						} else {
 						impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + n.getNode(3).toString() + "}");
+						}
 					}
 					
 					public void visitStringLiteral(GNode n) {
