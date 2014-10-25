@@ -65,9 +65,11 @@ public class SegFaultVisitor extends Visitor {
 	int index=-1; /**@var root node of class subtree index*/
 
 	String cc_name; /**@var current class name (this) */
+	String className;
 
 	SymbolTable table; /**@var node symbols*/
 
+	String method_return_type = "";
 
 	public SegFaultVisitor(String[] files) {
 		this.files = files;
@@ -103,7 +105,7 @@ public class SegFaultVisitor extends Visitor {
   	GNode class_node; /**@var java class node */
 
   	public void visitClassDeclaration(GNode n) {
-		String className = n.getString(1);
+		className = n.getString(1);
 		headWriter.pln("struct " + className + " {");
 
 		index++;
@@ -121,6 +123,10 @@ public class SegFaultVisitor extends Visitor {
 	public void visitMethodDeclaration(GNode n){
 		final GNode root=n;
 		final String return_type=n.getNode(2).toString();
+		try{
+			method_return_type = n.getNode(2).getNode(0).getString(0);
+		}
+				catch (Exception e) {}
 		new Visitor(){
 			String fp="";
 			int numTabs = 0;  // The number of tabs to include before a statement.
@@ -140,12 +146,15 @@ public class SegFaultVisitor extends Visitor {
 					else fp+=")";
 				}
 				String rType="";
+
 				if(return_type.equals("VoidType()")) rType="void";
-				else if( return_type.equals("String")) rType="string";
-				else if(return_type.equals("Type(PrimitiveType(\"int\"), null)")) rType = "int";
+				else if (method_return_type.equals("String")) rType="string";
+				else if(method_return_type.equals("Type(PrimitiveType(\"int\"), null)")) rType = "int";
 
 				String hpp_prototype= rType +" "+ fp;
-				String cpp_prototype= rType+" "+cc_name+ "::" + fp+" {";
+				// String cpp_prototype= rType+" "+cc_name+ "::" + fp+" {";
+				String cpp_prototype= "int main() {";
+				if(!className.equals(fileName.substring(0, 1).toUpperCase() + fileName.substring(1))) cpp_prototype = rType+" "+className+ "::" + fp+" {";
 				//runtime.console().pln(cpp_prototype);
 				//write function prototype to hpp file within struct <cc_name>
 				// <return_type> <function_name>(arg[0]...arg[n]);
