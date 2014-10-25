@@ -60,7 +60,7 @@ public class SegFaultVisitor extends Visitor {
 
 	public final SegNode<String> inhTree=new SegNode<String>((String)"Object");
 	public SegNode<String> currentClassNode = inhTree;
-
+	public String _super;	
 
 	ArrayList<GNode> cxx_class_roots=new ArrayList<GNode>(); /**@var root nodes of classes in linear container*/
 	int index=-1; /**@var root node of class subtree index*/
@@ -106,17 +106,31 @@ public class SegFaultVisitor extends Visitor {
   	public void visitClassDeclaration(GNode n) {
 		String className = n.getString(1);
 		headWriter.pln("struct " + className + " {");
-
+		
 		index++;
 		cxx_class_roots.add(n);
-		String cc_name=cxx_class_roots.get(index).getString(3);
-
-		this.currentClassNode.addChild(className);  // Add a child to the parent with the class' name.
-		this.currentClassNode = inhTree.dfs(inhTree, className);  // Get this new node that was just added.
-		visit(n);  // Visit the class body.
-		this.currentClassNode = this.currentClassNode.parent;  // Set currentClassNode back to its original value.
-		
+		//cc_name=cxx_class_roots.get(index).getString(3);
+	
+		//check if class explicitly inherits from another class other than Object
+		// if not add class as child of Object
+		if(n.getNode(3) == null){	
+			this.currentClassNode.addChild(className);  // Add a child to the parent with the class' name.
+			this.currentClassNode = inhTree;  // Set currentClassNode back to its original value.
+		}
+		//otherwise add class a child of explicit super class
+		else{
+			visit(n.getNode(3));	
+			SegNode<String> super_class=inhTree.dfs(inhTree,_super);
+			super_class.addChild(className); 
+		}
+		visit(n);
 		headWriter.pln("};\n");
+	}
+	public void visitExtension(GNode n){
+		//retrieve explicit extension 
+		//System.out.println(n.toString());
+		_super=n.getNode(0).getNode(0).getString(0); /**@var name of super class */
+		//System.out.println(_super);
 	}
 	public void visitAdditiveExpression(GNode n){
 	}
