@@ -207,6 +207,9 @@ public class SegFaultVisitor extends Visitor {
 	            } else if (declarationType.equals("String")) {
 	                impWriter.p("string ");
                 }
+                if (n.getNode(1).getNode(0).getName() == "QualifiedIdentifier") {
+                	impWriter.p(n.getNode(1).getNode(0).getString(0) + " ");
+                }
 
 				/* Print the name of the field. */
 				String fieldName = n.getNode(2).getNode(0).getString(0);
@@ -214,6 +217,11 @@ public class SegFaultVisitor extends Visitor {
 
 				/* Potentially visit the assigned value (if any). */
 				new Visitor() {
+
+					public void visitNewClassExpression(GNode n) {
+						impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + n.getNode(3).toString() + "}");
+					}
+					
 					public void visitStringLiteral(GNode n) {
 	                    impWriter.p(" = " + n.getString(0));
 	                }
