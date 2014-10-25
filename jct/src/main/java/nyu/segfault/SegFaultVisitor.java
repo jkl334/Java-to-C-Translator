@@ -279,6 +279,67 @@ public class SegFaultVisitor extends Visitor {
 
 
             public void visitExpressionStatement(GNode n) {
+            	if (n.getNode(0).getName().equals("Expression")) { // checks if regular expression is being made
+            		impWriter.p("\t");
+
+            		
+            		new Visitor() {  // Visit assigned value if any
+
+            			public void visitExpression(GNode n) {
+            				impWriter.p(n.getNode(0).getString(0) + n.getString(1) + n.getNode(2).getString(0));
+            			}
+
+						public void visitStringLiteral(GNode n) {
+		                    impWriter.p(n.getString(0));
+		                }
+
+						public void visitIntegerLiteral(GNode n) {
+							impWriter.p(n.getString(0));
+						}
+
+						public void visitFloatingPointLiteral(GNode n) {
+							impWriter.p(n.getString(0));
+		    	        }
+
+		    	        public void visitCharacterLiteral(GNode n) {
+							impWriter.p(n.getString(0));
+		    	        }
+
+		    	        public void visitBooleanLiteral(GNode n) {
+							impWriter.p(n.getString(0));
+		    	        }
+
+		    	        public void visitNullLiteral(GNode n) {
+							impWriter.p("null");
+		    	        }
+
+		                public void visitPrimaryIdentifier(GNode n) { 
+
+			                impWriter.p(n.getString(0));
+		    	        }
+				
+		    	        public void visitAdditiveExpression(GNode n) {
+		    	        //	Currently only works for 2 vars in expression. hard-coded 
+		    	        //	System.out.println(n.toString());
+		    	        	/*String add = "";
+		    	        	System.out.println(n.size());
+		    	        	for (int i = 0,j=1; i < n.size(); i+=2,j+=2) {
+		    	        		if(i < n.size()) {
+			    	        		add += n.getNode(i).getString(0);
+			    	        	    add += n.getString(j);
+			    	        	}
+		    	        	}
+		    	        	impWriter.p(add);
+							*/
+		    	        	impWriter.p(n.getNode(0).getString(0) + n.getString(1) + n.getNode(2).getString(0));
+		    	        //	if (n.getNode(0) != null) visit(n.getNode(0));
+		    	        }
+						public void visit(Node n){
+							for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+						}
+					}.dispatch(n);
+					impWriter.pln(";");
+            	}
                 //System.out.println(n.getNode(0).toString());
                 count = 0;
                 boolean isEndLine = false; // used to check if the print statement has an ln
