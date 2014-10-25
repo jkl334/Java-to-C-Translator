@@ -279,14 +279,14 @@ public class SegFaultVisitor extends Visitor {
 
 
             public void visitExpressionStatement(GNode n) {
-            	System.out.println(n);
+            	
             	if (n.getNode(0).getName().equals("Expression")) { // checks if regular expression is being made
             		impWriter.p("\t");
 
             		
             		new Visitor() {  // Visit assigned value if any
 
-            			public void visitExpression(GNode n) {
+            			public void visitExpression(GNode n) { 
             				if (n.getNode(2).getName().equals("AdditiveExpression")) {
             					impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getNode(0).getString(0) + " " + n.getNode(2).getString(1) + " " + n.getNode(2).getNode(2).getString(0));
             				} else {
