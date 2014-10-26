@@ -577,7 +577,7 @@ public class SegFaultVisitor extends Visitor {
                             else {
                                 count++;
                             }
-                            impWriter.p("%s");
+                            impWriter.p("\"%s\"");
                         }
 
                         public void visit(GNode n) {
