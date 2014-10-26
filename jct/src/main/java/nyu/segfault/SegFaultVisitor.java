@@ -365,7 +365,7 @@ public class SegFaultVisitor extends Visitor {
 					Node fparam=n.getNode(i);
 
 					//retrieve argument type
-					fp+=fparam.getNode(1).getNode(0).getString(0)+" ";
+					fp+= j2c(fparam.getNode(1).getNode(0).getString(0))+" ";
 
 					//retrieve argument name
 					fp+=fparam.getString(3);
@@ -416,8 +416,15 @@ public class SegFaultVisitor extends Visitor {
 	            } else if (declarationType.equals("String")) {
 	                impWriter.p("string ");
                 }
-                if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) {
-                	impWriter.p(n.getNode(1).getNode(0).getString(0) + " ");
+                else if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) {
+                	/*
+                	if (n.getNode(1).getNode(0).getString(0).equals("String")) {
+                		impWriter.p("string");
+                	} 
+                	else {
+                		*/
+                		impWriter.p(n.getNode(1).getNode(0).getString(0) + " ");
+                	//}
                 }
 
 				/* Print the name of the field. */
@@ -687,9 +694,11 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitCallExpression(GNode n){
                         	// If a method is called
+                        	/*
                         	try{
 		                    	if(n.getNode(3).getNode(0).getString(2).isEmpty() == false){
 		                    		String method_name = n.getNode(3).getNode(0).getString(2);
+
 		                        	// If arguments are passed in to that method add them to the arraylist
 		                        	if(n.getNode(3).getNode(0).getNode(3).isEmpty() == false){
 		                        		ArrayList<String> arguments = new ArrayList<String>();
@@ -705,6 +714,34 @@ public class SegFaultVisitor extends Visitor {
 		                    	}
 		                    }
 		                    catch(Exception e) {}
+		                    */
+		                    Node arguments = n.getNode(3);
+		                    new Visitor() {
+		                    	public void visitCallExpression(GNode n) {
+		                    		String method = "";
+		                    		method += n.getNode(0).getString(0);
+		                    		if (n.getString(2).isEmpty()) {
+		                    			method += "()";
+		                    		}
+		                    		else {
+		                    			method += "." + n.getString(2) + "(";
+		                    				if (n.getNode(3).isEmpty()){
+		                    					method += ")";
+		                    				}
+		                    		}
+		                    		vars.add(method);
+		                    		if (count > 0) {
+                                		impWriter.p(" + ");
+                            		}
+                            		else {
+                                		count++;
+                            		}
+                            		impWriter.p("\"%s\"");
+		                    	}
+		                    	public void visit(GNode n) {
+                            		for (Object o : n) if (o instanceof Node) dispatch((Node) o);
+                        		}
+		                    }.dispatch(arguments);
                         }
 
                         public void visit(GNode n) {
@@ -750,5 +787,16 @@ public class SegFaultVisitor extends Visitor {
 
 	public void visit(Node n) {
 		for (Object o : n) if (o instanceof Node) dispatch((Node)o);
+	}
+
+	public String j2c(String javaType) {
+		String cType;
+		if (javaType.equals("String")) {
+	        cType = "string";
+        }
+        else {
+        	cType = javaType;
+        }
+        return cType;
 	}
 }
