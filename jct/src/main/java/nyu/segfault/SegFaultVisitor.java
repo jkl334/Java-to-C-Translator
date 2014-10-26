@@ -96,6 +96,17 @@ public class SegFaultVisitor extends Visitor {
 	        impWriter.pln("/**\n * Team: SegFault\n */");
 	        impWriter.pln();
 
+		    impWriter.pln("#include <sstream> ");
+		    impWriter.pln("#include <iostream>"); 
+		    impWriter.pln("#include <string>");
+		    impWriter.pln(); 
+		    impWriter.pln("#include " + "\"" + hppName + "\"");
+		    impWriter.pln(); 
+		    impWriter.pln("using namespace std;");
+			impWriter.pln(); 
+			headWriter.pln("using namespace std;");
+		    headWriter.pln("#include <string>");
+		    headWriter.pln();
 	    } catch (Exception e) {}
     	visit(n);
     	impWriter.flush();
@@ -127,37 +138,9 @@ public class SegFaultVisitor extends Visitor {
 			super_class.addChild(className);
 		}
         new Visitor() {
-    		public void visitConstructorDeclaration(GNode n){
-    			headWriter.pln(n.getString(2) + "(");
-				new Visitor() {
-
-							// check the modifier
-							public void visitModifiers(GNode n) {
-								new Visitor() {
-									// check the modifier
-									public void visitModifier(GNode n) {
-										//impWriter.pln(n.getString(0) + ":");
-									}
-
-
-									public void visit(GNode n) {
-										for (Object o : n) if(o instanceof Node) dispatch((Node)o);
-									}
-								}.dispatch(n);
-							}
-
-							public void visitFormalParameters(GNode n) {
-
-								
-							}
-
-							public void visit(GNode n) {
-								for (Object o : n) if(o instanceof Node) dispatch((Node)o);
-							}
-						}.dispatch(n);
-			}
             /* This takes care of global variables */
             public void visitFieldDeclaration(GNode n) {
+            	headWriter.p("\t");
                 /* Returns if n is a local field declaration, in which case it is taken care of by visitMethodDeclaration. */
                 System.out.println("Class body field: " + n + "\n");
 
@@ -167,7 +150,7 @@ public class SegFaultVisitor extends Visitor {
                     String modifier = n.getNode(0).getNode(x).getString(0);
                     if (modifier.equals("static")) {
                         System.out.println(n);
-                        impWriter.p("static ");
+                        headWriter.p("static ");
                     } else if (modifier.equals("private")) {
                         // Do something.
                     }
@@ -176,22 +159,22 @@ public class SegFaultVisitor extends Visitor {
                 /* Determine and print the declarator type. */
                 String declarationType = n.getNode(1).getNode(0).getString(0);
                 if (declarationType.equals("boolean")) {
-                    impWriter.p("boolean ");
+                    headWriter.p("boolean ");
                 } else if (declarationType.equals("char")) {
-                    impWriter.p("char ");
+                    headWriter.p("char ");
                 } else if (declarationType.equals("double")) {
-                    impWriter.p("double ");
+                    headWriter.p("double ");
                 } else if (declarationType.equals("float")) {
-                    impWriter.p("float ");
+                    headWriter.p("float ");
                 } else if (declarationType.equals("int")) {
-                    impWriter.p("int ");
+                    headWriter.p("int ");
                 } else if (declarationType.equals("String")) {
-                    impWriter.p("string ");
+                    headWriter.p("string ");
                 }
 
                 /* Print the name of the field. */
                 String fieldName = n.getNode(2).getNode(0).getString(0);
-                impWriter.p(fieldName);
+                headWriter.p(fieldName);
 
                 /* Potentially visit the assigned value (if any). */
                 new Visitor() {
@@ -201,31 +184,147 @@ public class SegFaultVisitor extends Visitor {
 
 
                     public void visitStringLiteral(GNode n) {
-                        impWriter.p(" = " + n.getString(0));
+                        headWriter.p(" = " + n.getString(0));
                     }
 
                     public void visitIntegerLiteral(GNode n) {
-                        impWriter.p(" = " + n.getString(0));
+                        headWriter.p(" = " + n.getString(0));
                     }
 
                     public void visitFloatingPointLiteral(GNode n) {
-                        impWriter.p(" = " + n.getString(0));
+                        headWriter.p(" = " + n.getString(0));
                     }
 
                     public void visitCharacterLiteral(GNode n) {
-                        impWriter.p(" = " + n.getString(0));
+                        headWriter.p(" = " + n.getString(0));
                     }
 
                     public void visitBooleanLiteral(GNode n) {
-                        impWriter.p(" = " + n.getString(0));
+                        headWriter.p(" = " + n.getString(0));
                     }
 
                     public void visit(GNode n) {
                         for (Object o : n) if(o instanceof Node) dispatch((Node)o);
                     }
                 }.dispatch(n);
-                impWriter.pln(";");
+                headWriter.pln(";");
             }
+
+            public void visitConstructorDeclaration(GNode n) {
+    			headWriter.p("\t");
+    			headWriter.p(n.getString(2) + "(");
+				new Visitor() {
+
+					// check the modifier
+					public void visitModifiers(GNode n) {
+						new Visitor() {
+							// check the modifier
+							public void visitModifier(GNode n) {
+								//impWriter.pln(n.getString(0) + ":");
+							}
+
+							public void visit(GNode n) {
+								for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+							}
+						}.dispatch(n);
+					}
+
+					public void visitFormalParameters(GNode n) {
+						if (!n.getNode(0).getNode(0).toString().equals("Modifiers()"))	{
+							headWriter.p(n.getNode(0).getNode(0).getString(0) + " ");
+						}
+						headWriter.p(n.getNode(0).getNode(1).getNode(0).getString(0).toLowerCase() + " " + n.getNode(0).getString(3));
+						headWriter.pln(")");
+						headWriter.p("\t");
+						headWriter.pln("{");
+					}
+
+					public void visitBlock(GNode n) { //visits the constructor block
+						new Visitor() {
+
+							public void visitExpressionStatement(GNode n) {
+								System.out.println(n.toString());
+								headWriter.p("\t");
+				            	if (n.getNode(0).getName().equals("Expression")) { // checks if regular expression is being made
+				            		headWriter.p("\t");
+
+				            		new Visitor() {  // Visit assigned value if any
+
+				            			public void visitExpression(GNode n) { 
+				            				System.out.println(n.toString());
+				            				if (n.getNode(2).getName().equals("AdditiveExpression")) {
+				            					headWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getNode(0).getString(0) + " " + n.getNode(2).getString(1) + " " + n.getNode(2).getNode(2).getString(0));
+				            				} else {
+				            					headWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
+				            				}
+				            			}
+
+										public void visitStringLiteral(GNode n) {
+						                    headWriter.p(n.getString(0));
+						                }
+
+										public void visitIntegerLiteral(GNode n) {
+											headWriter.p(n.getString(0));
+										}
+
+										public void visitFloatingPointLiteral(GNode n) {
+											headWriter.p(n.getString(0));
+						    	        }
+
+						    	        public void visitCharacterLiteral(GNode n) {
+											headWriter.p(n.getString(0));
+						    	        }
+
+						    	        public void visitBooleanLiteral(GNode n) {
+											headWriter.p(n.getString(0));
+						    	        }
+
+						    	        public void visitNullLiteral(GNode n) {
+											headWriter.p("null");
+						    	        }
+
+						                public void visitPrimaryIdentifier(GNode n) { 
+
+							                headWriter.p(n.getString(0));
+						    	        }
+
+						    	        public void visitAdditiveExpression(GNode n) {
+						    	        //	Currently only works for 2 vars in expression. hard-coded 
+						    	        //	System.out.println(n.toString());
+						    	        	/*String add = "";
+						    	        	System.out.println(n.size());
+						    	        	for (int i = 0,j=1; i < n.size(); i+=2,j+=2) {
+						    	        		if(i < n.size()) {
+							    	        		add += n.getNode(i).getString(0);
+							    	        	    add += n.getString(j);
+							    	        	}
+						    	        	}
+						    	        	impWriter.p(add);
+											*/
+						    	        	headWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
+						    	        //	if (n.getNode(0) != null) visit(n.getNode(0));
+						    	        }
+										public void visit(Node n){
+											for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+										}
+									}.dispatch(n);
+									headWriter.pln(";");
+				            	}
+				            }
+
+							public void visit(GNode n) {
+		                		for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+		            		}
+						}.dispatch(n);
+						headWriter.p("\t");
+						headWriter.pln("}");
+					}
+
+					public void visit(GNode n) {
+                		for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+            		}
+				}.dispatch(n);
+			}
 
             /* To prevent printing local fields, do not visit methodDeclaration nodes. */
             public void visitMethodDeclaration(GNode n) { }
