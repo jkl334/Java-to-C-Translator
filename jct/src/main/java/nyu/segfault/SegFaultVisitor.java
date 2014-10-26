@@ -155,7 +155,9 @@ public class SegFaultVisitor extends Visitor {
                     impWriter.p("int ");
                 } else if (declarationType.equals("String")) {
                     impWriter.p("string ");
-                }
+                } else {
+		    impWriter.p(declarationType + " ");  // For non-primitive, non-String objects.
+		}
                 
                 /* Print the name of the field. */
                 String fieldName = n.getNode(2).getNode(0).getString(0);
