@@ -502,7 +502,9 @@ public class SegFaultVisitor extends Visitor {
                 boolean isEndLine = false; // used to check if the print statement has an ln
                 if (n.getNode(0).toString().contains("println")) isEndLine = true;
                 if (n.getNode(0).getName().equals("CallExpression")) { // checks if a call expression is being made
-                    impWriter.p("\tprintf(");
+					// String method_called = n.getNode(0).getNode(3).getNode(0).getString(2);
+					// impWriter.p("\tprintf("+method_called+"()");
+					impWriter.p("\tprintf(");
                     final ArrayList<String> vars = new ArrayList<String>();
                     new Visitor() {
 
@@ -578,6 +580,28 @@ public class SegFaultVisitor extends Visitor {
                                 count++;
                             }
                             impWriter.p("%s");
+                        }
+
+                        public void visitCallExpression(GNode n){
+                        	// If a method is called
+                        	try{
+		                    	if(n.getNode(3).getNode(0).getString(2).isEmpty() == false){
+		                    		String method_name = n.getNode(3).getNode(0).getString(2);
+		                        	// If arguments are passed in to that method add them to the arraylist
+		                        	if(n.getNode(3).getNode(0).getNode(3).isEmpty() == false){
+		                        		ArrayList<String> arguments = new ArrayList<String>();
+		                        		for(int i = 0; i < n.getNode(3).getNode(0).getNode(3).size(); i++){
+		                        			arguments.add(n.getNode(3).getNode(0).getNode(3).getNode(i).getString(0));
+		                        		}
+		                        		String all_arguments = "";
+		                        		for(String item : arguments){
+		                        			all_arguments += item + ",";
+		                        		}
+		                        		impWriter.p(method_name+"("+all_arguments.substring(0,all_arguments.length()-1)+")");
+		                        	}
+		                    	}
+		                    }
+		                    catch(Exception e) {}
                         }
 
                         public void visit(GNode n) {
