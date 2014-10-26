@@ -107,7 +107,6 @@ public class SegFaultVisitor extends Visitor {
   	public void visitClassDeclaration(GNode n) {
 		className = n.getString(1);
 		headWriter.pln("struct " + className + " {");
-		
 		index++;
 		cxx_class_roots.add(n);
 		//cc_name=cxx_class_roots.get(index).getString(3);
@@ -125,6 +124,37 @@ public class SegFaultVisitor extends Visitor {
 			super_class.addChild(className);  
 		}
         new Visitor() {
+    		public void visitConstructorDeclaration(GNode n){
+    			headWriter.pln(n.getString(2) + "(");
+				new Visitor() {
+
+							// check the modifier
+							public void visitModifiers(GNode n) {
+								new Visitor() {
+									// check the modifier
+									public void visitModifier(GNode n) {
+										//impWriter.pln(n.getString(0) + ":");
+									}
+
+
+									public void visit(GNode n) {
+										for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+									}
+								}.dispatch(n);
+							}
+
+							public void visitFormalParameters(GNode n) {
+								if (n.getNode(0).getNode(0).getString(0) != "")	{
+									headWriter.p(n.getNode(0).getNode(0).getString(0) + " ");
+								}
+								
+							}
+
+							public void visit(GNode n) {
+								for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+							}
+						}.dispatch(n);
+			}
             /* This takes care of global variables */
             public void visitFieldDeclaration(GNode n) {
                 /* Returns if n is a local field declaration, in which case it is taken care of by visitMethodDeclaration. */
@@ -205,8 +235,6 @@ public class SegFaultVisitor extends Visitor {
 		_super=n.getNode(0).getNode(0).getString(0); /**@var name of super class */
 	}
 	public void visitAdditiveExpression(GNode n){
-	}
-	public void visitConstructorDeclaration(GNode n){
 	}
 	public void visitBlock(GNode n){
 		visit(n);
@@ -293,7 +321,9 @@ public class SegFaultVisitor extends Visitor {
 						if (n.getNode(3).size() > 0) {  // if arguments exist for object initializing
 							System.out.print("Waiting on Constructor imp.");
 						} else { // if arguments do not exist
-						impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + n.getNode(3).toString() + "}");
+							if (!n.getNode(3).toString().equals("Arguments()")) {
+								impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + n.getNode(3).toString() + "}");
+							}
 						}
 					}
 					
