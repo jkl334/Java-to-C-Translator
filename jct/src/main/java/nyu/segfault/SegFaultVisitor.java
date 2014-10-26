@@ -67,6 +67,12 @@ public class SegFaultVisitor extends Visitor {
 	String cc_name; /**@var current class name (this) */
 	String className;
 
+	HashSet<String> publicHPP;  // Fields that fall under the "public:" tag of the header file.
+	HashSet<String> privateHPP;  // Fields that fall under the "private:" tag of the header file.
+
+	HashSet<String> publicHPPmethods;  // Methods that fall under the "public:" tag of the header file.
+	HashSet<String> privateHPPmethods;  // Methods that fall under the "private:" tag of the header file.
+
 	SymbolTable table; /**@var node symbols*/
 
 	String method_return_type = "";
@@ -109,6 +115,13 @@ public class SegFaultVisitor extends Visitor {
   	public void visitClassDeclaration(GNode n) {
 		className = n.getString(1);
 		headWriter.pln("struct " + className + " {");
+		
+		/* A class declaration means that there should be a corresponding struct in the header file. */
+		/* Each struct will have "private:" and "public:" tags, under which the contents of these HashSets will be printed. */
+		this.privateHPP = new HashSet<String>();
+		this.publicHPP = new HashSet<String>();
+		this.privateHPPmethods = new HashSet<String>();
+		this.publicHPPmethods = new HashSet<String>();
 
 		index++;
 		cxx_class_roots.add(n);
@@ -158,18 +171,17 @@ public class SegFaultVisitor extends Visitor {
 			}
             /* This takes care of global variables */
             public void visitFieldDeclaration(GNode n) {
-                /* Returns if n is a local field declaration, in which case it is taken care of by visitMethodDeclaration. */
-                System.out.println("Class body field: " + n + "\n");
-
+		final StringBuilder headerText = new StringBuilder();
+		boolean isPrivateField = false;
 
                 /* Determine and print the variable modifiers (e.g. "static", "private"). */
                 for (int x = 0; (x < n.getNode(0).size()) && (n.getNode(0).getNode(x).getString(0) != null); x++) {
                     String modifier = n.getNode(0).getNode(x).getString(0);
                     if (modifier.equals("static")) {
-                        System.out.println(n);
                         impWriter.p("static ");
+			headerText.append("static ");
                     } else if (modifier.equals("private")) {
-                        // Do something.
+                        isPrivateField = true;
                     }
                 }
 
@@ -177,21 +189,28 @@ public class SegFaultVisitor extends Visitor {
                 String declarationType = n.getNode(1).getNode(0).getString(0);
                 if (declarationType.equals("boolean")) {
                     impWriter.p("boolean ");
+		    headerText.append("boolean ");
                 } else if (declarationType.equals("char")) {
                     impWriter.p("char ");
+		    headerText.append("char ");
                 } else if (declarationType.equals("double")) {
                     impWriter.p("double ");
+                    headerText.append("double ");
                 } else if (declarationType.equals("float")) {
                     impWriter.p("float ");
+                    headerText.append("float ");
                 } else if (declarationType.equals("int")) {
                     impWriter.p("int ");
+                    headerText.append("int ");
                 } else if (declarationType.equals("String")) {
                     impWriter.p("string ");
+                    headerText.append("string ");
                 } else {
 		    impWriter.p(declarationType + " ");  // For non-primitive, non-String objects.
+                    headerText.append(declarationType + " ");
 		}
                 
-                /* Print the name of the field. */
+                /* Print the name of the field to the implementation. */
                 String fieldName = n.getNode(2).getNode(0).getString(0);
                 impWriter.p(fieldName);
 
@@ -204,32 +223,44 @@ public class SegFaultVisitor extends Visitor {
 
                     public void visitStringLiteral(GNode n) {
                         impWriter.p(" = " + n.getString(0));
+			headerText.append(" = " + n.getString(0));
                     }
 
                     public void visitIntegerLiteral(GNode n) {
                         impWriter.p(" = " + n.getString(0));
+                        headerText.append(" = " + n.getString(0));
                     }
 
                     public void visitFloatingPointLiteral(GNode n) {
                         impWriter.p(" = " + n.getString(0));
+                        headerText.append(" = " + n.getString(0));
                     }
 
                     public void visitCharacterLiteral(GNode n) {
                         impWriter.p(" = " + n.getString(0));
+                        headerText.append(" = " + n.getString(0));
                     }
 
                     public void visitBooleanLiteral(GNode n) {
                         impWriter.p(" = " + n.getString(0));
+                        headerText.append(" = " + n.getString(0));
                     }
 
                     public void visit(GNode n) {
                         for (Object o : n) if(o instanceof Node) dispatch((Node)o);
                     }
                 }.dispatch(n);
+
+		/* Add the field to the correct header HashSet (i.e. private or public). */
+		if (isPrivateField) {
+			privateHPP.add(headerText.toString());
+		} else {
+			publicHPP.add(headerText.toString());
+		}
                 impWriter.pln(";");
             }
 
-            /* To prevent printing local fields, do not visit methodDeclaration nodes. */
+            /* To prevent printing local fields, do not do anything with methodDeclaration nodes. */
             public void visitMethodDeclaration(GNode n) { }
 
             public void visit(Node n){
@@ -237,6 +268,22 @@ public class SegFaultVisitor extends Visitor {
             }
         }.dispatch(n);
 		visit(n);
+
+		/* Write the pubilc/private method declarations and fields in the header struct definitions. */
+		Object[] publicFields = publicHPP.toArray();
+		Object[] publicMethods = publicHPPmethods.toArray();
+		if (publicFields.length + publicMethods.length > 0) headWriter.pln("\tpublic:");
+		for (Object field : publicFields) headWriter.pln("\t\t" + field + ";");
+		for (Object method : publicMethods) headWriter.pln("\t\t" + method + ";");
+		
+		headWriter.pln();
+	
+                Object[] privateFields = privateHPP.toArray();
+                Object[] privateMethods = privateHPPmethods.toArray();
+		if (privateFields.length + privateMethods.length > 0) headWriter.pln("\tprivate:");
+                for (Object field : privateFields) headWriter.pln("\t\t" + field);
+                for (Object method : privateMethods) headWriter.pln("\t\t" + method);		
+
 		headWriter.pln("};\n");
 	}
 	public void visitExtension(GNode n){
@@ -249,6 +296,8 @@ public class SegFaultVisitor extends Visitor {
 		visit(n);
 	}
 	public void visitMethodDeclaration(GNode n){
+		final boolean isPrivate = false;
+
 		final GNode root=n;
 		final String return_type=n.getNode(2).toString();
 		try{
@@ -288,8 +337,17 @@ public class SegFaultVisitor extends Visitor {
 				//write function prototype to hpp file within struct <cc_name>
 				// <return_type> <function_name>(arg[0]...arg[n]);
 
-				headWriter.p("\t");  // Print a tab for method signatures in head file.
-				headWriter.pln(hpp_prototype + ";");
+				// Commented out these following 2 lines, as they *should* now be unneccessary.
+				//headWriter.p("\t");  // Print a tab for method signatures in head file.
+				//headWriter.pln(hpp_prototype + ";");
+
+				/* Add the method signature to the correct section of the header. */
+				if (isPrivate) {
+					privateHPPmethods.add(hpp_prototype);
+				} else {
+					publicHPPmethods.add(hpp_prototype);
+				}
+
 				//write function prototype to cpp file
 				// <return type> <class name> :: <function name> (arg[0]...arg[n]){
 
