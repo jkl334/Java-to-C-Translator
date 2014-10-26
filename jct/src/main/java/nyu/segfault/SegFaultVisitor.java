@@ -122,9 +122,81 @@ public class SegFaultVisitor extends Visitor {
 
 			visit(n.getNode(3));	
 			SegNode<String> super_class=inhTree.dfs(inhTree,_super);
-			//System.out.println(super_class.data);
 			super_class.addChild(className);  
 		}
+        new Visitor() {
+            /* This takes care of global variables */
+            public void visitFieldDeclaration(GNode n) {
+                /* Returns if n is a local field declaration, in which case it is taken care of by visitMethodDeclaration. */
+                System.out.println("Class body field: " + n + "\n");
+                
+                /* Determine and print the variable modifiers (e.g. "static", "private"). */
+                for (int x = 0; (x < n.getNode(0).size()) && (n.getNode(0).getNode(x).getString(0) != null); x++) {
+                    String modifier = n.getNode(0).getNode(x).getString(0);
+                    if (modifier.equals("static")) {
+                        System.out.println(n);
+                        impWriter.p("static ");
+                    } else if (modifier.equals("private")) {
+                        // Do something.
+                    }
+                }
+                
+                /* Determine and print the declarator type. */
+                String declarationType = n.getNode(1).getNode(0).getString(0);
+                if (declarationType.equals("boolean")) {
+                    impWriter.p("boolean ");
+                } else if (declarationType.equals("char")) {
+                    impWriter.p("char ");
+                } else if (declarationType.equals("double")) {
+                    impWriter.p("double ");
+                } else if (declarationType.equals("float")) {
+                    impWriter.p("float ");
+                } else if (declarationType.equals("int")) {
+                    impWriter.p("int ");
+                } else if (declarationType.equals("String")) {
+                    impWriter.p("string ");
+                }
+                
+                /* Print the name of the field. */
+                String fieldName = n.getNode(2).getNode(0).getString(0);
+                impWriter.p(fieldName);
+                
+                /* Potentially visit the assigned value (if any). */
+                new Visitor() {
+                    public void visitStringLiteral(GNode n) {
+                        impWriter.p(" = " + n.getString(0));
+                    }
+                    
+                    public void visitIntegerLiteral(GNode n) {
+                        impWriter.p(" = " + n.getString(0));
+                    }
+                    
+                    public void visitFloatingPointLiteral(GNode n) {
+                        impWriter.p(" = " + n.getString(0));
+                    }
+                    
+                    public void visitCharacterLiteral(GNode n) {
+                        impWriter.p(" = " + n.getString(0));
+                    }
+                    
+                    public void visitBooleanLiteral(GNode n) {
+                        impWriter.p(" = " + n.getString(0));
+                    }
+                    
+                    public void visit(GNode n) {
+                        for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+                    }
+                }.dispatch(n);
+                impWriter.pln(";");
+            }
+            
+            /* To prevent printing local fields, do not visit methodDeclaration nodes. */
+            public void visitMethodDeclaration(GNode n) { }
+            
+            public void visit(Node n){
+                for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+            }
+        }.dispatch(n);
 		visit(n);
 		headWriter.pln("};\n");
 	}
@@ -187,8 +259,10 @@ public class SegFaultVisitor extends Visitor {
 
 			}
 
+            
 			public void visitFieldDeclaration(GNode n) {  // Need to add visitMethodDeclaration() to visitor for advanced FieldDeclarations.
-                            /* Determine and print the declarator type. */
+                
+			/* Determine and print the declarator type. */
 			    impWriter.p("\t");
 			    String declarationType = n.getNode(1).getNode(0).getString(0);
 			    if (declarationType.equals("boolean")) {
@@ -284,9 +358,10 @@ public class SegFaultVisitor extends Visitor {
 	    	        }
 
 	                public void visitPrimaryIdentifier(GNode n) {
-
 		                impWriter.p(n.getString(0));
+				
 	    	        }
+			
 
 	    	        public void visitAdditiveExpression(GNode n) {
 	    	        //	Currently only works for 2 vars in expression. hard-coded
@@ -311,8 +386,8 @@ public class SegFaultVisitor extends Visitor {
 				}.dispatch(n);
 				impWriter.pln(";");
 			}
-
-
+            
+            
 			public void visit(Node n){
 				for (Object o : n) if(o instanceof Node) dispatch((Node)o);
 			}
@@ -494,7 +569,7 @@ public class SegFaultVisitor extends Visitor {
 		Node body = n.getNode(7);
 		if (null != body) visit(body);
 	}
-
+    
 	public void visitForStatement(GNode n){
 	}
 
