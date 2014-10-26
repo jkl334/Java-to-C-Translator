@@ -627,7 +627,7 @@ public class SegFaultVisitor extends Visitor {
                 if (n.getNode(0).getName().equals("CallExpression")) { // checks if a call expression is being made
 					// String method_called = n.getNode(0).getNode(3).getNode(0).getString(2);
 					// impWriter.p("\tprintf("+method_called+"()");
-					impWriter.p("\tprintf(");
+					impWriter.p("\tcout << ");
                     final ArrayList<String> vars = new ArrayList<String>();
                     new Visitor() {
 
@@ -636,7 +636,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitStringLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -646,7 +646,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitIntegerLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -656,7 +656,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitFloatingPointLiteral(GNode n) {
                         	if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -666,7 +666,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitCharacterLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -676,7 +676,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitBooleanLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -686,7 +686,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitNullLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -697,12 +697,12 @@ public class SegFaultVisitor extends Visitor {
                         public void visitPrimaryIdentifier(GNode n) {
                             vars.add(n.getString(0));
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
                             }
-                            impWriter.p("\"%s\"");
+                            impWriter.p(n.getString(0));
                         }
 
                         public void visitCallExpression(GNode n){
@@ -744,12 +744,12 @@ public class SegFaultVisitor extends Visitor {
 		                    		}
 		                    		vars.add(method);
 		                    		if (count > 0) {
-                                		impWriter.p(" + ");
+                                		impWriter.p(" << ");
                             		}
                             		else {
                                 		count++;
                             		}
-                            		impWriter.p("\"%s\"");
+                            		impWriter.p(method);
 		                    	}
 		                    	public void visit(GNode n) {
                             		for (Object o : n) if (o instanceof Node) dispatch((Node) o);
@@ -764,15 +764,16 @@ public class SegFaultVisitor extends Visitor {
                     }.dispatch(n.getNode(0));
 
                     if (isEndLine) {
-                        impWriter.p(" + \"\\n\"");
+                        impWriter.p(" << \"\\n\"");
                     }
-
+                    /*
                     if (!vars.isEmpty()){
                         for (String var : vars) {
                             impWriter.p(", " + "to_string(" + var + ")");
                         }
                     }
-                    impWriter.pln(");");
+                    */
+                    impWriter.pln(";");
             } else {
                     visit(n);
             }
