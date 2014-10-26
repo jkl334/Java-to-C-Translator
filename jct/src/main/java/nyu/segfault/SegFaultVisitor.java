@@ -104,6 +104,8 @@ public class SegFaultVisitor extends Visitor {
 
   	GNode class_node; /**@var java class node */
 
+  	public String constructorProp; //global variable to store constructor property in class declaration and to use to assign arguments in struct initialization in visitFieldDeclaration -Jeff
+
   	public void visitClassDeclaration(GNode n) {
 		className = n.getString(1);
 		headWriter.pln("struct " + className + " {");
@@ -129,6 +131,7 @@ public class SegFaultVisitor extends Visitor {
             public void visitFieldDeclaration(GNode n) {
                 /* Returns if n is a local field declaration, in which case it is taken care of by visitMethodDeclaration. */
                 System.out.println("Class body field: " + n + "\n");
+
                 
                 /* Determine and print the variable modifiers (e.g. "static", "private"). */
                 for (int x = 0; (x < n.getNode(0).size()) && (n.getNode(0).getNode(x).getString(0) != null); x++) {
@@ -163,6 +166,11 @@ public class SegFaultVisitor extends Visitor {
                 
                 /* Potentially visit the assigned value (if any). */
                 new Visitor() {
+                	public void visitDeclarators(GNode n) { // method to visit Declarator and grab constructor properties to store to constructorProp
+                		constructorProp = n.getNode(0).getString(0); //grabbing property
+                	}
+
+
                     public void visitStringLiteral(GNode n) {
                         impWriter.p(" = " + n.getString(0));
                     }
@@ -208,7 +216,7 @@ public class SegFaultVisitor extends Visitor {
 	}
 	public void visitConstructorDeclaration(GNode n){
 	}
-	public void visitBlock(GNode n){
+	public void wvisitBlock(GNode n){
 		visit(n);
 	}
 	public void visitMethodDeclaration(GNode n){
@@ -291,9 +299,9 @@ public class SegFaultVisitor extends Visitor {
 					// initializing struct
 					public void visitNewClassExpression(GNode n) {
 						if (n.getNode(3).size() > 0) {  // if arguments exist for object initializing
-							System.out.print("Waiting on Constructor imp.");
+							impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + "." + constructorProp + " = " + n.getNode(3).getNode(0).getString(0) + "}");  //arguments passed only 1 argument works for now
 						} else { // if arguments do not exist
-						impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + n.getNode(3).toString() + "}");
+							impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + " }");
 						}
 					}
 					
