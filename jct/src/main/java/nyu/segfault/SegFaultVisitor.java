@@ -427,22 +427,31 @@ public class SegFaultVisitor extends Visitor {
 				/* Potentially visit the assigned value (if any). */
 				new Visitor() {
 					// initializing struct
-					public void visitNewClassExpression(GNode n) {
-						if (n.getNode(3).size() > 0) {  // if arguments exist for object initializing
-							impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + "." + constructorProp + " = " + n.getNode(3).getNode(0).getString(0) + "}");  //arguments passed only 1 argument works for now
-						} else { // if arguments do not exist
-							if (!n.getNode(3).toString().equals("Arguments()")) {
-								impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + " }");
-							}
-						}
-					}
+					
 					public void visitDeclarators(GNode n) { //added 
+						
 						try {
 							boolean a = n.getNode(0).getNode(2).getString(0).equals("null");
 							impWriter.p(" = " + n.getNode(0).getNode(2).getString(0));
 						} catch(Exception e) {
 						}
+						
+						new Visitor() {
+							public void visitNewClassExpression(GNode n) {
+								if (n.getNode(3).size() > 0) {  // if arguments exist for object initializing
+									impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + "." + constructorProp + " = " + n.getNode(3).getNode(0).getString(0) + "}");  //arguments passed only 1 argument works for now
+								} else { // if arguments do not exist
+									if (!n.getNode(3).toString().equals("Arguments()")) {
+										impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + " }");
+									}
+								}
+							}
+							public void visit(GNode n) {
+								for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+							}
+						}.dispatch(n);
 					}
+
 
 					public void visitStringLiteral(GNode n) {
 	                    impWriter.p(" = " + n.getString(0));
