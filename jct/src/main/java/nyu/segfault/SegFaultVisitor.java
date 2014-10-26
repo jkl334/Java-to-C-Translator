@@ -299,7 +299,7 @@ public class SegFaultVisitor extends Visitor {
 
 
 			public void visitFieldDeclaration(GNode n) {  // Need to add visitMethodDeclaration() to visitor for advanced FieldDeclarations.
-
+				System.out.println(n);
 			/* Determine and print the declarator type. */
 			    impWriter.p("\t");
 			    String declarationType = n.getNode(1).getNode(0).getString(0);
@@ -335,6 +335,9 @@ public class SegFaultVisitor extends Visitor {
 								impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + " }");
 							}
 						}
+					}
+					public void visitDeclarators(GNode n) { //added 
+						impWriter.p(" = " + n.getNode(0).getNode(2).getString(0));
 					}
 
 					public void visitStringLiteral(GNode n) {
@@ -579,7 +582,7 @@ public class SegFaultVisitor extends Visitor {
                             else {
                                 count++;
                             }
-                            impWriter.p("%s");
+                            impWriter.p("\"%s\"");
                         }
 
                         public void visitCallExpression(GNode n){
