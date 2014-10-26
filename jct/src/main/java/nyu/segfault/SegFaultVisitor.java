@@ -127,6 +127,35 @@ public class SegFaultVisitor extends Visitor {
 			super_class.addChild(className);
 		}
         new Visitor() {
+    		public void visitConstructorDeclaration(GNode n){
+    			headWriter.pln(n.getString(2) + "(");
+				new Visitor() {
+
+							// check the modifier
+							public void visitModifiers(GNode n) {
+								new Visitor() {
+									// check the modifier
+									public void visitModifier(GNode n) {
+										//impWriter.pln(n.getString(0) + ":");
+									}
+
+
+									public void visit(GNode n) {
+										for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+									}
+								}.dispatch(n);
+							}
+
+							public void visitFormalParameters(GNode n) {
+
+								
+							}
+
+							public void visit(GNode n) {
+								for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+							}
+						}.dispatch(n);
+			}
             /* This takes care of global variables */
             public void visitFieldDeclaration(GNode n) {
                 /* Returns if n is a local field declaration, in which case it is taken care of by visitMethodDeclaration. */
@@ -216,9 +245,7 @@ public class SegFaultVisitor extends Visitor {
 	}
 	public void visitAdditiveExpression(GNode n){
 	}
-	public void visitConstructorDeclaration(GNode n){
-	}
-	public void wvisitBlock(GNode n){
+	public void visitBlock(GNode n){
 		visit(n);
 	}
 	public void visitMethodDeclaration(GNode n){
@@ -304,7 +331,9 @@ public class SegFaultVisitor extends Visitor {
 						if (n.getNode(3).size() > 0) {  // if arguments exist for object initializing
 							impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + "." + constructorProp + " = " + n.getNode(3).getNode(0).getString(0) + "}");  //arguments passed only 1 argument works for now
 						} else { // if arguments do not exist
-							impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + " }");
+							if (!n.getNode(3).toString().equals("Arguments()")) {
+								impWriter.p(" = " + "(" + n.getNode(2).getString(0) + ")" + " {" + " }");
+							}
 						}
 					}
 
