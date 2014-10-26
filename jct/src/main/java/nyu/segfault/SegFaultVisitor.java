@@ -437,7 +437,11 @@ public class SegFaultVisitor extends Visitor {
 						}
 					}
 					public void visitDeclarators(GNode n) { //added 
-						impWriter.p(" = " + n.getNode(0).getNode(2).getString(0));
+						try {
+							boolean a = n.getNode(0).getNode(2).getString(0).equals("null");
+							impWriter.p(" = " + n.getNode(0).getNode(2).getString(0));
+						} catch(Exception e) {
+						}
 					}
 
 					public void visitStringLiteral(GNode n) {
