@@ -72,6 +72,12 @@ public class SegFaultVisitor extends Visitor {
 	String cc_name; /**@var current class name (this) */
 	String className;
 
+	HashSet<String> publicHPP;  // Fields that fall under the "public:" tag of the header file.
+	HashSet<String> privateHPP;  // Fields that fall under the "private:" tag of the header file.
+
+	HashSet<String> publicHPPmethods;  // Methods that fall under the "public:" tag of the header file.
+	HashSet<String> privateHPPmethods;  // Methods that fall under the "private:" tag of the header file.
+
 	SymbolTable table; /**@var node symbols*/
 
 	String method_return_type = "";
@@ -143,6 +149,13 @@ public class SegFaultVisitor extends Visitor {
 		className = n.getString(1);
 		headWriter.pln("struct " + className + " {");
 		class_VT_buffer=className + "_VT";
+		
+		/* A class declaration means that there should be a corresponding struct in the header file. */
+		/* Each struct will have "private:" and "public:" tags, under which the contents of these HashSets will be printed. */
+		this.privateHPP = new HashSet<String>();
+		this.publicHPP = new HashSet<String>();
+		this.privateHPPmethods = new HashSet<String>();
+		this.publicHPPmethods = new HashSet<String>();
 
 		index++;
 		cxx_class_roots.add(n);
@@ -163,44 +176,50 @@ public class SegFaultVisitor extends Visitor {
         new Visitor() {
             /* This takes care of global variables */
             public void visitFieldDeclaration(GNode n) {
-            	headWriter.p("\t");
-                /* Returns if n is a local field declaration, in which case it is taken care of by visitMethodDeclaration. */
-                System.out.println("Class body field: " + n + "\n");
-
+		final StringBuilder headerText = new StringBuilder();
+		boolean isPrivateField = false;
 
                 /* Determine and print the variable modifiers (e.g. "static", "private"). */
                 for (int x = 0; (x < n.getNode(0).size()) && (n.getNode(0).getNode(x).getString(0) != null); x++) {
                     String modifier = n.getNode(0).getNode(x).getString(0);
                     if (modifier.equals("static")) {
-                        System.out.println(n);
-                        headWriter.p("static ");
+                        impWriter.p("static ");
+			headerText.append("static ");
+
                     } else if (modifier.equals("private")) {
-                        // Do something.
+                        isPrivateField = true;
                     }
                 }
 
                 /* Determine and print the declarator type. */
                 String declarationType = n.getNode(1).getNode(0).getString(0);
                 if (declarationType.equals("boolean")) {
-                    headWriter.p("boolean ");
+                    impWriter.p("boolean ");
+		    headerText.append("boolean ");
                 } else if (declarationType.equals("char")) {
-                    headWriter.p("char ");
+                    impWriter.p("char ");
+		    headerText.append("char ");
                 } else if (declarationType.equals("double")) {
-                    headWriter.p("double ");
+                    impWriter.p("double ");
+                    headerText.append("double ");
                 } else if (declarationType.equals("float")) {
-                    headWriter.p("float ");
+                    impWriter.p("float ");
+                    headerText.append("float ");
                 } else if (declarationType.equals("int")) {
-                    headWriter.p("int ");
+                    impWriter.p("int ");
+                    headerText.append("int ");
                 } else if (declarationType.equals("String")) {
-                    headWriter.p("string ");
+                    impWriter.p("string ");
+                    headerText.append("string ");
                 } else {
-		    headWriter.p(declarationType + " ");  // For non-primitive, non-String objects.
+		    impWriter.p(declarationType + " ");  // For non-primitive, non-String objects.
+                    headerText.append(declarationType + " ");
 		}
                 
-
-                /* Print the name of the field. */
+                /* Print the name of the field to the implementation. */
                 String fieldName = n.getNode(2).getNode(0).getString(0);
-                headWriter.p(fieldName);
+                headerText.append(fieldName);
+                impWriter.p(fieldName);
 
                 /* Potentially visit the assigned value (if any). */
                 new Visitor() {
@@ -210,30 +229,43 @@ public class SegFaultVisitor extends Visitor {
 
 
                     public void visitStringLiteral(GNode n) {
-                        headWriter.p(" = " + n.getString(0));
+                        impWriter.p(" = " + n.getString(0));
+			headerText.append(" = " + n.getString(0));
                     }
 
                     public void visitIntegerLiteral(GNode n) {
-                        headWriter.p(" = " + n.getString(0));
+                        impWriter.p(" = " + n.getString(0));
+                        headerText.append(" = " + n.getString(0));
                     }
 
                     public void visitFloatingPointLiteral(GNode n) {
-                        headWriter.p(" = " + n.getString(0));
+                        impWriter.p(" = " + n.getString(0));
+                        headerText.append(" = " + n.getString(0));
                     }
 
                     public void visitCharacterLiteral(GNode n) {
-                        headWriter.p(" = " + n.getString(0));
+                        impWriter.p(" = " + n.getString(0));
+                        headerText.append(" = " + n.getString(0));
                     }
 
                     public void visitBooleanLiteral(GNode n) {
-                        headWriter.p(" = " + n.getString(0));
+                        impWriter.p(" = " + n.getString(0));
+                        headerText.append(" = " + n.getString(0));
                     }
 
                     public void visit(GNode n) {
                         for (Object o : n) if(o instanceof Node) dispatch((Node)o);
                     }
                 }.dispatch(n);
-                headWriter.pln(";");
+
+		/* Add the field to the correct header HashSet (i.e. private or public). */
+        headerText.append(";");
+		if (isPrivateField) {
+			privateHPP.add(headerText.toString());
+		} else {
+			publicHPP.add(headerText.toString());
+		}
+                impWriter.pln(";");
             }
 
             public void visitConstructorDeclaration(GNode n) {
@@ -360,6 +392,22 @@ public class SegFaultVisitor extends Visitor {
             }
         }.dispatch(n);
 		visit(n);
+
+		/* Write the pubilc/private method declarations and fields in the header struct definitions. */
+		Object[] publicFields = publicHPP.toArray();
+		Object[] publicMethods = publicHPPmethods.toArray();
+		if (publicFields.length + publicMethods.length > 0) headWriter.pln("\tpublic:");
+		for (Object field : publicFields) headWriter.pln("\t\t" + field + ";");
+		for (Object method : publicMethods) headWriter.pln("\t\t" + method + ";");
+		
+		headWriter.pln();
+	
+                Object[] privateFields = privateHPP.toArray();
+                Object[] privateMethods = privateHPPmethods.toArray();
+		if (privateFields.length + privateMethods.length > 0) headWriter.pln("\tprivate:");
+                for (Object field : privateFields) headWriter.pln("\t\t" + field);
+                for (Object method : privateMethods) headWriter.pln("\t\t" + method);		
+
 		headWriter.pln("};\n");
 		initialize_vtable();
 	}
@@ -379,6 +427,8 @@ public class SegFaultVisitor extends Visitor {
 		visit(n);
 	}
 	public void visitMethodDeclaration(GNode n){
+		final boolean isPrivate = false;
+
 		final GNode root=n;
 		final String return_type=n.getNode(2).toString();
 		method_VT_buffer=new ArrayList<String>();
@@ -401,6 +451,9 @@ public class SegFaultVisitor extends Visitor {
 					//retrieve argument type
 					fp+=fparam.getNode(1).getNode(0).getString(0)+" ";
 					arg_types.add(fparam.getNode(1).getNode(0).getString(0)+" ");
+					
+					//already implemented look below.
+					//fp+= j2c(fparam.getNode(1).getNode(0).getString(0))+" ";
 
 					//retrieve argument name
 					fp+=fparam.getString(3);
@@ -434,8 +487,17 @@ public class SegFaultVisitor extends Visitor {
 				//write function prototype to hpp file within struct <cc_name>
 				// <return_type> <function_name>(arg[0]...arg[n]);
 
-				headWriter.p("\t");  // Print a tab for method signatures in head file.
-				headWriter.pln(hpp_prototype + ";");
+				// Commented out these following 2 lines, as they *should* now be unneccessary.
+				//headWriter.p("\t");  // Print a tab for method signatures in head file.
+				//headWriter.pln(hpp_prototype + ";");
+
+				/* Add the method signature to the correct section of the header. */
+				if (isPrivate) {
+					privateHPPmethods.add(hpp_prototype);
+				} else {
+					publicHPPmethods.add(hpp_prototype);
+				}
+
 				//write function prototype to cpp file
 				// <return type> <class name> :: <function name> (arg[0]...arg[n]){
 
@@ -462,8 +524,15 @@ public class SegFaultVisitor extends Visitor {
 	            } else if (declarationType.equals("String")) {
 	                impWriter.p("string ");
                 }
-                if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) {
-                	impWriter.p(n.getNode(1).getNode(0).getString(0) + " ");
+                else if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) {
+                	/*
+                	if (n.getNode(1).getNode(0).getString(0).equals("String")) {
+                		impWriter.p("string");
+                	} 
+                	else {
+                		*/
+                		impWriter.p(n.getNode(1).getNode(0).getString(0) + " ");
+                	//}
                 }
 
 				/* Print the name of the field. */
@@ -666,7 +735,7 @@ public class SegFaultVisitor extends Visitor {
                 if (n.getNode(0).getName().equals("CallExpression")) { // checks if a call expression is being made
 					// String method_called = n.getNode(0).getNode(3).getNode(0).getString(2);
 					// impWriter.p("\tprintf("+method_called+"()");
-					impWriter.p("\tprintf(");
+					impWriter.p("\tcout << ");
                     final ArrayList<String> vars = new ArrayList<String>();
                     new Visitor() {
 
@@ -675,7 +744,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitStringLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -685,7 +754,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitIntegerLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -695,7 +764,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitFloatingPointLiteral(GNode n) {
                         	if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -705,7 +774,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitCharacterLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -715,7 +784,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitBooleanLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -725,7 +794,7 @@ public class SegFaultVisitor extends Visitor {
 
                         public void visitNullLiteral(GNode n) {
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
@@ -736,19 +805,21 @@ public class SegFaultVisitor extends Visitor {
                         public void visitPrimaryIdentifier(GNode n) {
                             vars.add(n.getString(0));
                             if (count > 0) {
-                                impWriter.p(" + ");
+                                impWriter.p(" << ");
                             }
                             else {
                                 count++;
                             }
-                            impWriter.p("\"%s\"");
+                            impWriter.p(n.getString(0));
                         }
 
                         public void visitCallExpression(GNode n){
                         	// If a method is called
+                        	/*
                         	try{
 		                    	if(n.getNode(3).getNode(0).getString(2).isEmpty() == false){
 		                    		String method_name = n.getNode(3).getNode(0).getString(2);
+
 		                        	// If arguments are passed in to that method add them to the arraylist
 		                        	if(n.getNode(3).getNode(0).getNode(3).isEmpty() == false){
 		                        		ArrayList<String> arguments = new ArrayList<String>();
@@ -764,6 +835,34 @@ public class SegFaultVisitor extends Visitor {
 		                    	}
 		                    }
 		                    catch(Exception e) {}
+		                    */
+		                    Node arguments = n.getNode(3);
+		                    new Visitor() {
+		                    	public void visitCallExpression(GNode n) {
+		                    		String method = "";
+		                    		method += n.getNode(0).getString(0);
+		                    		if (n.getString(2).isEmpty()) {
+		                    			method += "()";
+		                    		}
+		                    		else {
+		                    			method += "." + n.getString(2) + "(";
+		                    				if (n.getNode(3).isEmpty()){
+		                    					method += ")";
+		                    				}
+		                    		}
+		                    		vars.add(method);
+		                    		if (count > 0) {
+                                		impWriter.p(" << ");
+                            		}
+                            		else {
+                                		count++;
+                            		}
+                            		impWriter.p(method);
+		                    	}
+		                    	public void visit(GNode n) {
+                            		for (Object o : n) if (o instanceof Node) dispatch((Node) o);
+                        		}
+		                    }.dispatch(arguments);
                         }
 
                         public void visit(GNode n) {
@@ -773,15 +872,16 @@ public class SegFaultVisitor extends Visitor {
                     }.dispatch(n.getNode(0));
 
                     if (isEndLine) {
-                        impWriter.p(" + \"\\n\"");
+                        impWriter.p(" << \"\\n\"");
                     }
-
+                    /*
                     if (!vars.isEmpty()){
                         for (String var : vars) {
                             impWriter.p(", " + "to_string(" + var + ")");
                         }
                     }
-                    impWriter.pln(");");
+                    */
+                    impWriter.pln(";");
             } else {
                     visit(n);
             }
@@ -809,5 +909,16 @@ public class SegFaultVisitor extends Visitor {
 
 	public void visit(Node n) {
 		for (Object o : n) if (o instanceof Node) dispatch((Node)o);
+	}
+
+	public String j2c(String javaType) {
+		String cType;
+		if (javaType.equals("String")) {
+	        cType = "string";
+        }
+        else {
+        	cType = javaType;
+        }
+        return cType;
 	}
 }
