@@ -477,10 +477,13 @@ public class SegFaultVisitor extends Visitor {
 				 * <return_type> (*function name)(arg_type 1, arg_type 2)
 				 */
 
-				String function_ptr=rType+"(*"+root.getString(3)+")(";
-				for(int k=0; k< arg_types.size(); k++){
-					function_ptr+=arg_types.get(k);
-					if(k < arg_types.size() -1) function_ptr+=",";
+				String function_ptr=rType+"(*"+root.getString(3)+")";
+				if(arg_types.size() == 0) function_ptr+="()";
+				else{
+					for(int k=0; k< arg_types.size(); k++){
+						function_ptr+=arg_types.get(k);
+						if(k < arg_types.size() -1) function_ptr+=",";
+					}
 				}
 				method_VT_buffer.add(function_ptr);
 				String hpp_prototype= rType +" "+ fp;
@@ -506,6 +509,140 @@ public class SegFaultVisitor extends Visitor {
 				// <return type> <class name> :: <function name> (arg[0]...arg[n]){
 
 				impWriter.pln(cpp_prototype);
+
+			}
+
+			public void visitForStatement(GNode n) {
+				impWriter.p("\t" + "for " + "(");
+				
+				new Visitor() {  
+
+					public void visitBasicForControl(GNode n) {
+						new Visitor() {
+							public void visitRelationalExpression(GNode n) {
+								impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0) + "; ");
+							}
+							public void visitDeclarators(GNode n) {
+								impWriter.p(n.getNode(0).getString(0) + " = " + n.getNode(0).getNode(2).getString(0) + "; ");
+							}
+							public void visitExpressionList(GNode n) {
+								new Visitor() {
+									public void visitPostfixExpression(GNode n) {
+										impWriter.p(n.getNode(0).getString(0) + n.getString(1));
+									}
+									public void visitUnaryExpression(GNode n) {
+										impWriter.p(n.getString(0) + n.getNode(1).getString(0));
+									}
+									public void visit(Node n){
+										for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+									}
+								}.dispatch(n);
+							}
+							public void visitStringLiteral(GNode n) {
+				                impWriter.p(n.getString(0));
+				            }
+
+							public void visitIntegerLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+							}
+
+							public void visitFloatingPointLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+				    	    }
+
+				    	    public void visitCharacterLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+				    	    }
+
+				    	    public void visitBooleanLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+				    	    }
+
+				    	    public void visitNullLiteral(GNode n) {
+								impWriter.p("null");
+				    	    }
+
+				            public void visitPrimaryIdentifier(GNode n) {
+					            impWriter.p(n.getString(0));
+				    	    }
+				    	    public void visitType(GNode n) {
+				    	      	impWriter.p(n.getNode(0).getString(0) + " ");
+				    	    }
+
+				    	    public void visitAdditiveExpression(GNode n) {
+				    	    	impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
+				    	    }
+
+				    	        
+							public void visit(Node n){
+								for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+							}
+
+
+						}.dispatch(n);
+						impWriter.pln(") {");
+					}
+
+					public void visitBlock(GNode n) {
+						impWriter.p("\t");
+						impWriter.p("\t");
+						new Visitor() {
+							public void visitExpression(GNode n) { 
+	            				if (n.getNode(2).getName().equals("AdditiveExpression")) {
+	            					impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getNode(0).getString(0) + " " + n.getNode(2).getString(1) + " " + n.getNode(2).getNode(2).getString(0) +";");
+	            				} else {
+	            					impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0) + ";");
+	            				}
+	            			}
+
+							public void visitStringLiteral(GNode n) {
+			                    impWriter.p(n.getString(0));
+			                }
+
+							public void visitIntegerLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+							}
+
+							public void visitFloatingPointLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+			    	        }
+
+			    	        public void visitCharacterLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+			    	        }
+
+			    	        public void visitBooleanLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+			    	        }
+
+			    	        public void visitNullLiteral(GNode n) {
+								impWriter.p("null");
+			    	        }
+
+			                public void visitPrimaryIdentifier(GNode n) { 
+
+				                impWriter.p(n.getString(0));
+			    	        }
+
+			    	        public void visitAdditiveExpression(GNode n) {
+			    	        	impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0) + ";");
+			    	        }
+							public void visit(Node n){
+								for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+							}
+
+						}.dispatch(n);
+					}	
+
+
+					public void visit(Node n){
+						for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+					}
+					
+				}.dispatch(n);
+				impWriter.p("\n");
+				impWriter.p("\t" + "}" + "\n");
+			
 
 			}
 
