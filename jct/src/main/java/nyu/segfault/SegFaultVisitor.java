@@ -288,10 +288,16 @@ public class SegFaultVisitor extends Visitor {
 					}
 
 					public void visitFormalParameters(GNode n) {
-						if (!n.getNode(0).getNode(0).toString().equals("Modifiers()"))	{
-							headWriter.p(n.getNode(0).getNode(0).getString(0) + " ");
+						//System.out.println(n.toString());
+						try {
+							if (!n.getNode(0).isEmpty())	{
+								headWriter.p(n.getNode(0).getNode(0).getString(0) + " ");
+							}
+						} catch (Exception e) {
 						}
-						headWriter.p(n.getNode(0).getNode(1).getNode(0).getString(0).toLowerCase() + " " + n.getNode(0).getString(3));
+						if (!n.isEmpty()) {
+							headWriter.p(n.getNode(0).getNode(1).getNode(0).getString(0).toLowerCase() + " " + n.getNode(0).getString(3));
+						}
 						headWriter.pln(")");
 						headWriter.p("\t");
 						headWriter.pln("{");
@@ -301,7 +307,7 @@ public class SegFaultVisitor extends Visitor {
 						new Visitor() {
 
 							public void visitExpressionStatement(GNode n) {
-								System.out.println(n.toString());
+								//System.out.println(n.toString());
 								headWriter.p("\t");
 				            	if (n.getNode(0).getName().equals("Expression")) { // checks if regular expression is being made
 				            		headWriter.p("\t");
@@ -309,7 +315,7 @@ public class SegFaultVisitor extends Visitor {
 				            		new Visitor() {  // Visit assigned value if any
 
 				            			public void visitExpression(GNode n) { 
-				            				System.out.println(n.toString());
+				            				//System.out.println(n.toString());
 				            				if (n.getNode(2).getName().equals("AdditiveExpression")) {
 				            					headWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getNode(0).getString(0) + " " + n.getNode(2).getString(1) + " " + n.getNode(2).getNode(2).getString(0));
 				            				} else {
@@ -506,9 +512,143 @@ public class SegFaultVisitor extends Visitor {
 
 			}
 
+			public void visitForStatement(GNode n) {
+				impWriter.p("\t" + "for " + "(");
+				
+				new Visitor() {  
+
+					public void visitBasicForControl(GNode n) {
+						new Visitor() {
+							public void visitRelationalExpression(GNode n) {
+								impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0) + "; ");
+							}
+							public void visitDeclarators(GNode n) {
+								impWriter.p(n.getNode(0).getString(0) + " = " + n.getNode(0).getNode(2).getString(0) + "; ");
+							}
+							public void visitExpressionList(GNode n) {
+								new Visitor() {
+									public void visitPostfixExpression(GNode n) {
+										impWriter.p(n.getNode(0).getString(0) + n.getString(1));
+									}
+									public void visitUnaryExpression(GNode n) {
+										impWriter.p(n.getString(0) + n.getNode(1).getString(0));
+									}
+									public void visit(Node n){
+										for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+									}
+								}.dispatch(n);
+							}
+							public void visitStringLiteral(GNode n) {
+				                impWriter.p(n.getString(0));
+				            }
+
+							public void visitIntegerLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+							}
+
+							public void visitFloatingPointLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+				    	    }
+
+				    	    public void visitCharacterLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+				    	    }
+
+				    	    public void visitBooleanLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+				    	    }
+
+				    	    public void visitNullLiteral(GNode n) {
+								impWriter.p("null");
+				    	    }
+
+				            public void visitPrimaryIdentifier(GNode n) {
+					            impWriter.p(n.getString(0));
+				    	    }
+				    	    public void visitType(GNode n) {
+				    	      	impWriter.p(n.getNode(0).getString(0) + " ");
+				    	    }
+
+				    	    public void visitAdditiveExpression(GNode n) {
+				    	    	impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
+				    	    }
+
+				    	        
+							public void visit(Node n){
+								for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+							}
+
+
+						}.dispatch(n);
+						impWriter.pln(") {");
+					}
+
+					public void visitBlock(GNode n) {
+						impWriter.p("\t");
+						impWriter.p("\t");
+						new Visitor() {
+							public void visitExpression(GNode n) { 
+	            				if (n.getNode(2).getName().equals("AdditiveExpression")) {
+	            					impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getNode(0).getString(0) + " " + n.getNode(2).getString(1) + " " + n.getNode(2).getNode(2).getString(0) +";");
+	            				} else {
+	            					impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0) + ";");
+	            				}
+	            			}
+
+							public void visitStringLiteral(GNode n) {
+			                    impWriter.p(n.getString(0));
+			                }
+
+							public void visitIntegerLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+							}
+
+							public void visitFloatingPointLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+			    	        }
+
+			    	        public void visitCharacterLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+			    	        }
+
+			    	        public void visitBooleanLiteral(GNode n) {
+								impWriter.p(n.getString(0));
+			    	        }
+
+			    	        public void visitNullLiteral(GNode n) {
+								impWriter.p("null");
+			    	        }
+
+			                public void visitPrimaryIdentifier(GNode n) { 
+
+				                impWriter.p(n.getString(0));
+			    	        }
+
+			    	        public void visitAdditiveExpression(GNode n) {
+			    	        	impWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0) + ";");
+			    	        }
+							public void visit(Node n){
+								for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+							}
+
+						}.dispatch(n);
+					}	
+
+
+					public void visit(Node n){
+						for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+					}
+					
+				}.dispatch(n);
+				impWriter.p("\n");
+				impWriter.p("\t" + "}" + "\n");
+			
+
+			}
+
 
 			public void visitFieldDeclaration(GNode n) {  // Need to add visitMethodDeclaration() to visitor for advanced FieldDeclarations.
-				System.out.println(n);
+				//System.out.println(n);
 			/* Determine and print the declarator type. */
 			    impWriter.p("\t");
 			    String declarationType = n.getNode(1).getNode(0).getString(0);
@@ -730,13 +870,13 @@ public class SegFaultVisitor extends Visitor {
 					impWriter.pln(";");
             	}
                 //System.out.println(n.getNode(0).toString());
-                count = 0;
                 boolean isEndLine = false; // used to check if the print statement has an ln
                 if (n.getNode(0).toString().contains("println")) isEndLine = true;
-                if (n.getNode(0).getName().equals("CallExpression")) { // checks if a call expression is being made
+                if (n.toString().contains("CallExpression") && n.toString().contains("SelectionExpression") && n.toString().contains("System") && n.toString().contains("out")) { // checks if a call expression is being made
 					// String method_called = n.getNode(0).getNode(3).getNode(0).getString(2);
 					// impWriter.p("\tprintf("+method_called+"()");
-					impWriter.p("\tcout << ");
+					//System.out.println(n.toString());
+					impWriter.p("\tcout");
                     final ArrayList<String> vars = new ArrayList<String>();
                     new Visitor() {
 
@@ -744,99 +884,35 @@ public class SegFaultVisitor extends Visitor {
                         }
 
                         public void visitStringLiteral(GNode n) {
-                            if (count > 0) {
-                                impWriter.p(" << ");
-                            }
-                            else {
-                                count++;
-                            }
-                            impWriter.p(n.getString(0));
+                            impWriter.p(" << " + n.getString(0));
                         }
 
                         public void visitIntegerLiteral(GNode n) {
-                            if (count > 0) {
-                                impWriter.p(" << ");
-                            }
-                            else {
-                                count++;
-                            }
-                            impWriter.p(n.getString(0));
+                            impWriter.p(" << " + n.getString(0));
                         }
 
                         public void visitFloatingPointLiteral(GNode n) {
-                        	if (count > 0) {
-                                impWriter.p(" << ");
-                            }
-                            else {
-                                count++;
-                            }
-                            impWriter.p(n.getString(0));
+                            impWriter.p(" << " + n.getString(0));
                         }
 
                         public void visitCharacterLiteral(GNode n) {
-                            if (count > 0) {
-                                impWriter.p(" << ");
-                            }
-                            else {
-                                count++;
-                            }
-                            impWriter.p(n.getString(0));
+                            impWriter.p(" << " + n.getString(0));
                         }
 
                         public void visitBooleanLiteral(GNode n) {
-                            if (count > 0) {
-                                impWriter.p(" << ");
-                            }
-                            else {
-                                count++;
-                            }
-                            impWriter.p(n.getString(0));
+                            impWriter.p(" << " + n.getString(0));
                         }
 
                         public void visitNullLiteral(GNode n) {
-                            if (count > 0) {
-                                impWriter.p(" << ");
-                            }
-                            else {
-                                count++;
-                            }
-                            impWriter.p("null");
+                            impWriter.p(" << " + "null");
                         }
 
                         public void visitPrimaryIdentifier(GNode n) {
-                            vars.add(n.getString(0));
-                            if (count > 0) {
-                                impWriter.p(" << ");
-                            }
-                            else {
-                                count++;
-                            }
-                            impWriter.p(n.getString(0));
+                            impWriter.p(" << " + n.getString(0));
                         }
 
                         public void visitCallExpression(GNode n){
                         	// If a method is called
-                        	/*
-                        	try{
-		                    	if(n.getNode(3).getNode(0).getString(2).isEmpty() == false){
-		                    		String method_name = n.getNode(3).getNode(0).getString(2);
-
-		                        	// If arguments are passed in to that method add them to the arraylist
-		                        	if(n.getNode(3).getNode(0).getNode(3).isEmpty() == false){
-		                        		ArrayList<String> arguments = new ArrayList<String>();
-		                        		for(int i = 0; i < n.getNode(3).getNode(0).getNode(3).size(); i++){
-		                        			arguments.add(n.getNode(3).getNode(0).getNode(3).getNode(i).getString(0));
-		                        		}
-		                        		String all_arguments = "";
-		                        		for(String item : arguments){
-		                        			all_arguments += item + ",";
-		                        		}
-		                        		impWriter.p(method_name+"("+all_arguments.substring(0,all_arguments.length()-1)+")");
-		                        	}
-		                    	}
-		                    }
-		                    catch(Exception e) {}
-		                    */
 		                    Node arguments = n.getNode(3);
 		                    new Visitor() {
 		                    	public void visitCallExpression(GNode n) {
@@ -852,13 +928,7 @@ public class SegFaultVisitor extends Visitor {
 		                    				}
 		                    		}
 		                    		vars.add(method);
-		                    		if (count > 0) {
-                                		impWriter.p(" << ");
-                            		}
-                            		else {
-                                		count++;
-                            		}
-                            		impWriter.p(method);
+                            		impWriter.p(" << " + method);
 		                    	}
 		                    	public void visit(GNode n) {
                             		for (Object o : n) if (o instanceof Node) dispatch((Node) o);
@@ -883,7 +953,47 @@ public class SegFaultVisitor extends Visitor {
                     }
                     */
                     impWriter.pln(";");
-            } else {
+            } 
+            else if (n.toString().contains("CallExpression")) {
+            	impWriter.p("\t");
+                new Visitor() {
+                	public void visitCallExpression(GNode n) {
+                		System.out.println(n.toString());
+                		String method = "";
+                		method += n.getNode(0).getString(0);
+                		if (n.getString(2).isEmpty()) {
+                			method += "()";
+                		}
+                		else {
+                			method += "." + n.getString(2) + "(";
+                				if (n.getNode(3).isEmpty()){
+                					method += ")";
+                				}
+                				else {
+                					Node arguments = n.getNode(3);
+                					System.out.println(arguments.toString());
+                					
+                					for (int i = 0; i < arguments.size(); i++) {
+                						if (i == 0) {
+                							method += arguments.getNode(0).getString(i);
+                						}
+                						else {
+                							method += ", " + arguments.getNode(0).getString(i);
+                						}
+                					}
+                					method += ")";
+
+                				}
+                		}
+                		impWriter.p(method);
+                	}
+                	public void visit(GNode n) {
+                		for (Object o : n) if (o instanceof Node) dispatch((Node) o);
+            		}
+                }.dispatch(n);
+                impWriter.pln(";");
+            }
+            else {
                     visit(n);
             }
         }
