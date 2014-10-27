@@ -90,12 +90,16 @@ public class SegFaultVisitor extends Visitor {
 		headWriter.pln("struct " + class_VT_buffer+"{");
 		
 		//write function pointers
-		for (String func_VT : method_VT_buffer ) headWriter.pln("\t"+func_VT+";");	 
+		for (String func_VT : method_VT_buffer ){
+			if(func_VT.contains("main")) continue;
+			headWriter.pln("\t"+func_VT+";");	 
+		}
 		
 		//write constructor and function pointer initialization (grab address of functions)
 		headWriter.pln("\t" + class_VT_buffer+"():");
 		int i=0; 
 		for (String func_name : method_only_VT ){ 
+			if(func_name.equals("main")){ i++; continue; }
 			headWriter.pln("\t" + func_name+"(&"+className+"::"+func_name+")");
 			if((i+1) < method_only_VT.size())  headWriter.pln(","); i++;
 		 }
@@ -490,26 +494,23 @@ public class SegFaultVisitor extends Visitor {
 				// String cpp_prototype= rType+" "+cc_name+ "::" + fp+" {";
 				String cpp_prototype= "int main() {";
 				if(!className.equals(fileName.substring(0, 1).toUpperCase() + fileName.substring(1))) cpp_prototype = rType+" "+className+ "::" + fp+" {";
-				//runtime.console().pln(cpp_prototype);
-				//write function prototype to hpp file within struct <cc_name>
-				// <return_type> <function_name>(arg[0]...arg[n]);
+				
+				System.out.println(root.getString(3));
+				if(!root.getString(3).equals("main")){
+					//write function prototype to hpp file within struct <cc_name>
+					// <return_type> <function_name>(arg[0]...arg[n]);
 
-				// Commented out these following 2 lines, as they *should* now be unneccessary.
-				//headWriter.p("\t");  // Print a tab for method signatures in head file.
-				//headWriter.pln(hpp_prototype + ";");
-
-				/* Add the method signature to the correct section of the header. */
-				if (isPrivate) {
-					privateHPPmethods.add(hpp_prototype);
-				} else {
-					publicHPPmethods.add(hpp_prototype);
+					/* Add the method signature to the correct section of the header. */
+					if (isPrivate) {
+						privateHPPmethods.add(hpp_prototype);
+					} else {
+						publicHPPmethods.add(hpp_prototype);
+					}
 				}
-
 				//write function prototype to cpp file
 				// <return type> <class name> :: <function name> (arg[0]...arg[n]){
 
 				impWriter.pln(cpp_prototype);
-
 			}
 
 			public void visitForStatement(GNode n) {
