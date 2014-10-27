@@ -471,10 +471,13 @@ public class SegFaultVisitor extends Visitor {
 				 * <return_type> (*function name)(arg_type 1, arg_type 2)
 				 */
 
-				String function_ptr=rType+"(*"+root.getString(3)+")(";
-				for(int k=0; k< arg_types.size(); k++){
-					function_ptr+=arg_types.get(k);
-					if(k < arg_types.size() -1) function_ptr+=",";
+				String function_ptr=rType+"(*"+root.getString(3)+")";
+				if(arg_types.size() == 0) function_ptr+="()";
+				else{
+					for(int k=0; k< arg_types.size(); k++){
+						function_ptr+=arg_types.get(k);
+						if(k < arg_types.size() -1) function_ptr+=",";
+					}
 				}
 				method_VT_buffer.add(function_ptr);
 				String hpp_prototype= rType +" "+ fp;
