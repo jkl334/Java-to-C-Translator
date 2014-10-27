@@ -61,10 +61,10 @@ public class SegFaultVisitor extends Visitor {
 	public final SegNode<String> inhTree=new SegNode<String>((String)"Object");
 	public String _super;
 	
-	//temporarily stores name of encountered class members to construct vtable
-	public String class_VT_buffer; 
-	public ArrayList<String> method_VT_buffer; // modified function definitions as function pointers
-	public ArrayList<String> method_only_VT; // function name only
+//	//temporarily stores name of encountered class members to construct vtable
+//	public String class_VT_buffer; 
+//	public ArrayList<String> method_VT_buffer; // modified function definitions as function pointers
+//	public ArrayList<String> method_only_VT; // function name only
 
 	ArrayList<GNode> cxx_class_roots=new ArrayList<GNode>(); /**@var root nodes of classes in linear container*/
 	int index=-1; /**@var root node of class subtree index*/
@@ -85,28 +85,34 @@ public class SegFaultVisitor extends Visitor {
 	public SegFaultVisitor(String[] files) {
 		this.files = files;
 	}
-	public void initialize_vtable(){
-		//open vtable struct
-		headWriter.pln("struct " + class_VT_buffer+"{");
-		
-		//write function pointers
-		for (String func_VT : method_VT_buffer ){
-			if(func_VT.contains("main")) continue;
-			headWriter.pln("\t"+func_VT+";");	 
-		}
-		
-		//write constructor and function pointer initialization (grab address of functions)
-		headWriter.pln("\t" + class_VT_buffer+"():");
-		int i=0; 
-		for (String func_name : method_only_VT ){ 
-			if(func_name.equals("main")){ i++; continue; }
-			headWriter.pln("\t" + func_name+"(&"+className+"::"+func_name+")");
-			if((i+1) < method_only_VT.size())  headWriter.pln(","); i++;
-		 }
-		
-		//close struct
-		headWriter.pln("};\n");
-	}
+//	public void initialize_vtable(){
+//		//open vtable struct
+//		headWriter.pln("struct " + class_VT_buffer+" {");
+//		
+//		//write function pointers
+//		for (String func_VT : method_VT_buffer ){
+//			System.out.println(func_VT);
+//			if(func_VT.contains("main")) continue;
+//			headWriter.pln("\t"+func_VT+";");	 
+//		}
+//		
+//		//write constructor and function pointer initialization (grab address of functions)
+//		headWriter.pln("\t" + class_VT_buffer+"()");
+//		int i=0;
+//		//boolean colonRequired = true;
+//		for (String func_name : method_only_VT ){ 
+//		//	if (colonRequired) {
+//		//		headWriter.p(":");
+//		//		colonRequired = false;
+//		//	}
+//			if(func_name.equals("main")){ i++; continue; }
+//			headWriter.pln("\t" + func_name+"(&"+className+"::"+func_name+")");
+//			if((i+1) < method_only_VT.size())  headWriter.pln(","); i++;
+//		 }
+//		
+//		//close struct
+//		headWriter.pln("};\n");
+//	}
 	public void visitCompilationUnit(GNode n) {
 
 		//creates the new output files to be written to
@@ -152,7 +158,7 @@ public class SegFaultVisitor extends Visitor {
   	public void visitClassDeclaration(GNode n) {
 		className = n.getString(1);
 		headWriter.pln("struct " + className + " {");
-		class_VT_buffer=className + "_VT";
+//		class_VT_buffer=className + "_VT";
 		
 		/* A class declaration means that there should be a corresponding struct in the header file. */
 		/* Each struct will have "private:" and "public:" tags, under which the contents of these HashSets will be printed. */
@@ -417,7 +423,7 @@ public class SegFaultVisitor extends Visitor {
                 for (Object method : privateMethods) headWriter.pln("\t\t" + method);		
 
 		headWriter.pln("};\n");
-		initialize_vtable();
+//		initialize_vtable();
 	}
 	/**
 	 * construct vtable struct for each class 
@@ -439,9 +445,9 @@ public class SegFaultVisitor extends Visitor {
 
 		final GNode root=n;
 		final String return_type=n.getNode(2).toString();
-		method_VT_buffer=new ArrayList<String>();
-		method_only_VT=new ArrayList<String>();
-		method_only_VT.add(root.getString(3));
+//		method_VT_buffer=new ArrayList<String>();
+//		method_only_VT=new ArrayList<String>();
+//		method_only_VT.add(root.getString(3));
 		try{
 			method_return_type = n.getNode(2).getNode(0).getString(0);
 		}
@@ -489,7 +495,7 @@ public class SegFaultVisitor extends Visitor {
 						if(k < arg_types.size() -1) function_ptr+=",";
 					}
 				}
-				method_VT_buffer.add(function_ptr);
+//				method_VT_buffer.add(function_ptr);
 				String hpp_prototype= rType +" "+ fp;
 				// String cpp_prototype= rType+" "+cc_name+ "::" + fp+" {";
 				String cpp_prototype= "int main() {";
