@@ -315,12 +315,47 @@ public class SegFaultVisitor extends Visitor {
 				            		new Visitor() {  // Visit assigned value if any
 
 				            			public void visitExpression(GNode n) { 
-				            				//System.out.println(n.toString());
-				            				if (n.getNode(2).getName().equals("AdditiveExpression")) {
-				            					headWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getNode(0).getString(0) + " " + n.getNode(2).getString(1) + " " + n.getNode(2).getNode(2).getString(0));
-				            				} else {
-				            					headWriter.p(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
-				            				}
+				            				System.out.println(n.toString());
+				            				new Visitor() {
+				    
+												public void visitStringLiteral(GNode n) {
+								                    headWriter.p(n.getString(0));
+								                }
+
+												public void visitIntegerLiteral(GNode n) {
+													headWriter.p(n.getString(0));
+												}
+
+												public void visitFloatingPointLiteral(GNode n) {
+													headWriter.p(n.getString(0));
+								    	        }
+
+								    	        public void visitCharacterLiteral(GNode n) {
+													headWriter.p(n.getString(0));
+								    	        }
+
+								    	        public void visitBooleanLiteral(GNode n) {
+													headWriter.p(n.getString(0));
+								    	        }
+
+								    	        public void visitNullLiteral(GNode n) {
+													headWriter.p("null");
+								    	        }
+
+								                public void visitPrimaryIdentifier(GNode n) { 
+
+									                headWriter.p(n.getString(0));
+								    	        }
+
+								    	        public void visitThisExpression(GNode n) {
+								    	        	//headWriter.p("__" + className + "::"+ n.getString(0));
+								    	        	/*TODO*/
+								    	        }
+
+				            					public void visit(Node n){
+													for (Object o : n) if(o instanceof Node) dispatch((Node)o);
+												}
+											}.dispatch(n.getNode(0));
 				            			}
 
 										public void visitStringLiteral(GNode n) {
@@ -350,6 +385,10 @@ public class SegFaultVisitor extends Visitor {
 						                public void visitPrimaryIdentifier(GNode n) { 
 
 							                headWriter.p(n.getString(0));
+						    	        }
+
+						    	        public void visitThisExpression(GNode n) {
+						    	        	headWriter.p("__" + className + "::"+ n.getString(0));
 						    	        }
 
 						    	        public void visitAdditiveExpression(GNode n) {
@@ -453,11 +492,8 @@ public class SegFaultVisitor extends Visitor {
 					Node fparam=n.getNode(i);
 
 					//retrieve argument type
-					fp+=fparam.getNode(1).getNode(0).getString(0)+" ";
-					arg_types.add(fparam.getNode(1).getNode(0).getString(0)+" ");
-					
-					//already implemented look below.
-					//fp+= j2c(fparam.getNode(1).getNode(0).getString(0))+" ";
+					fp+= j2c(fparam.getNode(1).getNode(0).getString(0))+" ";
+					arg_types.add(fparam.getNode(1).getNode(0).getString(0)+" ");					
 
 					//retrieve argument name
 					fp+=fparam.getString(3);
@@ -773,6 +809,10 @@ public class SegFaultVisitor extends Visitor {
 		                impWriter.p(n.getString(0));
 	    	        }
 
+	    	        public void visitThisExpression(GNode n) {
+
+	    	        }
+
 
 	    	        public void visitAdditiveExpression(GNode n) {
 	    	        //	Currently only works for 2 vars in expression. hard-coded
@@ -919,6 +959,9 @@ public class SegFaultVisitor extends Visitor {
 		                    		if (n.getString(2).isEmpty()) {
 		                    			method += "()";
 		                    		}
+		                    		else if (n.getString(2).equals("toString")) {
+	                					method = "std::to_string(" + method + ")";
+	                				}
 		                    		else {
 		                    			method += "." + n.getString(2) + "(";
 		                    				if (n.getNode(3).isEmpty()){
@@ -951,48 +994,56 @@ public class SegFaultVisitor extends Visitor {
                     }
                     */
                     impWriter.pln(";");
-            } 
-            else if (n.toString().contains("CallExpression")) {
-            	impWriter.p("\t");
-                new Visitor() {
-                	public void visitCallExpression(GNode n) {              		
-                		String method = "";
-                		method += n.getNode(0).getString(0);
-                		if (n.getString(2).isEmpty()) {
-                			method += "()";
-                		}
-                		else {
-                			method += "." + n.getString(2) + "(";
-                				if (n.getNode(3).isEmpty()){
-                					method += ")";
-                				}
-                				else {
-                					Node arguments = n.getNode(3);
-                					
-                					for (int i = 0; i < arguments.size(); i++) {
-                						if (i == 0) {
-                							method += arguments.getNode(0).getString(i);
-                						}
-                						else {
-                							method += ", " + arguments.getNode(0).getString(i);
-                						}
-                					}
-                					method += ")";
+            	} 
+	            else if (n.toString().contains("CallExpression")) {
+	            	impWriter.p("\t");
+	                new Visitor() {
+	                	public void visitCallExpression(GNode n) {              		
+	                		String method = "";
+	                		method += n.getNode(0).getString(0);
+	                		if (n.getString(2).isEmpty()) {
+	                			method += "()";
+	                		}
+	                		else if (n.getString(2).equals("toString")) {
+	                			method = "std::to_string(" + method + ")";
+	                		}
+	                		else {
+	                			System.out.println(n.getString(2));
+	                			method += "." + n.getString(2) + "(";
+	                				if (n.getNode(3).isEmpty()){
+	                					method += ")";
+	                				}
+	                				else {
+	                					Node arguments = n.getNode(3);
+	                					
+	                					for (int i = 0; i < arguments.size(); i++) {
+	                						if (i == 0) {
+	                							method += arguments.getNode(0).getString(i);
+	                						}
+	                						else {
+	                							method += ", " + arguments.getNode(0).getString(i);
+	                						}
+	                					}
+	                					method += ")";
 
-                				}
-                		}
-                		impWriter.p(method);
-                	}
-                	public void visit(GNode n) {
-                		for (Object o : n) if (o instanceof Node) dispatch((Node) o);
-            		}
-                }.dispatch(n);
-                impWriter.pln(";");
-            }
-            else {
-                    visit(n);
-            }
-        }
+	                				}
+	                		}
+	                		
+	                		impWriter.p(method);
+	                	}
+	                	public void visit(GNode n) {
+	                		for (Object o : n) if (o instanceof Node) dispatch((Node) o);
+	            		}
+	                }.dispatch(n);
+	                impWriter.pln(";");
+	            }
+	            else {
+	                    visit(n);
+	            }
+        	}
+
+
+
 		}.dispatch(n);
 
 		impWriter.pln("}\n");
