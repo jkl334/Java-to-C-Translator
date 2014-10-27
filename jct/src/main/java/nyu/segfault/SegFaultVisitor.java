@@ -60,6 +60,11 @@ public class SegFaultVisitor extends Visitor {
 
 	public final SegNode<String> inhTree=new SegNode<String>((String)"Object");
 	public String _super;
+	
+	//temporarily stores name of encountered class members to construct vtable
+	public String class_VT_buffer; 
+	public ArrayList<String> method_VT_buffer; // modified function definitions as function pointers
+	public ArrayList<String> method_only_VT; // function name only
 
 	ArrayList<GNode> cxx_class_roots=new ArrayList<GNode>(); /**@var root nodes of classes in linear container*/
 	int index=-1; /**@var root node of class subtree index*/
@@ -80,7 +85,24 @@ public class SegFaultVisitor extends Visitor {
 	public SegFaultVisitor(String[] files) {
 		this.files = files;
 	}
-
+	public void initialize_vtable(){
+		//open vtable struct
+		headWriter.pln("struct " + class_VT_buffer+"{");
+		
+		//write function pointers
+		for (String func_VT : method_VT_buffer ) headWriter.pln("\t"+func_VT+";");	 
+		
+		//write constructor and function pointer initialization (grab address of functions)
+		headWriter.pln("\t" + class_VT_buffer+"():");
+		int i=0; 
+		for (String func_name : method_only_VT ){ 
+			headWriter.pln("\t" + func_name+"(&"+className+"::"+func_name+")");
+			if((i+1) < method_only_VT.size())  headWriter.pln(","); i++;
+		 }
+		
+		//close struct
+		headWriter.pln("};\n");
+	}
 	public void visitCompilationUnit(GNode n) {
 
 		//creates the new output files to be written to
@@ -126,6 +148,7 @@ public class SegFaultVisitor extends Visitor {
   	public void visitClassDeclaration(GNode n) {
 		className = n.getString(1);
 		headWriter.pln("struct " + className + " {");
+		class_VT_buffer=className + "_VT";
 		
 		/* A class declaration means that there should be a corresponding struct in the header file. */
 		/* Each struct will have "private:" and "public:" tags, under which the contents of these HashSets will be printed. */
@@ -382,17 +405,22 @@ public class SegFaultVisitor extends Visitor {
 		if (publicFields.length + publicMethods.length > 0) headWriter.pln("\tpublic:");
 		for (Object field : publicFields) headWriter.pln("\t\t" + field + ";");
 		for (Object method : publicMethods) headWriter.pln("\t\t" + method + ";");
-		
-		headWriter.pln();
-	
+
                 Object[] privateFields = privateHPP.toArray();
                 Object[] privateMethods = privateHPPmethods.toArray();
-		if (privateFields.length + privateMethods.length > 0) headWriter.pln("\tprivate:");
+		if (privateFields.length + privateMethods.length > 0) headWriter.pln("\n\tprivate:");
                 for (Object field : privateFields) headWriter.pln("\t\t" + field);
                 for (Object method : privateMethods) headWriter.pln("\t\t" + method);		
 
 		headWriter.pln("};\n");
+		initialize_vtable();
 	}
+	/**
+	 * construct vtable struct for each class 
+	 * and the vtable constructor
+	 * formated similar to java_lang.h
+	 */
+	
 	public void visitExtension(GNode n){
 		//retrieve explicit extension 
 		_super=n.getNode(0).getNode(0).getString(0); /**@var name of super class */
@@ -407,6 +435,9 @@ public class SegFaultVisitor extends Visitor {
 
 		final GNode root=n;
 		final String return_type=n.getNode(2).toString();
+		method_VT_buffer=new ArrayList<String>();
+		method_only_VT=new ArrayList<String>();
+		method_only_VT.add(root.getString(3));
 		try{
 			method_return_type = n.getNode(2).getNode(0).getString(0);
 		}
@@ -417,11 +448,16 @@ public class SegFaultVisitor extends Visitor {
 			public void visitFormalParameters(GNode n){
 				fp+=root.getString(3)+"(";
 				if( n.size() == 0 ) fp+=")";
+				ArrayList<String> arg_types=new ArrayList<String>();
 				for(int i=0; i< n.size(); i++){
 					Node fparam=n.getNode(i);
 
 					//retrieve argument type
-					fp+= j2c(fparam.getNode(1).getNode(0).getString(0))+" ";
+					fp+=fparam.getNode(1).getNode(0).getString(0)+" ";
+					arg_types.add(fparam.getNode(1).getNode(0).getString(0)+" ");
+					
+					//already implemented look below.
+					//fp+= j2c(fparam.getNode(1).getNode(0).getString(0))+" ";
 
 					//retrieve argument name
 					fp+=fparam.getString(3);
@@ -436,6 +472,17 @@ public class SegFaultVisitor extends Visitor {
 				else if(method_return_type.equals("String")) rType="string";
 				else if(method_return_type.equals("Integer")) rType = "int";
 
+				/**
+				 * generate the function ptr in struct <class_name>_VT
+				 * <return_type> (*function name)(arg_type 1, arg_type 2)
+				 */
+
+				String function_ptr=rType+"(*"+root.getString(3)+")(";
+				for(int k=0; k< arg_types.size(); k++){
+					function_ptr+=arg_types.get(k);
+					if(k < arg_types.size() -1) function_ptr+=",";
+				}
+				method_VT_buffer.add(function_ptr);
 				String hpp_prototype= rType +" "+ fp;
 				// String cpp_prototype= rType+" "+cc_name+ "::" + fp+" {";
 				String cpp_prototype= "int main() {";
