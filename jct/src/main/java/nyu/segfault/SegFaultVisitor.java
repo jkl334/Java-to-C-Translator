@@ -509,7 +509,7 @@ public class SegFaultVisitor extends Visitor {
 
 			}
 
-						public void visitForStatement(GNode n) {
+			public void visitForStatement(GNode n) {
 				impWriter.p("\t" + "for " + "(");
 				
 				new Visitor() {  
