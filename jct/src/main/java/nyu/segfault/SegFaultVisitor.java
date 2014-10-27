@@ -740,44 +740,42 @@ public class SegFaultVisitor extends Visitor {
 					// impWriter.p("\tprintf("+method_called+"()");
 					//System.out.println(n.toString());
 					impWriter.p("\tcout");
+					//System.out.println(n.toString());
                     final ArrayList<String> vars = new ArrayList<String>();
                     new Visitor() {
 
-                        public void visitSelectionExpression(GNode n) {
-                        }
-
-                        public void visitStringLiteral(GNode n) {
-                            impWriter.p(" << " + n.getString(0));
-                        }
-
-                        public void visitIntegerLiteral(GNode n) {
-                            impWriter.p(" << " + n.getString(0));
-                        }
-
-                        public void visitFloatingPointLiteral(GNode n) {
-                            impWriter.p(" << " + n.getString(0));
-                        }
-
-                        public void visitCharacterLiteral(GNode n) {
-                            impWriter.p(" << " + n.getString(0));
-                        }
-
-                        public void visitBooleanLiteral(GNode n) {
-                            impWriter.p(" << " + n.getString(0));
-                        }
-
-                        public void visitNullLiteral(GNode n) {
-                            impWriter.p(" << " + "null");
-                        }
-
-                        public void visitPrimaryIdentifier(GNode n) {
-                            impWriter.p(" << " + n.getString(0));
-                        }
-
                         public void visitCallExpression(GNode n){
                         	// If a method is called
+                        	
 		                    Node arguments = n.getNode(3);
 		                    new Visitor() {
+		                    	public void visitStringLiteral(GNode n) {
+                            		impWriter.p(" << " + n.getString(0));
+		                        }
+
+		                        public void visitIntegerLiteral(GNode n) {
+		                            impWriter.p(" << " + n.getString(0));
+		                        }
+
+		                        public void visitFloatingPointLiteral(GNode n) {
+		                            impWriter.p(" << " + n.getString(0));
+		                        }
+
+		                        public void visitCharacterLiteral(GNode n) {
+		                            impWriter.p(" << " + n.getString(0));
+		                        }
+
+		                        public void visitBooleanLiteral(GNode n) {
+		                            impWriter.p(" << " + n.getString(0));
+		                        }
+
+		                        public void visitNullLiteral(GNode n) {
+		                            impWriter.p(" << " + "null");
+		                        }
+
+		                        public void visitPrimaryIdentifier(GNode n) {
+		                            impWriter.p(" << " + n.getString(0));
+		                        }
 		                    	public void visitCallExpression(GNode n) {
 		                    		String method = "";
 		                    		method += n.getNode(0).getString(0);
@@ -820,8 +818,7 @@ public class SegFaultVisitor extends Visitor {
             else if (n.toString().contains("CallExpression")) {
             	impWriter.p("\t");
                 new Visitor() {
-                	public void visitCallExpression(GNode n) {
-                		System.out.println(n.toString());
+                	public void visitCallExpression(GNode n) {              		
                 		String method = "";
                 		method += n.getNode(0).getString(0);
                 		if (n.getString(2).isEmpty()) {
@@ -834,7 +831,6 @@ public class SegFaultVisitor extends Visitor {
                 				}
                 				else {
                 					Node arguments = n.getNode(3);
-                					System.out.println(arguments.toString());
                 					
                 					for (int i = 0; i < arguments.size(); i++) {
                 						if (i == 0) {
