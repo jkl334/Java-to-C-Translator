@@ -87,21 +87,21 @@ public class SegFaultVisitor extends Visitor {
 	}
 	public void initialize_vtable(){
 		//open vtable struct
-		headWriter.pln(class_VT_buffer+"{");
+		headWriter.pln("struct " + class_VT_buffer+"{");
 		
 		//write function pointers
 		for (String func_VT : method_VT_buffer ) headWriter.pln("\t"+func_VT+";");	 
 		
 		//write constructor and function pointer initialization (grab address of functions)
-		headWriter.pln(class_VT_buffer+"():");
+		headWriter.pln("\t" + class_VT_buffer+"():");
 		int i=0; 
 		for (String func_name : method_only_VT ){ 
-			headWriter.pln(func_name+"(&"+className+"::"+func_name+")");
+			headWriter.pln("\t" + func_name+"(&"+className+"::"+func_name+")");
 			if((i+1) < method_only_VT.size())  headWriter.pln(","); i++;
 		 }
 		
 		//close struct
-		headWriter.pln("};");
+		headWriter.pln("};\n");
 	}
 	public void visitCompilationUnit(GNode n) {
 
@@ -399,12 +399,10 @@ public class SegFaultVisitor extends Visitor {
 		if (publicFields.length + publicMethods.length > 0) headWriter.pln("\tpublic:");
 		for (Object field : publicFields) headWriter.pln("\t\t" + field + ";");
 		for (Object method : publicMethods) headWriter.pln("\t\t" + method + ";");
-		
-		headWriter.pln();
-	
+
                 Object[] privateFields = privateHPP.toArray();
                 Object[] privateMethods = privateHPPmethods.toArray();
-		if (privateFields.length + privateMethods.length > 0) headWriter.pln("\tprivate:");
+		if (privateFields.length + privateMethods.length > 0) headWriter.pln("\n\tprivate:");
                 for (Object field : privateFields) headWriter.pln("\t\t" + field);
                 for (Object method : privateMethods) headWriter.pln("\t\t" + method);		
 
