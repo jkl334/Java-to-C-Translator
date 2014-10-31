@@ -480,6 +480,8 @@ public class SegFaultVisitor extends Visitor {
 		visit(n);
 	}
 	public void visitMethodDeclaration(GNode n){
+		System.out.println("visitMethodDeclaration");
+		System.out.println(n + "\n");
 		final boolean isPrivate = false;
 
 		final GNode root=n;
