@@ -34,7 +34,5 @@ public class SegHead extends Visitor{
 	 */
 	public SegHead(){
 
-
-
 	}
 }
