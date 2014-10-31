@@ -52,7 +52,8 @@ public class Translator extends xtc.util.Tool {
 	  
 
 	public void process(Node node) {
-	    new SegFaultVisitor(files).dispatch(node);
+	    //new SegFaultVisitor(files).dispatch(node);
+	    new SegHead()
 	}
 
 	public static void main(String[] args) {

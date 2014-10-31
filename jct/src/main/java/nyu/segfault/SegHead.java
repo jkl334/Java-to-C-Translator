@@ -27,12 +27,13 @@ import xtc.tree.Visitor;
 /**
  * SegHead Visitor  handles classes without inheritance and virtual methods
  */
-public class SegHead{
+public class SegHead extends Visitor{
 
 	/**
 	 * constructor for SegHead
 	 */
 	public SegHead(){
+
 
 
 	}
