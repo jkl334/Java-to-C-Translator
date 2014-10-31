@@ -17,7 +17,111 @@ import xtc.tree.Printer;
 import xtc.tree.Visitor;
 	
 public class SegHelper {
-	
+	/**
+	* Get the name of the method in visitMethodDeclaration.
+	*
+	* @param n	The node from the Java AST.
+	* @return	The name of the method.
+	*/
+	public static String getMethodName(GNode n) {
+		return n.getString(3);
+	}	
+
+
+
+	static String gCallExpression;  // Global variable used with getCallExpression.
+	/**
+	* Get the C++ translation of a Java print statement. Must be used in
+	* visitExpressionStatment's visitCallExpression.
+	*
+	* @param n	The node from the Java AST.
+	* @return	A String representing the C++ version of a Java print statement.
+	*/
+	public static String getCallExpression(GNode n) {
+		gCallExpression = "";
+
+		boolean isEndLine = false;
+		if (n.getNode(0).toString().contains("println")) {
+			isEndLine = true;
+		}
+
+		gCallExpression += "\tcout";
+		final ArrayList<String> vars = new ArrayList<String>();
+
+		new Visitor() {
+			public void visitStringLiteral(GNode n) {
+				gCallExpression += " << " + n.getString(0);
+			}
+			
+			public void visitIntegerLiteral(GNode n) {
+				gCallExpression += " << " + n.getString(0);
+			}
+
+			public void visitFloatingPointLiteral(GNode n) {
+				gCallExpression += " << " + n.getString(0);
+			}
+
+			public void visitCharacterLiteral(GNode n) {
+				gCallExpression += " << " + n.getString(0);
+			}
+			
+			public void visitBooleanLiteral(GNode n) {
+				gCallExpression += " << " + n.getString(0);
+			}
+
+			public void visitNullLiteral(GNode n) {
+				gCallExpression += " << " + "null";
+			}
+
+			public void visitPrimaryIdentifier(GNode n) {
+				gCallExpression += " << " + n.getString(0);
+			}
+			
+			public void visitCallExpression(GNode n) {
+				String method = "";
+				method +=n.getNode(0).getString(0);
+				if (n.getString(2).isEmpty()) {
+					method += "()";
+				} else {
+					method += "." + n.getString(2) + "(";
+					if (n.getNode(3).isEmpty()) {
+						method += ")";
+					}
+				}
+				vars.add(method);
+				gCallExpression += " << " + method;
+			}
+
+			public void visit(GNode n) {
+				for (Object o : n) {
+					if (o instanceof Node) { 
+						dispatch ((Node) o);
+					}
+				}
+			}	
+		}.dispatch(n.getNode(0));
+
+		if (isEndLine) {
+			gCallExpression += " << \"\\n\"";
+		}		
+		return gCallExpression += ";";
+	}	
+
+	/**
+	* Determines whether the given GNode represents a print statement. Must be used
+	* in visitExpressionStatement.
+	*
+	* @param n	The node from the Java AST.
+	* @return	true or false, depending on whether or not the GNode represents
+	*		a print statement.
+	*/
+	public static boolean isPrintStatement(GNode n) {
+		return (n.toString().contains("CallExpression") && 
+				n.toString().contains("SelectionExpression") && 
+				n.toString().contains("System") && 
+				n.toString().contains("out"));
+
+	}
 	/**
 	 * extract class name from node
 	 * @param node node from java parse tree
@@ -27,6 +131,7 @@ public class SegHelper {
 		validCall();
 		return n.getString(1); 
 	}
+
 	/**
 	 * extract class declaration from node
 	 * @param node node from java parse tree
@@ -36,6 +141,7 @@ public class SegHelper {
 		validCall();
 		return  "struct "+ n.getString(1);
 	}
+
 	/**
 	 * extract method declaration from node
 	 * @param node node from java parse tree
@@ -65,6 +171,7 @@ public class SegHelper {
 		}
 		return null;
 	}
+	
 	/**
 	 * extract function parameters
 	 * @param n node from java parse tree
@@ -86,6 +193,7 @@ public class SegHelper {
 		}
 		return fp;
 	}
+	
 	/**
 	 *  convert raw type provided by xtc to c++ type
 	 *  @param javaType  raw java type from xtc node
@@ -99,10 +207,11 @@ public class SegHelper {
 
 		return cType;
 	}
+
 	/**
 	 *  check if visit object methods calls appropriate Helper function
 	 */
-	private static  void  validCall(){
+	private static void validCall(){
 		final int x=2; final int y=1;
 		final StackTraceElement[] ste=Thread.currentThread().getStackTrace();
 
@@ -112,7 +221,7 @@ public class SegHelper {
 		final String[] comp=new String[]{"Class","Method"};
 		
 		for (int k=0;k<comp.length;k++) {
-			if(sh_xfunc.contains(comp[i]) &&  sh_yfunc.contains(comp[i])) return; 
+			if(sh_xfunc.contains(comp[k]) &&  sh_yfunc.contains(comp[k])) return; 
 		}
 		throw new RuntimeException("visit function  to not correspond to helper function");
 	}
