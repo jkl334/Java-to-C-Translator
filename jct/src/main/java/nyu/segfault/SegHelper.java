@@ -30,7 +30,7 @@ public class SegHelper {
 	private static Printer hppWriter; /**@var xtc hpp printstream wrapper class */
 	
 	/**@var class inheritance tree */
-	private static final SegNode<CppClass> Root=new SegNode<CppClass>(new CppClass("Object"));
+	public static final SegNode<CppClass> Root=new SegNode<CppClass>(new CppClass("Object"));
 
 	/**
 	 * set the file_name data field and create files
@@ -205,7 +205,18 @@ public class SegHelper {
 		validCall();
 		return  "struct "+ n.getString(1);
 	}
-
+	/**
+	 * @param node subclass node
+	 * @return String name of superclass
+	 */
+	public static String getSuperClass(GNode n){
+		try{
+			return n.getNode(3).getNode(0).getNode(0).getString(0);
+		}catch(Exception e){}
+		
+		return null;
+	}
+	
 	/**
 	 * extract method declaration from node
 	 * @param node node from java parse tree

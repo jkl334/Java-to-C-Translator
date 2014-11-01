@@ -54,6 +54,13 @@ public class SegHead extends Visitor{
 		this.privateHPPMethods = new HashSet<String>();
 		this.publicHPPMethods = new HashSet<String>();
 
+		String super_class=SegHelper.getSuperClass(n);
+		if(super_class == null)
+			SegHelper.Root.addChild(new CppClass(super_class));
+
+		else{
+			SegHelper.Root.dfs(SegHelper.Root,new CppClass(super_class));
+		}	
 	}
 	public void visit(GNode n) {
 		for (Object o : n) if (o instanceof Node) dispatch((Node) o);
