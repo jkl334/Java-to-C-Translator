@@ -17,6 +17,70 @@ import xtc.tree.Printer;
 import xtc.tree.Visitor;
 	
 public class SegHelper {
+	
+	private String file_name; /**@var name of input java source code */
+	
+	private File impFile; /**@var cpp file */
+	private File headFile; /**@var hpp file */
+	
+	private PrintWriter cWriter; /**@var printstream to cpp file */
+	private PrintWriter hWriter /**@var printstream to hpp file */
+
+	private Printer cppWriter; /**@var xtc cpp printstream wrapper class */
+	private Printer hppWriter /**@var xtc hpp printstream wrapper class */
+
+
+	/**
+	 * set the file_name data field and create files
+	 * @param file_name 
+	 */
+	public static void setFileName(String file_name){
+		this.file_name=file_name;
+		try{
+			impFile=new File(getFileName()+".cpp");
+			headFile=new File(getFileName()+".hpp");
+			
+			cWriter=new PrintWriter(impFile);
+			hWriter=new PrintWriter(headFile);
+			
+			cppWriter=new Printer(cWriter);
+			hppWriter=new Printer(hWriter);
+
+		}catch(Exception e){}
+		
+	}
+	/**
+	 * get file_name
+	 * @return name of file
+	 */
+	public static String getFileName(){
+		return file_name;
+	}
+
+	/**
+	 * write macros to both cpp and hpp files
+	 */
+	public void writeMacros(){
+		/**@var STL macros for hpp file */
+		final String[] stlMacros=new String[]{"<sstream>", "<iostream>", "<string>"};
+		
+		/**@var cpp macro definitions  */
+		final String [] cppMacros=new String[]{"#include <"+getFileName()+".hpp", "using namespace std;"};
+
+		
+		final StackTraceElement [] stack=Thread.getCurrentThread().getStackTrace();
+		
+		if(stack[1].getClassName().equals("SegHead"))
+			for (String stlMacro : stlMacros ) 
+				hppWriter.pln("#include "+stlMacro);	
+
+		else if(stack[1].getClassName().equals("SegImp"))
+			for(String cppMacro : cppMacros) 
+				cppWriter.pln(cppMacro);
+		
+		cppWriter.flush(); hppWriter.flush();
+	}
+
 	/**
 	* Get the name of the method in visitMethodDeclaration.
 	*
@@ -26,8 +90,6 @@ public class SegHelper {
 	public static String getMethodName(GNode n) {
 		return n.getString(3);
 	}	
-
-
 
 	static String gCallExpression;  // Global variable used with getCallExpression.
 	/**
@@ -224,5 +286,29 @@ public class SegHelper {
 			if(sh_xfunc.contains(comp[k]) &&  sh_yfunc.contains(comp[k])) return; 
 		}
 		throw new RuntimeException("visit function  to not correspond to helper function");
+	}
+	/**
+	 * print string to new line hpp file
+	 */
+	public static void hpp_pln(String s){
+		hppWriter.pln(s);
+	}
+	/**
+	 * print string to new line in cpp file
+	 */
+	public static void cpp_pln(String s){
+		cppWriter.pln(s);
+	}
+	/**
+	 * print string to hpp file on same line
+	 */
+	public static void hpp_p(String s){
+		hppWriter.p(s);
+	}
+	/**
+	 * print string to cpp file on same line
+	 */
+	public static void cpp_p(String s){
+		cppWriter(s);
 	}
 }

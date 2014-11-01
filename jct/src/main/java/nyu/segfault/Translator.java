@@ -18,9 +18,7 @@ import xtc.tree.Visitor;
 public class Translator extends xtc.util.Tool {
 	public static String[] files; // an array used to store the files - args 
 
-	public Translator() {
-		// do Nothing
-	}
+	
 
 	public interface ICommand {
 	    public void run();
@@ -47,11 +45,17 @@ public class Translator extends xtc.util.Tool {
 	    Result result = parser.pCompilationUnit(0);
 	    return (Node)parser.value(result);
 	}
-	  
-
+	/**
+	 * Send top-level node to each respective visitor method
+	 * 1) SegHead visitor - tree generate struct and struct_vt info for each class 
+	 * 2) SegImp visitor - generate implementation for classes
+	 *
+	 * @param node compilation unit node
+	 */
 	public void process(Node node) {
-	    //new SegFaultVisitor(files).dispatch(node);
-	    new SegHead();
+	    SegHelper.setFileName(arg[1]);  
+	    new SegHead().dispatch(node);
+	    new SegImp().dispatch(node);
 	}
 
 	public static void main(String[] args) {
