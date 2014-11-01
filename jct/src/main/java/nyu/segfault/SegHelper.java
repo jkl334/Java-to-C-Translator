@@ -32,6 +32,9 @@ public class SegHelper {
 	/**@var class inheritance tree */
 	public static final SegNode<CppClass> Root=new SegNode<CppClass>(new CppClass("Object"));
 
+	/**@var current class name*/
+	public static String currClass;
+
 	/**
 	 * set the file_name data field and create files
 	 * @param file_name
@@ -56,6 +59,18 @@ public class SegHelper {
 	 */
 	public static String getFileName(){
 		return file_name;
+	}
+	/**
+	 * set the current class
+	 */
+	private static void setCurrClass(String cs){
+		currClass=cs;
+	}
+	/**
+	 * @return string name of current class
+	 */
+	public static String getCurrClass(){
+		return currClass;
 	}
 
 	/**
@@ -207,6 +222,7 @@ public class SegHelper {
 	 */
 	public static  String getClassDeclaration(GNode n){
 		validCall();
+		setCurrClass(n.getString(1));
 		return  "struct "+ n.getString(1);
 	}
 	/**
@@ -229,8 +245,8 @@ public class SegHelper {
 	public static String getMethodDeclaration(GNode n,String className){
 		validCall();
 		final StackTraceElement[] s=Thread.currentThread().getStackTrace();
-		if((s[1].getClassName().contains("SegHead")) || (s[1].getClassName().contains("SegImp"))
-			||(s[1].getClassName().contains("SegCVT"))){
+		if((s[2].getClassName().contains("SegHead")) || (s[2].getClassName().contains("SegImp"))
+			||(s[2].getClassName().contains("SegCVT"))){
 
 			String return_type=j2c(n.getNode(2).toString());
 			String fp=n.getString(3)+"(";
@@ -238,10 +254,10 @@ public class SegHelper {
 			else fp+=getFormalParameters((GNode)n.getNode(4));
 
 
-			if(s[1].getClassName().contains("SegHead"))
+			if(s[2].getClassName().contains("SegHead"))
 				return return_type+" "+fp;
 
-			else if((s[1].getClassName().contains("SegImp")))
+			else if((s[2].getClassName().contains("SegImp")))
 				return return_type+" "+className+"::"+fp;
 		}
 		return null;
