@@ -49,7 +49,6 @@ public class SegHelper {
 			hppWriter=new Printer(hWriter);
 
 		}catch(Exception e){}
-
 	}
 	/**
 	 * get file_name
@@ -72,13 +71,15 @@ public class SegHelper {
 
 		final StackTraceElement [] stack=Thread.currentThread().getStackTrace();
 		
-		if(stack[1].getClassName().contains("SegHead"))
+		if(stack[2].getClassName().contains("SegHead")){
 			for (String stlMacro : stlMacros ) 
-				hppWriter.pln("#include "+stlMacro);	
+				hppWriter.pln("#include "+stlMacro);
+		}
 	
-		else if(stack[1].getClassName().contains("SegImp"))
+		else if(stack[2].getClassName().contains("SegImp")){
 			for(String cppMacro : cppMacros)
 				cppWriter.pln(cppMacro);
+		}
 
 		cppWriter.flush(); hppWriter.flush();
 	}
