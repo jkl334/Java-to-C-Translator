@@ -56,10 +56,11 @@ public class SegHead extends Visitor{
 
 		String super_class=SegHelper.getSuperClass(n);
 		if(super_class == null)
-			SegHelper.Root.addChild(new CppClass(super_class));
+			SegHelper.Root.addChild(new CppClass(SegHelper.getClassName(n)));
 
 		else{
-			SegHelper.Root.dfs(SegHelper.Root,new CppClass(super_class));
+			SegNode<CppClass> parent=SegHelper.Root.dfs(SegHelper.Root,new CppClass(super_class));
+			parent.addChild(new CppClass(SegHelper.getClassName(n)));
 		}	
 	}
 	public void visit(GNode n) {
