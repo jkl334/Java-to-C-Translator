@@ -38,7 +38,7 @@ public class SegHelper {
 	 */
 	public static void setFileName(String fn){
 		file_name=fn;
-		try{
+		try {
 			impFile=new File(getFileName()+".cpp");
 			headFile=new File(getFileName()+".hpp");
 			
@@ -48,8 +48,9 @@ public class SegHelper {
 			cppWriter=new Printer(cWriter);
 			hppWriter=new Printer(hWriter);
 
-		}catch(Exception e){}
-		
+		} catch(Exception e) {
+			System.out.println(e);
+		}		
 	}
 	/**
 	 * get file_name
@@ -68,8 +69,7 @@ public class SegHelper {
 		
 		/**@var cpp macro definitions  */
 		final String [] cppMacros=new String[]{"#include <"+getFileName()+".hpp", "using namespace std;"};
-
-		
+        
 		final StackTraceElement [] stack=Thread.currentThread().getStackTrace();
 		
 		if(stack[1].getClassName().equals("SegHead"))
@@ -250,7 +250,7 @@ public class SegHelper {
 	/**
 	 * extract function parameters
 	 * @param n node from java parse tree
-	 * @return formated list of parameter types nad parameter names 
+	 * @return formated list of parameter types and parameter names
 	 */
 	private static  String getFormalParameters(GNode n){
 		String fp="";
@@ -268,6 +268,59 @@ public class SegHelper {
 		}
 		return fp;
 	}
+    
+    /**
+     * Returns a list of the class's global variables and global variable assignments. Must be called with the GNode
+     * of visitClassDeclaration.
+     *
+     *@param n  The node from the Java AST.
+     *@return   An ArrayList of the class's global variables.
+     */
+    public static ArrayList<String> getGlobalVariables(GNode n) {
+        final ArrayList<String> gVarList = new ArrayList<String>();
+        new Visitor() {
+            public void visitFieldDeclaration(GNode n) {
+                final StringBuilder gVar = new StringBuilder();
+                /* Determine the variable modifiers (e.g. "static", "private"). */
+                boolean isPrivateField = false;
+                for (int x = 0; (x < n.getNode(0).size()) && (n.getNode(0).getNode(x).getString(0) != null); x++) {
+                    String modifier = n.getNode(0).getNode(x).getString(0);
+                    if (modifier.equals("static")) gVar.append("static ");
+                    else if (modifier.equals("private")) isPrivateField = true;
+                }
+                
+                /* Determine the declarator type. */
+                String declarationType = n.getNode(1).getNode(0).getString(0);
+                if (declarationType.equals("boolean")) { gVar.append("boolean "); }
+                else if (declarationType.equals("char")) { gVar.append("char "); }
+                else if (declarationType.equals("double")) { gVar.append("double "); }
+                else if (declarationType.equals("float")) { gVar.append("float "); }
+                else if (declarationType.equals("int")) { gVar.append("int "); }
+                else if (declarationType.equals("String")) { gVar.append("string "); }
+                else { gVar.append(declarationType + " "); }  // For non-primitive, non-String objects.
+                
+                /* Get the name of the field. */
+                String fieldName = n.getNode(2).getNode(0).getString(0);
+                gVar.append(fieldName);
+                
+                /* Potentially visit the assigned value (if any). */
+                new Visitor() {
+                    public void visitStringLiteral(GNode n) { gVar.append(" = " + n.getString(0));}
+                    public void visitIntegerLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
+                    public void visitFloatingPointLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
+                    public void visitCharacterLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
+                    public void visitBooleanLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
+                    public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
+                }.dispatch(n);
+                gVarList.add(gVar.toString());
+            }
+            
+            /* To prevent printing local fields, do not visit methodDeclaration nodes. */
+            public void visitMethodDeclaration(GNode n) { }
+            public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
+        }.dispatch(n);
+        return gVarList;
+    }
 	
 	/**
 	 *  convert raw type provided by xtc to c++ type
