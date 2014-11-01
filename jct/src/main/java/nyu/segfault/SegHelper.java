@@ -72,11 +72,11 @@ public class SegHelper {
 		
 		final StackTraceElement [] stack=Thread.currentThread().getStackTrace();
 		
-		if(stack[1].getClassName().equals("SegHead"))
+		if(stack[1].getClassName().contains("SegHead"))
 			for (String stlMacro : stlMacros ) 
 				hppWriter.pln("#include "+stlMacro);	
 
-		else if(stack[1].getClassName().equals("SegImp"))
+		else if(stack[1].getClassName().contains("SegImp"))
 			for(String cppMacro : cppMacros) 
 				cppWriter.pln(cppMacro);
 		
