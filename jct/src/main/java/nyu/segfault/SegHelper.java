@@ -18,24 +18,24 @@ import xtc.tree.Visitor;
 	
 public class SegHelper {
 	
-	private String file_name; /**@var name of input java source code */
+	private static  String file_name; /**@var name of input java source code */
 	
-	private File impFile; /**@var cpp file */
-	private File headFile; /**@var hpp file */
+	private static File impFile; /**@var cpp file */
+	private static File headFile; /**@var hpp file */
 	
-	private PrintWriter cWriter; /**@var printstream to cpp file */
-	private PrintWriter hWriter /**@var printstream to hpp file */
+	private static PrintWriter cWriter; /**@var printstream to cpp file */
+	private static PrintWriter hWriter; /**@var printstream to hpp file */
 
-	private Printer cppWriter; /**@var xtc cpp printstream wrapper class */
-	private Printer hppWriter /**@var xtc hpp printstream wrapper class */
+	private static Printer cppWriter; /**@var xtc cpp printstream wrapper class */
+	private static Printer hppWriter; /**@var xtc hpp printstream wrapper class */
 
 
 	/**
 	 * set the file_name data field and create files
 	 * @param file_name 
 	 */
-	public static void setFileName(String file_name){
-		this.file_name=file_name;
+	public static void setFileName(String fn){
+		file_name=fn;
 		try{
 			impFile=new File(getFileName()+".cpp");
 			headFile=new File(getFileName()+".hpp");
@@ -60,7 +60,7 @@ public class SegHelper {
 	/**
 	 * write macros to both cpp and hpp files
 	 */
-	public void writeMacros(){
+	public static void writeMacros(){
 		/**@var STL macros for hpp file */
 		final String[] stlMacros=new String[]{"<sstream>", "<iostream>", "<string>"};
 		
@@ -68,7 +68,7 @@ public class SegHelper {
 		final String [] cppMacros=new String[]{"#include <"+getFileName()+".hpp", "using namespace std;"};
 
 		
-		final StackTraceElement [] stack=Thread.getCurrentThread().getStackTrace();
+		final StackTraceElement [] stack=Thread.currentThread().getStackTrace();
 		
 		if(stack[1].getClassName().equals("SegHead"))
 			for (String stlMacro : stlMacros ) 
@@ -309,6 +309,6 @@ public class SegHelper {
 	 * print string to cpp file on same line
 	 */
 	public static void cpp_p(String s){
-		cppWriter(s);
+		cppWriter.p(s);
 	}
 }

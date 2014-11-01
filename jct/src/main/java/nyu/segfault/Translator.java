@@ -17,7 +17,6 @@ import xtc.tree.Visitor;
 
 public class Translator extends xtc.util.Tool {
 	public static String[] files; // an array used to store the files - args 
-
 	
 
 	public interface ICommand {
@@ -53,7 +52,7 @@ public class Translator extends xtc.util.Tool {
 	 * @param node compilation unit node
 	 */
 	public void process(Node node) {
-	    SegHelper.setFileName(arg[1]);  
+	    SegHelper.setFileName(files[1]);  
 	    new SegHead().dispatch(node);
 	    new SegImp().dispatch(node);
 	}
@@ -62,5 +61,4 @@ public class Translator extends xtc.util.Tool {
 		files = args;
 		new Translator().run(args);
 	}
-
 }

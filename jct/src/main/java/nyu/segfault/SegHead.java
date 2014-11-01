@@ -51,9 +51,9 @@ public class SegHead extends Visitor{
 		
 		this.privateHPP = new HashSet<String>();
 		this.publicHPP = new HashSet<String>();
-		this.privateHPPmethods = new HashSet<String>();
-		this.publicHPPmethods = new HashSet<String>();
-		
+		this.privateHPPMethods = new HashSet<String>();
+		this.publicHPPMethods = new HashSet<String>();
+
 	}
 	public void visit(GNode n) {
 		for (Object o : n) if (o instanceof Node) dispatch((Node) o);

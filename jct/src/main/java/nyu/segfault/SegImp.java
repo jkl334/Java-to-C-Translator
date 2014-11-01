@@ -27,7 +27,7 @@ import xtc.tree.Visitor;
 /**
  * SegImp Visitor  handles classes without inheritance and virtual methods
  */
-public class SegImp{
+public class SegImp extends Visitor{
 
 	/**
 	 * constructor for SegImp
