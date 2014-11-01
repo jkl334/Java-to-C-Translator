@@ -33,7 +33,7 @@ public class SegImp extends Visitor{
 	 * constructor for SegImp
 	 */
 	public SegImp(){
-
-
 	}
+
+	public void visit(GNode n){for (Object o : n) if (o instanceof Node) dispatch((Node) o);}
 }

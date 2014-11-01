@@ -6,7 +6,7 @@ public class  CppClass{
 	public String Parent; /**@var parent node*/
 	public String className; /**@var name of class*/
 	public ArrayList<String> functionPtrs; /** function pointers*/
-	
+
 	/**
 	 * constructor
 	 * @param class_name
