@@ -1,3 +1,5 @@
+package nyu.segfault;
+
 import java.util.ArrayList;
 
 /**

@@ -28,7 +28,9 @@ public class SegHelper {
 
 	private static Printer cppWriter; /**@var xtc cpp printstream wrapper class */
 	private static Printer hppWriter; /**@var xtc hpp printstream wrapper class */
-
+	
+	/**@var class inheritance tree */
+	private static final SegNode<CppClass> Root=new SegNode<CppClass>(new CppClass("Object"));
 
 	/**
 	 * set the file_name data field and create files
