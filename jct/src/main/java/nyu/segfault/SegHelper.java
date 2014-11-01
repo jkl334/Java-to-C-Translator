@@ -28,6 +28,9 @@ public class SegHelper {
 
 	private static Printer cppWriter; /**@var xtc cpp printstream wrapper class */
 	private static Printer hppWriter; /**@var xtc hpp printstream wrapper class */
+    
+    /**@var List of current class's global variables/assignments */
+    public static final ArrayList<String> currentClassGlobalVariables = new ArrayList<String>();
 	
 	/**@var class inheritance tree */
 	public static final SegNode<CppClass> Root=new SegNode<CppClass>(new CppClass("Object"));
@@ -276,8 +279,7 @@ public class SegHelper {
      *@param n  The node from the Java AST.
      *@return   An ArrayList of the class's global variables.
      */
-    public static ArrayList<String> getGlobalVariables(GNode n) {
-        final ArrayList<String> gVarList = new ArrayList<String>();
+    public static void getGlobalVariables(GNode n) {
         new Visitor() {
             public void visitFieldDeclaration(GNode n) {
                 final StringBuilder gVar = new StringBuilder();
@@ -312,14 +314,12 @@ public class SegHelper {
                     public void visitBooleanLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
                     public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
                 }.dispatch(n);
-                gVarList.add(gVar.toString());
+                currentClassGlobalVariables.add(gVar.toString());
             }
-            
             /* To prevent printing local fields, do not visit methodDeclaration nodes. */
             public void visitMethodDeclaration(GNode n) { }
             public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
         }.dispatch(n);
-        return gVarList;
     }
 	
 	/**

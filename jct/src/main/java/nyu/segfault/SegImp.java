@@ -68,10 +68,8 @@ public class SegImp extends Visitor{
     public String constructorProp; //global variable to store constructor property in class declaration and to use to assign arguments in struct initialization in visitFieldDeclaration -Jeff
     
     public void visitClassDeclaration(GNode n) {
-        className = n.getString(1);
-        ArrayList<String> gVars = SegHelper.getGlobalVariables(n);
-        for (String gVar : gVars) SegHelper.cpp_pln(gVar + ";");
-        headWriter.pln("};\n");
+        SegHelper.getGlobalVariables(n);
+        for (String gVar : SegHelper.currentClassGlobalVariables) SegHelper.cpp_pln(gVar + ";");
     }
     
     public void visitExtension(GNode n){
