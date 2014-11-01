@@ -15,41 +15,41 @@ import xtc.tree.GNode;
 import xtc.tree.Node;
 import xtc.tree.Printer;
 import xtc.tree.Visitor;
-	
+
 public class SegHelper {
-	
+
 	private static  String file_name; /**@var name of input java source code */
-	
+
 	private static File impFile; /**@var cpp file */
 	private static File headFile; /**@var hpp file */
-	
+
 	private static PrintWriter cWriter; /**@var printstream to cpp file */
 	private static PrintWriter hWriter; /**@var printstream to hpp file */
 
 	private static Printer cppWriter; /**@var xtc cpp printstream wrapper class */
 	private static Printer hppWriter; /**@var xtc hpp printstream wrapper class */
-	
+
 	/**@var class inheritance tree */
 	public static final SegNode<CppClass> Root=new SegNode<CppClass>(new CppClass("Object"));
 
 	/**
 	 * set the file_name data field and create files
-	 * @param file_name 
+	 * @param file_name
 	 */
 	public static void setFileName(String fn){
-		file_name=fn;
+		file_name=fn.replace(".java", "");
 		try{
 			impFile=new File(getFileName()+".cpp");
 			headFile=new File(getFileName()+".hpp");
-			
+
 			cWriter=new PrintWriter(impFile);
 			hWriter=new PrintWriter(headFile);
-			
+
 			cppWriter=new Printer(cWriter);
 			hppWriter=new Printer(hWriter);
 
 		}catch(Exception e){}
-		
+
 	}
 	/**
 	 * get file_name
@@ -65,23 +65,26 @@ public class SegHelper {
 	public static void writeMacros(){
 		/**@var STL macros for hpp file */
 		final String[] stlMacros=new String[]{"<sstream>", "<iostream>", "<string>"};
-		
+
 		/**@var cpp macro definitions  */
 		final String [] cppMacros=new String[]{"#include <"+getFileName()+".hpp", "using namespace std;"};
 
-		
+
 		final StackTraceElement [] stack=Thread.currentThread().getStackTrace();
 		
 		if(stack[1].getClassName().contains("SegHead"))
 			for (String stlMacro : stlMacros ) 
 				hppWriter.pln("#include "+stlMacro);	
-
+	
 		else if(stack[1].getClassName().contains("SegImp"))
-			for(String cppMacro : cppMacros) 
+			for(String cppMacro : cppMacros)
 				cppWriter.pln(cppMacro);
-		
+
 		cppWriter.flush(); hppWriter.flush();
 	}
+
+	public void visitCompilationUnit(GNode n) {
+    }
 
 	/**
 	* Get the name of the method in visitMethodDeclaration.
@@ -91,7 +94,7 @@ public class SegHelper {
 	*/
 	public static String getMethodName(GNode n) {
 		return n.getString(3);
-	}	
+	}
 
 	static String gCallExpression;  // Global variable used with getCallExpression.
 	/**
@@ -116,7 +119,7 @@ public class SegHelper {
 			public void visitStringLiteral(GNode n) {
 				gCallExpression += " << " + n.getString(0);
 			}
-			
+
 			public void visitIntegerLiteral(GNode n) {
 				gCallExpression += " << " + n.getString(0);
 			}
@@ -128,7 +131,7 @@ public class SegHelper {
 			public void visitCharacterLiteral(GNode n) {
 				gCallExpression += " << " + n.getString(0);
 			}
-			
+
 			public void visitBooleanLiteral(GNode n) {
 				gCallExpression += " << " + n.getString(0);
 			}
@@ -140,7 +143,7 @@ public class SegHelper {
 			public void visitPrimaryIdentifier(GNode n) {
 				gCallExpression += " << " + n.getString(0);
 			}
-			
+
 			public void visitCallExpression(GNode n) {
 				String method = "";
 				method +=n.getNode(0).getString(0);
@@ -158,18 +161,18 @@ public class SegHelper {
 
 			public void visit(GNode n) {
 				for (Object o : n) {
-					if (o instanceof Node) { 
+					if (o instanceof Node) {
 						dispatch ((Node) o);
 					}
 				}
-			}	
+			}
 		}.dispatch(n.getNode(0));
 
 		if (isEndLine) {
 			gCallExpression += " << \"\\n\"";
-		}		
+		}
 		return gCallExpression += ";";
-	}	
+	}
 
 	/**
 	* Determines whether the given GNode represents a print statement. Must be used
@@ -180,9 +183,9 @@ public class SegHelper {
 	*		a print statement.
 	*/
 	public static boolean isPrintStatement(GNode n) {
-		return (n.toString().contains("CallExpression") && 
-				n.toString().contains("SelectionExpression") && 
-				n.toString().contains("System") && 
+		return (n.toString().contains("CallExpression") &&
+				n.toString().contains("SelectionExpression") &&
+				n.toString().contains("System") &&
 				n.toString().contains("out"));
 
 	}
@@ -191,9 +194,9 @@ public class SegHelper {
 	 * @param node node from java parse tree
 	 * @return formated String represented class name
 	 */
-	public static  String getClassName(GNode n){ 
+	public static  String getClassName(GNode n){
 		validCall();
-		return n.getString(1); 
+		return n.getString(1);
 	}
 
 	/**
@@ -213,10 +216,10 @@ public class SegHelper {
 		try{
 			return n.getNode(3).getNode(0).getNode(0).getString(0);
 		}catch(Exception e){}
-		
+
 		return null;
 	}
-	
+
 	/**
 	 * extract method declaration from node
 	 * @param node node from java parse tree
@@ -225,32 +228,28 @@ public class SegHelper {
 	public static String getMethodDeclaration(GNode n,String className){
 		validCall();
 		final StackTraceElement[] s=Thread.currentThread().getStackTrace();
-		if((s[1].getClassName().equals("SegHead")) || (s[1].getClassName().equals("SegImp"))
-			||(s[1].getClassName().equals("SegCVT"))){
-			
+		if((s[1].getClassName().contains("SegHead")) || (s[1].getClassName().contains("SegImp"))
+			||(s[1].getClassName().contains("SegCVT"))){
+
 			String return_type=j2c(n.getNode(2).toString());
-			String fp=n.getString(3)+"("; 
+			String fp=n.getString(3)+"(";
 			if( n.size() == 0 ) fp+=")";
-			else fp+=getFormalParameters((GNode)n.getNode(4)); 
+			else fp+=getFormalParameters((GNode)n.getNode(4));
 
 
-			if(s[1].getClassName().equals("SegHead"))
+			if(s[1].getClassName().contains("SegHead"))
 				return return_type+" "+fp;
 
-			else if((s[1].getClassName().equals("SegImp")) || s[1].getClassName().equals("SegCVT"))
+			else if((s[1].getClassName().contains("SegImp")))
 				return return_type+" "+className+"::"+fp;
-
-			else if((s[1].getClassName().equals("SegHVT"))){
-				
-			}
 		}
 		return null;
 	}
-	
+
 	/**
 	 * extract function parameters
 	 * @param n node from java parse tree
-	 * @return formated list of parameter types nad parameter names 
+	 * @return formated list of parameter types nad parameter names
 	 */
 	private static  String getFormalParameters(GNode n){
 		String fp="";
@@ -268,7 +267,7 @@ public class SegHelper {
 		}
 		return fp;
 	}
-	
+
 	/**
 	 *  convert raw type provided by xtc to c++ type
 	 *  @param javaType  raw java type from xtc node
@@ -294,9 +293,9 @@ public class SegHelper {
 		String sh_xfunc=ste[x].getMethodName();
 
 		final String[] comp=new String[]{"Class","Method"};
-		
+
 		for (int k=0;k<comp.length;k++) {
-			if(sh_xfunc.contains(comp[k]) &&  sh_yfunc.contains(comp[k])) return; 
+			if(sh_xfunc.contains(comp[k]) &&  sh_yfunc.contains(comp[k])) return;
 		}
 		throw new RuntimeException("visit function  to not correspond to helper function");
 	}
