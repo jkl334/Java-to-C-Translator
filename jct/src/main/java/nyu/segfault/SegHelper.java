@@ -28,10 +28,10 @@ public class SegHelper {
 
 	private static Printer cppWriter; /**@var xtc cpp printstream wrapper class */
 	private static Printer hppWriter; /**@var xtc hpp printstream wrapper class */
-    
+
     /**@var List of current class's global variables/assignments */
     public static final ArrayList<String> currentClassGlobalVariables = new ArrayList<String>();
-	
+
 	/**@var class inheritance tree */
 	public static final SegNode<CppClass> Root=new SegNode<CppClass>(new CppClass("Object"));
 
@@ -89,12 +89,12 @@ public class SegHelper {
 		final String [] cppMacros=new String[]{"#include <"+getFileName()+".hpp", "using namespace std;"};
 
 		final StackTraceElement [] stack=Thread.currentThread().getStackTrace();
-		
+
 		if(stack[2].getClassName().contains("SegHead")){
-			for (String stlMacro : stlMacros ) 
+			for (String stlMacro : stlMacros )
 				hppWriter.pln("#include "+stlMacro);
 		}
-	
+
 		else if(stack[2].getClassName().contains("SegImp")){
 			for(String cppMacro : cppMacros)
 				cppWriter.pln(cppMacro);
@@ -128,7 +128,7 @@ public class SegHelper {
 		gCallExpression = "";
 
 		boolean isEndLine = false;
-		if (n.getNode(0).toString().contains("println")) {
+		if (n.getNode(1).toString().contains("println")) {
 			isEndLine = true;
 		}
 
@@ -288,7 +288,7 @@ public class SegHelper {
 		}
 		return fp;
 	}
-    
+
     /**
      * Returns a list of the class's global variables and global variable assignments. Must be called with the GNode
      * of visitClassDeclaration.
@@ -307,7 +307,7 @@ public class SegHelper {
                     if (modifier.equals("static")) gVar.append("static ");
                     else if (modifier.equals("private")) isPrivateField = true;
                 }
-                
+
                 /* Determine the declarator type. */
                 String declarationType = n.getNode(1).getNode(0).getString(0);
                 if (declarationType.equals("boolean")) { gVar.append("boolean "); }
@@ -317,11 +317,11 @@ public class SegHelper {
                 else if (declarationType.equals("int")) { gVar.append("int "); }
                 else if (declarationType.equals("String")) { gVar.append("string "); }
                 else { gVar.append(declarationType + " "); }  // For non-primitive, non-String objects.
-                
+
                 /* Get the name of the field. */
                 String fieldName = n.getNode(2).getNode(0).getString(0);
                 gVar.append(fieldName);
-                
+
                 /* Potentially visit the assigned value (if any). */
                 new Visitor() {
                     public void visitStringLiteral(GNode n) { gVar.append(" = " + n.getString(0));}
@@ -338,7 +338,7 @@ public class SegHelper {
             public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
         }.dispatch(n);
     }
-	
+
 	/**
 	 *  convert raw type provided by xtc to c++ type
 	 *  @param javaType  raw java type from xtc node
@@ -393,5 +393,14 @@ public class SegHelper {
 	 */
 	public static void cpp_p(String s){
 		cppWriter.p(s);
+	}
+
+	public static void just_testing(GNode n){
+		new Visitor(){
+			public void visitConstructorDeclaration(GNode n) {hpp_pln(n.toString());System.out.println(n);}
+			public void visitMethodDeclaration(GNode n) {hpp_pln(n.toString());}
+			public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o);}
+		}.dispatch(n);
+		cppWriter.flush(); hppWriter.flush();
 	}
 }
