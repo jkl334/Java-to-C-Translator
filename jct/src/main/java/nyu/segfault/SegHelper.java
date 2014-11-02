@@ -38,6 +38,9 @@ public class SegHelper {
 	/**@var current class name*/
 	public static String currClass;
 
+	/**@var communication buffer between nested anonymous visitor classes and SegHelper */
+	public static String buffer;
+
 	/**
 	 * set the file_name data field and create files
 	 * @param file_name
@@ -83,7 +86,7 @@ public class SegHelper {
 	 */
 	public static void writeMacros(){
 		/**@var STL macros for hpp file */
-		final String[] stlMacros=new String[]{"<sstream>", "<iostream>", "<string>"};
+		final String[] stlMacros=new String[]{"<sstream>", "<iostream>", "<string>","using namespace std;"};
 
 		/**@var cpp macro definitions  */
 		final String [] cppMacros=new String[]{"#include <"+getFileName()+".hpp", "using namespace std;"};
@@ -248,25 +251,61 @@ public class SegHelper {
 	 */
 	public static String getMethodDeclaration(GNode n,String className){
 		validCall();
-		final StackTraceElement[] s=Thread.currentThread().getStackTrace();
-		if((s[2].getClassName().contains("SegHead")) || (s[2].getClassName().contains("SegImp"))
-			||(s[2].getClassName().contains("SegCVT"))){
+		if(getMethodName(n).equals("main")) return null;
+		
+		String return_type="";
 
-			String return_type=j2c(n.getNode(2).toString());
-			String fp=n.getString(3)+"(";
-			if( n.size() == 0 ) fp+=")";
-			else fp+=getFormalParameters((GNode)n.getNode(4));
+		if(j2c(n.getNode(2).toString()).equals("void")) return_type="void";
 
-
-			if(s[2].getClassName().contains("SegHead"))
-				return return_type+" "+fp;
-
-			else if((s[2].getClassName().contains("SegImp")))
-				return return_type+" "+className+"::"+fp;
+		else{
+			new Visitor(){
+				public String rtype="";
+				
+				/**
+				 * extract return type
+				 */
+				public void visitQualifiedIdentifier(GNode n){
+					SegHelper.setBuffer(SegHelper.j2c(n.getString(0)));
+				}
+				public void visit(GNode n) {
+					for (Object o : n) if (o instanceof Node) dispatch((Node) o);
+				
+				}
+			}.dispatch(n.getNode(2));
+			return_type=buffer;
 		}
+
+		String fp=getMethodName(n)+"(";
+		if(n.getNode(4).size() == 0) fp+=");";
+		else fp+=getFormalParameters((GNode)n.getNode(4));
+		
+
+		final StackTraceElement[] s=Thread.currentThread().getStackTrace();
+			
+		if(s[2].getClassName().contains("SegHead"))
+			return return_type+" "+fp;
+
+		else if((s[2].getClassName().contains("SegImp")))
+			return return_type+" "+className+"::"+fp;
+		
 		return null;
 	}
-
+	/**
+	 * create the vtable for the coressponding class 
+	 * and save function pointer to tree
+	 * which includes function pointers and class information
+	 * @param n method declaration node 
+	 */
+	private void genVTable(GNode n){
+			
+	}
+	/**
+	 * buffer to communication between anonymous inner classes and SegHelper
+	 * @param s String to be sent from anonymous class to SegHelper
+	 */
+	public static void setBuffer(String s){
+		buffer=s;
+	}
 	/**
 	 * extract function parameters
 	 * @param n node from java parse tree
@@ -284,7 +323,7 @@ public class SegHelper {
 			fp+=fparam.getString(3);
 
 			if(i+1 < n.size()) fp+=",";
-			else fp+=")";
+			else fp+=");";
 		}
 		return fp;
 	}
@@ -357,11 +396,13 @@ public class SegHelper {
 	 *  check if visit object methods calls appropriate Helper function
 	 */
 	private static void validCall(){
-		final int x=2; final int y=1;
-		final StackTraceElement[] ste=Thread.currentThread().getStackTrace();
+		final int x=3; final int y=2;
+		final StackTraceElement[] s=Thread.currentThread().getStackTrace();
 
-		String sh_yfunc=ste[y].getMethodName();
-		String sh_xfunc=ste[x].getMethodName();
+		String sh_yfunc=s[y].getMethodName();
+		String sh_xfunc=s[x].getMethodName();
+
+		//System.out.println(sh_yfunc+" : "+sh_xfunc);
 
 		final String[] comp=new String[]{"Class","Method"};
 
@@ -393,14 +434,5 @@ public class SegHelper {
 	 */
 	public static void cpp_p(String s){
 		cppWriter.p(s);
-	}
-
-	public static void just_testing(GNode n){
-		new Visitor(){
-			public void visitConstructorDeclaration(GNode n) {hpp_pln(n.toString());System.out.println(n);}
-			public void visitMethodDeclaration(GNode n) {hpp_pln(n.toString());}
-			public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o);}
-		}.dispatch(n);
-		cppWriter.flush(); hppWriter.flush();
 	}
 }

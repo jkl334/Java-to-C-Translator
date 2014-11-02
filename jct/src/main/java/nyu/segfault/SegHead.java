@@ -43,9 +43,11 @@ public class SegHead extends Visitor{
 	}
 	public void visitCompilationUnit(GNode n){
 		SegHelper.writeMacros();
+		visit(n);
 	}
 	public void visitClassDeclaration(GNode n){
 		SegHelper.hpp_pln(SegHelper.getClassDeclaration(n));
+		SegHelper.hpp_pln("{");
 
 		this.privateHPP = new HashSet<String>();
 		this.publicHPP = new HashSet<String>();
@@ -60,9 +62,13 @@ public class SegHead extends Visitor{
 			SegNode<CppClass> parent=SegHelper.Root.dfs(SegHelper.Root,new CppClass(super_class));
 			parent.addChild(new CppClass(SegHelper.getClassName(n)));
 		}
+		visit(n);
+		SegHelper.hpp_pln("};");
 	}
 	public void visitMethodDeclaration(GNode n){
-		SegHelper.hpp_pln("\t"+SegHelper.getMethodDeclaration(n,SegHelper.getCurrClass()));
+		String method_decl=SegHelper.getMethodDeclaration(n,SegHelper.getCurrClass());
+		if(method_decl != null)
+			SegHelper.hpp_pln("\t"+method_decl);
 	}
 	public void visit(GNode n) {
 		for (Object o : n) if (o instanceof Node) dispatch((Node) o);
