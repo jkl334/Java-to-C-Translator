@@ -16,6 +16,7 @@ import xtc.tree.Printer;
 import xtc.tree.Visitor;
 
 import nyu.segfault.SegFaultVisitor;
+import nyu.segfault.SFVisitor;
 
 public class Translator extends xtc.util.Tool {
 	public static String[] files; // an array used to store the files - args 
@@ -52,7 +53,7 @@ public class Translator extends xtc.util.Tool {
 	  
 
 	public void process(Node node) {
-	    new SegFaultVisitor(files).dispatch(node);
+	    new SFVisitor(files).dispatch(node);
 	}
 
 	public static void main(String[] args) {
