@@ -41,6 +41,15 @@ public class SegHelper {
 	/**@var communication buffer between nested anonymous visitor classes and SegHelper */
 	public static String buffer;
 
+	/**@var method buffer for generating functions pointers in vtable */
+	public static ArrayList<String> mbuffer;
+
+	/**@var return_type buffer for generate function pointers in vtable */
+	public static ArrayList<String> rbuffer;
+
+	/**@var parameter buffer to generate functionpointers in vtable */
+	public static ArrayList<ArrayList<String>> pbuffer;
+
 	/**
 	 * set the file_name data field and create files
 	 * @param file_name
@@ -86,7 +95,8 @@ public class SegHelper {
 	 */
 	public static void writeMacros(){
 		/**@var STL macros for hpp file */
-		final String[] stlMacros=new String[]{"<sstream>", "<iostream>", "<string>","using namespace std;"};
+		final String[] stlMacros=new String[]{"<sstream>", "<iostream>", "<string>"};
+
 
 		/**@var cpp macro definitions  */
 		final String [] cppMacros=new String[]{"#include <"+getFileName()+".hpp", "using namespace std;"};
@@ -96,6 +106,7 @@ public class SegHelper {
 		if(stack[2].getClassName().contains("SegHead")){
 			for (String stlMacro : stlMacros )
 				hppWriter.pln("#include "+stlMacro);
+			hppWriter.pln("using namespace std;");
 		}
 
 		else if(stack[2].getClassName().contains("SegImp")){
@@ -229,6 +240,9 @@ public class SegHelper {
 	 */
 	public static  String getClassDeclaration(GNode n){
 		validCall();
+		mbuffer=new ArrayList<String>();
+		rbuffer=new ArrayList<String>();
+		pbuffer=new ArrayList<ArrayList<String>>();
 		setCurrClass(n.getString(1));
 		return  "struct "+ n.getString(1);
 	}
@@ -282,8 +296,11 @@ public class SegHelper {
 
 		final StackTraceElement[] s=Thread.currentThread().getStackTrace();
 			
-		if(s[2].getClassName().contains("SegHead"))
+		if(s[2].getClassName().contains("SegHead")){
+			mbuffer.add(getMethodName(n));
+			rbuffer.add(return_type);
 			return return_type+" "+fp;
+		}
 
 		else if((s[2].getClassName().contains("SegImp")))
 			return return_type+" "+className+"::"+fp;
@@ -296,8 +313,27 @@ public class SegHelper {
 	 * which includes function pointers and class information
 	 * @param n method declaration node 
 	 */
-	private void genVTable(GNode n){
-			
+	public static void genVTable(){
+		if(mbuffer.size() == 0) return;
+		// <return_type> (*<method name>)(<parameter type>);
+		hppWriter.pln("struct "+getCurrClass()+"_VT");
+		hppWriter.pln("{");
+		for (int k=0; k<mbuffer.size(); k++){
+			String fptr="\t"+rbuffer.get(k)+"(*"+mbuffer.get(k)+")(";
+			int Q=0;
+			if((pbuffer.size() == 0) || (k >= pbuffer.size())  ) fptr+=");";
+			else{
+				for(String param : pbuffer.get(k)){
+					if ( Q != pbuffer.get(k).size()-1)
+						fptr+=param+",";
+					else
+						fptr+=param+");";
+					Q++;
+				}
+			}
+			hppWriter.pln(fptr);
+		}
+		hppWriter.pln("};"); 
 	}
 	/**
 	 * buffer to communication between anonymous inner classes and SegHelper
@@ -313,11 +349,15 @@ public class SegHelper {
 	 */
 	private static  String getFormalParameters(GNode n){
 		String fp="";
+		ArrayList<String> param=new ArrayList<String>();
 		for(int i=0; i< n.size(); i++){
 			Node fparam=n.getNode(i);
 
 			//retrieve argument type
-			fp+= j2c(fparam.getNode(1).getNode(0).getString(0))+" ";
+			String arg=j2c(fparam.getNode(1).getNode(0).getString(0));
+			param.add(arg); 
+			fp+=arg+" ";
+			System.out.println(arg);
 
 			//retrieve argument name
 			fp+=fparam.getString(3);
@@ -325,6 +365,7 @@ public class SegHelper {
 			if(i+1 < n.size()) fp+=",";
 			else fp+=");";
 		}
+		pbuffer.add(param); //add Array to List of Arrays to construct vtable
 		return fp;
 	}
 

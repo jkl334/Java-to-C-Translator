@@ -64,6 +64,9 @@ public class SegHead extends Visitor{
 		}
 		visit(n);
 		SegHelper.hpp_pln("};");
+
+		//generate vtable for that respective class
+		SegHelper.genVTable();
 	}
 	public void visitMethodDeclaration(GNode n){
 		String method_decl=SegHelper.getMethodDeclaration(n,SegHelper.getCurrClass());
