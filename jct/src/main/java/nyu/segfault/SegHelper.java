@@ -99,7 +99,7 @@ public class SegHelper {
 
 
 		/**@var cpp macro definitions  */
-		final String [] cppMacros=new String[]{"#include <"+getFileName()+".hpp", "using namespace std;"};
+		final String [] cppMacros=new String[]{"#include <"+getFileName()+".hpp>", "using namespace std;"};
 
 		final StackTraceElement [] stack=Thread.currentThread().getStackTrace();
 
@@ -217,6 +217,7 @@ public class SegHelper {
 	*		a print statement.
 	*/
 	public static boolean isPrintStatement(GNode n) {
+		System.out.println(n.toString());
 		return (n.toString().contains("CallExpression") &&
 				n.toString().contains("SelectionExpression") &&
 				n.toString().contains("System") &&
@@ -265,6 +266,7 @@ public class SegHelper {
 	 */
 	public static String getMethodDeclaration(GNode n,String className){
 		validCall();
+
 		if(getMethodName(n).equals("main")) return null;
 		
 		String return_type="";
@@ -302,8 +304,9 @@ public class SegHelper {
 			return "static "+return_type+" "+fp;
 		}
 
-		else if((s[2].getClassName().contains("SegImp")))
+		else if((s[2].getClassName().contains("SegImp"))){
 			return return_type+" "+className+"::"+fp;
+		}
 		
 		return null;
 	}
@@ -496,5 +499,10 @@ public class SegHelper {
 	 */
 	public static void cpp_p(String s){
 		cppWriter.p(s);
+	}
+
+	public static void flush(){
+		cppWriter.flush();
+		hppWriter.flush();
 	}
 }

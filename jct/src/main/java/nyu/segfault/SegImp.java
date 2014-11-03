@@ -37,8 +37,23 @@ public class SegImp extends Visitor{
 
 	public void visitCompilationUnit(GNode n) {
 		SegHelper.writeMacros();
+		SegHelper.cpp_pln("");
 		SegHelper.getCallExpression(n);
-		SegHelper.just_testing(n);
+		visit(n);
+		//SegHelper.just_testing(n);
+		SegHelper.flush();
 	}
+
+	public void visitClassDeclaraion(GNode n) {
+		visit(n);
+	}
+
+	public void visitMethodDeclaration(GNode n){
+		String method_decl=SegHelper.getMethodDeclaration(n,SegHelper.getCurrClass());
+		if(method_decl != null){
+			SegHelper.cpp_pln("\t"+method_decl);
+		}
+	}
+
 	public void visit(GNode n){for (Object o : n) if (o instanceof Node) dispatch((Node) o);}
 }
