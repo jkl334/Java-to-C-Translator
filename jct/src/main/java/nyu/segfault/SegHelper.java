@@ -49,6 +49,10 @@ public class SegHelper {
 
 	/**@var parameter buffer to generate functionpointers in vtable */
 	public static ArrayList<ArrayList<String>> pbuffer;
+    
+    /**@var global variable to store constructor property in class declaration and to use to assign arguments in struct initialization in visitFieldDeclaration -Jeff */
+    public static String constructorProp;
+     
 
 	/**
 	 * set the file_name data field and create files
@@ -65,9 +69,9 @@ public class SegHelper {
 
 			cppWriter=new Printer(cWriter);
 			hppWriter=new Printer(hWriter);
-
+            System.out.println("file name: " + file_name + ".cpp");
 		} catch(Exception e) {
-			System.out.println(e);
+			System.out.println("SegHelper.setFileName: " + e);
 		}
 	}
 	/**
@@ -99,7 +103,7 @@ public class SegHelper {
 
 
 		/**@var cpp macro definitions  */
-		final String [] cppMacros=new String[]{"#include <"+getFileName()+".hpp", "using namespace std;"};
+		final String [] cppMacros=new String[]{"#include <"+getFileName()+".hpp>", "using namespace std;"};
 
 		final StackTraceElement [] stack=Thread.currentThread().getStackTrace();
 
@@ -113,10 +117,208 @@ public class SegHelper {
 			for(String cppMacro : cppMacros)
 				cppWriter.pln(cppMacro);
 		}
+        cppWriter.pln();
 
 		cppWriter.flush(); hppWriter.flush();
 	}
-
+    
+    /**
+     * Returns the body of the method declaration represented by the given GNode. Must be called
+     * on a visitMethodDeclaration GNode.
+     *
+     * @param n The node in the Java AST
+     * @return  The entire body of the method declaration.
+     */
+    public static String getMethodBody(GNode n) {
+        System.out.println("getMethodBody");
+//        final StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+       // if (!stack[2].getClassName().contains("SegImp")) return;
+    
+        final StringBuilder mBod = new StringBuilder();  // The method body.
+        String method_return_type = "";
+        final boolean isPrivate = false;
+        
+        final GNode root = n;
+        final String return_type=n.getNode(2).toString();
+        try {
+            method_return_type = n.getNode(2).getNode(0).getString(0);
+        }
+        catch (Exception e) { }
+        new Visitor(){
+            public void visitFieldDeclaration(GNode n) {  // Need to add visitMethodDeclaration() to visitor for advanced FieldDeclarations.
+                /* Determine and print the declarator type. */
+                mBod.append("\t");  // Indent the field once (because it is within a method body).
+                String declarationType = n.getNode(1).getNode(0).getString(0);
+                if (declarationType.equals("boolean")) { mBod.append("boolean "); }
+                else if (declarationType.equals("char")) { mBod.append("char "); }
+                else if (declarationType.equals("double")) { mBod.append("double "); }
+                else if (declarationType.equals("float")) { mBod.append("float "); }
+                else if (declarationType.equals("int")) { mBod.append("int "); }
+                else if (declarationType.equals("String")) { mBod.append("string "); }
+                else if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) { mBod.append(n.getNode(1).getNode(0).getString(0) + " "); }
+                
+                /* Print the name of the field. */
+                String fieldName = n.getNode(2).getNode(0).getString(0);
+                mBod.append(fieldName);
+                
+                /* Potentially visit the assigned value (if any). */
+                new Visitor() {
+                    public void visitDeclarators(GNode n) {
+                        try {
+                            if (n.getNode(0).getNode(2).getString(0) != null) mBod.append(" = " + n.getNode(0).getNode(2).getString(0));
+                        } catch(Exception e) { }
+                        new Visitor() {
+                            public void visitNewClassExpression(GNode n) {
+                                mBod.append(" = ");
+                                if (n.getNode(3).size() > 0) {  // if arguments exist for object initializing
+                                    mBod.append("(" + n.getNode(2).getString(0) + ")" + " {" + "." + constructorProp + " = " + n.getNode(3).getNode(0).getString(0) + "}");  //  only 1 argument works for now
+                                } else if (n.getNode(3).toString().equals("Arguments()"))  // Arguments do not exist.
+                                    mBod.append("(" + n.getNode(2).getString(0) + ")" + " {" + " }");
+                            }
+                            public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
+                        }.dispatch(n);
+                    }
+                    
+                    public void visitStringLiteral(GNode n) { mBod.append(" = " + n.getString(0)); }
+                    public void visitIntegerLiteral(GNode n) { mBod.append(" = " + n.getString(0)); }
+                    public void visitFloatingPointLiteral(GNode n) { mBod.append(" = " + n.getString(0)); }
+                    public void visitCharacterLiteral(GNode n) { mBod.append(" = " + n.getString(0)); }
+                    public void visitBooleanLiteral(GNode n) { mBod.append(" = " + n.getString(0)); }
+                    public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
+                }.dispatch(n);
+                mBod.append(";").append("\n");
+            }
+            
+            public void visitReturnStatement(GNode n) {
+                mBod.append("\t");  // Return statements will generally be indented (since they are located in the method body).
+                if (n.getNode(0) != null) mBod.append("return ");
+                new Visitor() {  // Visit assigned value if any
+                    public void visitStringLiteral(GNode n) { mBod.append(n.getString(0)); }
+                    public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
+                    public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
+                    public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
+                    public void visitBooleanLiteral(GNode n) { mBod.append(n.getString(0)); }
+                    public void visitNullLiteral(GNode n) { mBod.append("null"); }
+                    public void visitPrimaryIdentifier(GNode n) { mBod.append(n.getString(0)); }
+                    public void visitThisExpression(GNode n) { }
+                    public void visitAdditiveExpression(GNode n) { mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0)); }
+                    public void visit(Node n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
+                }.dispatch(n);
+                mBod.append(";").append("\n");
+            }
+            public void visit(Node n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
+            
+            public void visitExpressionStatement(GNode n) {
+                mBod.append("\t");  // Indent the expression statement once.
+                if (n.getNode(0).getName().equals("Expression")) { // checks if regular expression is being made
+                    new Visitor() {  // Visit assigned value if any
+                        public void visitExpression(GNode n) {
+                            if (n.getNode(2).getName().equals("AdditiveExpression")) {
+                                mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getNode(0).getString(0) + " " + n.getNode(2).getString(1) + " " + n.getNode(2).getNode(2).getString(0));
+                            } else {
+                                mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
+                            }
+                        }
+                        public void visitStringLiteral(GNode n) { mBod.append(n.getString(0)); }
+                        public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
+                        public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
+                        public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
+                        public void visitBooleanLiteral(GNode n) { mBod.append(n.getString(0)); }
+                        public void visitNullLiteral(GNode n) { mBod.append("null"); }
+                        public void visitPrimaryIdentifier(GNode n) { mBod.append(n.getString(0)); }
+                        public void visitAdditiveExpression(GNode n) { mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0)); }
+                        public void visit(Node n){ for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
+                    }.dispatch(n);
+                    mBod.append(";").append("\n");
+                }
+                boolean isEndLine = false; // used to check if the print statement has an ln
+                if (n.getNode(0).toString().contains("println")) isEndLine = true;
+                if (n.toString().contains("CallExpression") && n.toString().contains("SelectionExpression") && n.toString().contains("System") && n.toString().contains("out")) { //
+                    mBod.append("cout");
+                    final ArrayList<String> vars = new ArrayList<String>();
+                    new Visitor() {
+                        
+                        public void visitCallExpression(GNode n) { // If a method is called
+                            Node arguments = n.getNode(3);
+                            new Visitor() {
+                                public void visitStringLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
+                                public void visitIntegerLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
+                                public void visitFloatingPointLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
+                                public void visitCharacterLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
+                                public void visitBooleanLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
+                                public void visitNullLiteral(GNode n) { mBod.append(" << " + "null"); }
+                                public void visitPrimaryIdentifier(GNode n) { mBod.append(" << " + n.getString(0)); }
+                                public void visitCallExpression(GNode n) {
+                                    String method = "";
+                                    method += n.getNode(0).getString(0);
+                                    if (n.getString(2).isEmpty()) {
+                                        method += "()";
+                                    } else if (n.getString(2).equals("toString")) {
+                                        method = "std::to_string(" + method + ")";
+                                    } else {
+                                        method += "." + n.getString(2) + "(";
+                                        if (n.getNode(3).isEmpty()) method += ")";
+                                    }
+                                    vars.add(method);
+                                    mBod.append(" << " + method);
+                                }
+                                public void visit(GNode n) { for (Object o : n) if (o instanceof Node) dispatch((Node) o); }
+                            }.dispatch(arguments);
+                        }
+                        
+                        public void visit(GNode n) { for (Object o : n) if (o instanceof Node) dispatch((Node) o); }
+                    }.dispatch(n.getNode(0));
+                    
+                    if (isEndLine) mBod.append(" << \"\\n\"");
+                    mBod.append(";").append("\n");
+                }
+                else if (n.toString().contains("CallExpression")) {
+                    mBod.append("\t");
+                    new Visitor() {
+                        public void visitCallExpression(GNode n) {
+                            String method = "";
+                            method += n.getNode(0).getString(0);
+                            if (n.getString(2).isEmpty()) {
+                                method += "()";
+                            }
+                            else if (n.getString(2).equals("toString")) {
+                                method = "std::to_string(" + method + ")";
+                            }
+                            else {
+                                System.out.println(n.getString(2));
+                                method += "." + n.getString(2) + "(";
+                                if (n.getNode(3).isEmpty()){
+                                    method += ")";
+                                }
+                                else {
+                                    Node arguments = n.getNode(3);
+                                    for (int i = 0; i < arguments.size(); i++) {
+                                        if (i == 0) method += arguments.getNode(0).getString(i);
+                                        else method += ", " + arguments.getNode(0).getString(i);
+                                    }
+                                    method += ")";
+                                }
+                            }
+                            mBod.append(method);
+                        }
+                        public void visit(GNode n) { for (Object o : n) if (o instanceof Node) dispatch((Node) o); }
+                    }.dispatch(n);
+                    mBod.append(";").append("\n");
+                }
+                else {
+                    visit(n);
+                }
+            }
+        }.dispatch(n);
+        String bod = mBod.toString();
+        //System.out.println(bod);
+        mBod.setLength(0);
+        return bod.substring(0, bod.length() - 1);  // Remove the final new line.
+            // Node body = n.getNode(7);
+            // if (null != body) visit(body);
+        }
+    
+    
 	public void visitCompilationUnit(GNode n) {
     }
 
@@ -265,7 +467,10 @@ public class SegHelper {
 	 */
 	public static String getMethodDeclaration(GNode n,String className){
 		validCall();
-		if(getMethodName(n).equals("main")) return null;
+        if(getMethodName(n).equals("main")) {
+            if (className.contains("SegImp")) return "int main(int argc, const char* argv[]);";
+            else return null;  // The header doesn't include a main method.
+        }
 		
 		String return_type="";
 
@@ -293,18 +498,15 @@ public class SegHelper {
 		if(n.getNode(4).size() == 0) fp+=");";
 		else fp+=getFormalParameters((GNode)n.getNode(4));
 		
-
 		final StackTraceElement[] s=Thread.currentThread().getStackTrace();
 			
 		if(s[2].getClassName().contains("SegHead")){
 			mbuffer.add(getMethodName(n));
 			rbuffer.add(return_type);
 			return return_type+" "+fp;
-		}
-
-		else if((s[2].getClassName().contains("SegImp")))
-			return return_type+" "+className+"::"+fp;
-		
+        } else if((s[2].getClassName().contains("SegImp"))) {
+			return return_type + " " + currClass + "::" + fp;
+        }
 		return null;
 	}
 	/**
@@ -404,6 +606,7 @@ public class SegHelper {
 
                 /* Potentially visit the assigned value (if any). */
                 new Visitor() {
+                    public void visitDeclarators(GNode n) { constructorProp = n.getNode(0).getString(0); }
                     public void visitStringLiteral(GNode n) { gVar.append(" = " + n.getString(0));}
                     public void visitIntegerLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
                     public void visitFloatingPointLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
@@ -476,4 +679,17 @@ public class SegHelper {
 	public static void cpp_p(String s){
 		cppWriter.p(s);
 	}
+    
+    /**
+     * print string to hpp file on same line
+     */
+    public static void hpp_flush(){
+        hppWriter.flush();
+    }
+    /**
+     * print string to cpp file on same line
+     */
+    public static void cpp_flush(){
+        cppWriter.flush();
+    }
 }
