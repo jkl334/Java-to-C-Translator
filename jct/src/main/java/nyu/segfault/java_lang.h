@@ -126,7 +126,7 @@ namespace java {
       String (*toString)(String);
       int32_t (*length)(String);
       char (*charAt)(String, int32_t);
-      
+
       __String_VT()
       : __isa(__String::__class()),
         hashCode(&__String::hashCode),
