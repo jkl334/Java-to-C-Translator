@@ -299,7 +299,7 @@ public class SegHelper {
 		if(s[2].getClassName().contains("SegHead")){
 			mbuffer.add(getMethodName(n));
 			rbuffer.add(return_type);
-			return return_type+" "+fp;
+			return "static "+return_type+" "+fp;
 		}
 
 		else if((s[2].getClassName().contains("SegImp")))
@@ -318,6 +318,10 @@ public class SegHelper {
 		// <return_type> (*<method name>)(<parameter type>);
 		hppWriter.pln("struct "+getCurrClass()+"_VT");
 		hppWriter.pln("{");
+
+		/**
+		 * produce struct <class_name>_VT data fields (function pointers)
+		 */
 		for (int k=0; k<mbuffer.size(); k++){
 			String fptr="\t"+rbuffer.get(k)+"(*"+mbuffer.get(k)+")(";
 			int Q=0;
@@ -332,6 +336,23 @@ public class SegHelper {
 				}
 			}
 			hppWriter.pln(fptr);
+			
+			/**
+			 * add function pointer string to node in inheritance tree
+			 */
+			//SegNode<CppClass> node=SegHelper.Root.dfs(Root,new CppClass(getCurrClass()));
+			//node.data.functionPtrs.add(fptr);
+		}
+		/**
+		 * produce struct <class_name>_VT constructor and initialized  
+		 * initialized function form <function_name>(&<class_name>::<function_name>)
+		 */
+		hppWriter.pln("\t"+getCurrClass()+"_VT"+"():");
+		for(int n=0; n<mbuffer.size();n++){
+			String fref="\t\t"+mbuffer.get(n)+"(&"+getCurrClass()+"::"+mbuffer.get(n)+")";
+			if(n == mbuffer.size() -1) fref+="{}";
+			else fref+=",";
+			hppWriter.pln(fref);
 		}
 		hppWriter.pln("};"); 
 	}
