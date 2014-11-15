@@ -56,7 +56,7 @@ public class Translator extends xtc.util.Tool {
 	    SegHelper.setFileName(files[0]);
 	    new SegHead().dispatch(node);
 	    new SegImp().dispatch(node);
-
+            SegHelper.printInheritanceTree();
 	}
 
 	public static void main(String[] args) {

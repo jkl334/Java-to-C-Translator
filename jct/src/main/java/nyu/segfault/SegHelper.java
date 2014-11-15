@@ -212,13 +212,13 @@ public class SegHelper {
                 mBod.append("\t");  // Indent the expression statement once.
                 if (n.getNode(0).getName().equals("Expression")) { // checks if regular expression is being made
                     new Visitor() {  // Visit assigned value if any
-                        public void visitExpression(GNode n) {
+                       /* public void visitExpression(GNode n) {
                             if (n.getNode(2).getName().equals("AdditiveExpression")) {
                                 mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getNode(0).getString(0) + " " + n.getNode(2).getString(1) + " " + n.getNode(2).getNode(2).getString(0));
                             } else {
                                 mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
                             }
-                        }
+                        } */
                         public void visitStringLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
@@ -718,4 +718,26 @@ public class SegHelper {
         cppWriter.flush();
     }
 
+    /**
+     * Prints the inheritance tree.
+     */
+    public static void printInheritanceTree() {
+        System.out.println("\nInheritance Tree:");
+        printInheritanceTree(Root, 0);
+    }
+
+    /**
+     * Prints the inheritance tree by recurring through the tree.
+     *
+     * @param treeNode  A node from the inheritance tree.
+     * @param numTabs   The number of tabs to print before printing the class's name.
+     */
+    private static void printInheritanceTree(SegNode<CppClass> treeNode, int numTabs) {
+        for (int t = 0; t < numTabs; t++) System.out.print("\t\t");
+        if (treeNode.data == null) System.out.println("nullData");
+        else if (treeNode.data.className == null) System.out.println("nullClassName");
+        else System.out.println(treeNode.data.className);
+
+        for (SegNode<CppClass> child : treeNode.children) printInheritanceTree(child, numTabs + 1);
+    }
 }
