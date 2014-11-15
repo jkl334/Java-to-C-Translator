@@ -18,7 +18,10 @@ public class  CppClass{
 	 * equals method between to CppClass objects
 	 * @return true if both objects have same className
 	 */
-	public  boolean equals(CppClass other){
-		return (this.className.equals(other.className));
+	@Override
+	public  boolean equals(Object other){
+		if(other instanceof CppClass)
+			return (this.className.equals(((CppClass)other).className));
+		return false;
 	}
 }
