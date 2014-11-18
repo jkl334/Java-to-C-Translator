@@ -740,4 +740,76 @@ public class SegHelper {
 
         for (SegNode<CppClass> child : treeNode.children) printInheritanceTree(child, numTabs + 1);
     }
+
+    /**
+     * Returns a function pointer String corresponding to the given method declaration.
+     *
+     * @param methodDeclarationNode	A generic node representing a method declaration.
+     * @return A string representing the method declaration’s corresponding function pointer.
+     */
+    public static String getPointerFromMethodDeclaration(GNode methodDeclarationNode) {
+        return getPointerFromMethodDeclaration(methodDeclarationNode, currClass);
+    }  
+
+
+    /**
+     * Returns a function pointer String corresponding to the given method
+     * declaration. Assumes that the given className is correct.
+     *
+     * @param methodDeclarationNode	A generic node representing a method declaration.
+     * @param className				The name of the class to which this methodDeclaration belongs.
+     *
+     * @return A string representing the method declaration’s corresponding
+     * function pointer.
+     */
+    public static String getPointerFromMethodDeclaration(GNode methodDeclarationNode, String className) {
+        GNode n = methodDeclarationNode;
+        if (getMethodName(n).equals("main")) {
+            return "Function pointer not necessary for main method.";
+        }
+
+        String methodName = getMethodName(n);
+        String formalParameters = getFormalParameters((GNode)n.getNode(4));
+        final StringBuilder returnType = new StringBuilder();
+
+        /* Determine the return type. */
+        if (j2c(n.getNode(2).toString()).equals("void")) {
+	        returnType.append("void");
+        } else {
+            new Visitor() {
+                public void visitQualifiedIdentifier(GNode n) { 
+                    returnType.append(SegHelper.j2c(n.getString(0)));
+                }
+
+                public void visit(GNode n) {
+                    for (Object o : n) if (o instanceof Node) dispatch((Node) o);
+                }
+            }.dispatch(n.getNode(2));
+        }
+
+        boolean inHeader = false;
+        boolean inImplementation = false;
+        final StackTraceElement[] stackTraceElement = Thread.currentThread().getStackTrace();
+        if(stackTraceElement[3].getClassName().contains("SegHead")) {
+            inHeader = true;
+        } else if (stackTraceElement[3].getClassName().contains("SegImp")) {
+            inImplementation = true;
+        }
+
+        String functionPointer = methodName + (inHeader ? ")(" : "(");
+        if(n.getNode(4).size() == 0) {
+            functionPointer += ");";
+        } else {
+            functionPointer += formalParameters;
+        }
+
+        if(inHeader) {
+            return returnType.toString() + " (*" + functionPointer;
+        } else if(inImplementation) {
+            return returnType.toString() + " " + className + "::" + functionPointer;
+        } else {
+            return "****Error in getPointerFromMethodDeclaration*****";
+        }
+    }  
+
 }
