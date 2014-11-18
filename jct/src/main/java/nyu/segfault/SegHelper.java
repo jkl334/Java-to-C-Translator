@@ -642,7 +642,7 @@ public class SegHelper {
                 currentClassGlobalVariables.add(gVar.toString());
             }
             /* To prevent printing local fields, do not visit methodDeclaration nodes. */
-            public void visitMethodDeclaration(GNode n) { }
+            public void visitMethodDeclaration(GNode n) { System.out.println(getPointerFromMethodDeclaration(n)); }
             public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
         }.dispatch(n);
     }
@@ -748,7 +748,7 @@ public class SegHelper {
      * @return A string representing the method declaration’s corresponding function pointer.
      */
     public static String getPointerFromMethodDeclaration(GNode methodDeclarationNode) {
-        return getPointerFromMethodDeclaration(methodDeclarationNode, currClass);
+        return convertDeclarationToPointer(methodDeclarationNode, currClass);
     }  
 
 
@@ -763,6 +763,10 @@ public class SegHelper {
      * function pointer.
      */
     public static String getPointerFromMethodDeclaration(GNode methodDeclarationNode, String className) {
+        return convertDeclarationToPointer(methodDeclarationNode, className);
+    }
+
+    public static String convertDeclarationToPointer(GNode methodDeclarationNode, String className) {
         GNode n = methodDeclarationNode;
         if (getMethodName(n).equals("main")) {
             return "Function pointer not necessary for main method.";
