@@ -77,7 +77,7 @@ public class SegHead extends Visitor{
 			SegHelper.hpp_pln("\t"+method_decl);
 		}
 
-        String pointer = SegHelper.getPointerFromMethodDeclaration(n);
+        String pointer = SegHelper.getPointerFromMethodDeclaration(n, "DooDoo");
         System.out.println(pointer);
 	}
 
