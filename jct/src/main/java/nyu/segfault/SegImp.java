@@ -60,6 +60,7 @@ public class SegImp extends Visitor{
         SegHelper.cpp_pln(body);
         SegHelper.cpp_pln("}\n");
         SegHelper.cpp_flush();
+        System.out.println(SegHelper.getPointerFromMethodDeclaration(n));
     }
     
     public void visit(Node n) { for (Object o : n) if (o instanceof Node) dispatch((Node)o); }

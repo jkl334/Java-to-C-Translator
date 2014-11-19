@@ -72,12 +72,19 @@ public class SegHead extends Visitor{
 		/**generate vtable for that respective class*/
 		SegHelper.genVTable();
 	}
+
+
 	public void visitMethodDeclaration(GNode n){
 		String method_decl=SegHelper.getMethodDeclaration(n,SegHelper.getCurrClass());
 		if(method_decl != null){
 			SegHelper.hpp_pln("\t"+method_decl);
 		}
+
+        String pointer = SegHelper.getPointerFromMethodDeclaration(n);
+        System.out.println(pointer);
 	}
+
+
 	public void visit(GNode n) {
 		for (Object o : n) if (o instanceof Node) dispatch((Node) o);
 	}
