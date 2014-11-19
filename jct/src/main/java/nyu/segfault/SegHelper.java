@@ -802,9 +802,9 @@ public class SegHelper {
 
         String functionPointer = methodName + (inHeader ? ")(" : "(");
         if(n.getNode(4).size() == 0) {
-            functionPointer += ");";
+            functionPointer += className + ");";
         } else {
-            functionPointer += formalParameters;
+            functionPointer += className + ", " + formalParameters;
         }
 
         if(inHeader) {
