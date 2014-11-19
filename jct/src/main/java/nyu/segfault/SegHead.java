@@ -49,6 +49,9 @@ public class SegHead extends Visitor{
 		SegHelper.hpp_pln(SegHelper.getClassDeclaration(n));
 		SegHelper.hpp_pln("{");
 
+		SegHelper.hpp_pln("\t"+n.getString(1)+"_VT* vptr;" ); 
+
+
 		this.privateHPP = new HashSet<String>();
 		this.publicHPP = new HashSet<String>();
 		this.privateHPPMethods = new HashSet<String>();
@@ -66,7 +69,7 @@ public class SegHead extends Visitor{
 		visit(n);
 		SegHelper.hpp_pln("};");
 
-		//generate vtable for that respective class
+		/**generate vtable for that respective class*/
 		SegHelper.genVTable();
 	}
 	public void visitMethodDeclaration(GNode n){
