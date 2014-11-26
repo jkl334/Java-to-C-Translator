@@ -97,9 +97,10 @@ public class SegHelper {
 	 * write macros to both cpp and hpp files
 	 */
 	public static void writeMacros(){
+		
 		/**@var STL macros for hpp file */
-		final String[] stlMacros=new String[]{"\"java_lang.h\"", "<sstream>", "<iostream>", "<string>"};
-
+		
+		final String[] stlMacros=new String[]{"\"java_lang.h\"","<sstream>", "<iostream>", "<string>"};
 
 		/**@var cpp macro definitions  */
 		final String [] cppMacros=new String[]{"#include \""+getFileName()+".hpp\"", "using namespace std;"};
@@ -107,9 +108,17 @@ public class SegHelper {
 		final StackTraceElement [] stack=Thread.currentThread().getStackTrace();
 
 		if(stack[2].getClassName().contains("SegHead")){
+			/**
+			 * write header guard and namespaces
+			 */
+			SegHelper.hpp_pln("#ifndef SEGFAULT_HPP");	
+
 			for (String stlMacro : stlMacros )
 				hppWriter.pln("#include "+stlMacro);
-            hppWriter.pln("using namespace std;");
+			
+			hppWriter.pln("using namespace std;");
+			hppWriter.pln("namespace java{");
+			hppWriter.pln("\tnamespace lang{");;
 		}
 
 		else if(stack[2].getClassName().contains("SegImp")){
@@ -121,6 +130,13 @@ public class SegHelper {
         cppWriter.pln();
 
 		cppWriter.flush(); hppWriter.flush();
+	}
+	public static  void endMacroScopes(){
+		/** close namespaces */
+		hppWriter.pln("\t}\n}");
+		
+		/** end macro guard */
+		hppWriter.pln("#endif");
 	}
     
     /**
@@ -542,6 +558,8 @@ public class SegHelper {
 		/**
 		 * produce struct <class_name>_VT data fields (function pointers)
 		 */
+
+		hppWriter.pln("java::lang::Class __isa");
 		for (int k=0; k<mbuffer.size(); k++){
 			String fptr="\t"+rbuffer.get(k)+"(*"+mbuffer.get(k)+")(";
 			int Q=0;
