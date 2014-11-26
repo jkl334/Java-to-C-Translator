@@ -53,7 +53,12 @@ public class Translator extends xtc.util.Tool {
 	 * @param node compilation unit node
 	 */
 	public void process(Node node) {
-	    SegHelper.setFileName(files[0]);
+        String fileArgument = files[0];
+        String[] filePath = fileArgument.split("/");
+        int indexOfFileName = filePath.length - 1;
+
+	    SegHelper.setFileName(filePath[indexOfFileName]);
+        System.out.println("File name: " + filePath[indexOfFileName]);
 	    new SegHead().dispatch(node);
 	    new SegImp().dispatch(node);
             SegHelper.printInheritanceTree();
