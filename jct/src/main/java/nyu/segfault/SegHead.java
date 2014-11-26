@@ -44,6 +44,7 @@ public class SegHead extends Visitor{
 	public void visitCompilationUnit(GNode n){
 		SegHelper.writeMacros();
 		visit(n);
+		SegHelper.endMacroScopes();
 	}
 	public void visitClassDeclaration(GNode n){
 		SegHelper.hpp_pln(SegHelper.getClassDeclaration(n));
