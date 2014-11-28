@@ -50,7 +50,7 @@ public class SegHead extends Visitor{
 		SegHelper.hpp_pln(SegHelper.getClassDeclaration(n));
 		SegHelper.hpp_pln("{");
 
-		SegHelper.hpp_pln("\t"+n.getString(1)+"_VT* vptr;" ); 
+		//SegHelper.hpp_pln("\t"+n.getString(1)+"_VT* vptr;" );
 
 
 		this.privateHPP = new HashSet<String>();
