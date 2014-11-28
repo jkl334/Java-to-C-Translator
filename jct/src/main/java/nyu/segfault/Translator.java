@@ -6,14 +6,20 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
 
+import xtc.lang.JavaAstSimplifier;
+import xtc.lang.JavaEntities;
+import xtc.lang.JavaExternalAnalyzer;
 import xtc.lang.JavaFiveParser;
 import xtc.parser.ParseException;
 import xtc.parser.Result;
+import xtc.util.SymbolTable;
 import xtc.util.Tool;
 import xtc.tree.GNode;
 import xtc.tree.Node;
 import xtc.tree.Printer;
 import xtc.tree.Visitor;
+
+
 
 
 public class Translator extends xtc.util.Tool {
@@ -59,6 +65,15 @@ public class Translator extends xtc.util.Tool {
 
 	    SegHelper.setFileName(filePath[indexOfFileName]);
         System.out.println("File name: " + filePath[indexOfFileName]);
+
+        SymbolTable table = new SymbolTable();
+        // Do some simplifications on the AST.
+        new JavaAstSimplifier().dispatch(node);
+        // Construct the symbol table.
+        new SymbolTableBuilder(runtime, table).dispatch(node);
+        // Set SegHelper's symbol table to the newly-constructed.
+        //SegHelper.symbolTable = table;
+
 	    new SegHead().dispatch(node);
 	    new SegImp().dispatch(node);
             SegHelper.printInheritanceTree();

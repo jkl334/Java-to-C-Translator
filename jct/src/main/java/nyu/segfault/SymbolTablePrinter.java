@@ -1,4 +1,4 @@
-package xtc.oop;
+package nyu.segfault;
 
 import java.util.ArrayList;
 import java.util.List;

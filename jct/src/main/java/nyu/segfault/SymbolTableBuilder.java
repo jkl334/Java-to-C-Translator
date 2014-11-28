@@ -1,4 +1,4 @@
-package xtc.oop;
+package nyu.segfault;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +46,7 @@ public class SymbolTableBuilder extends Visitor {
     String canonicalName = null == n ? "" : (String) dispatch(n.getNode(1));
     //PackageT result = JavaEntities.canonicalNameToPackage(table, canonicalName);
     table.enter(JavaEntities.packageNameToScopeName(canonicalName));
-    table.mark(n);
+    if (n != null) table.mark(n);
   }
   
   public void visitClassDeclaration(GNode n) {

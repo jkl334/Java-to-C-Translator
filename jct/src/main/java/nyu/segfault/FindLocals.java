@@ -1,4 +1,4 @@
-package xtc.oop;
+package nyu.segfault;
 
 import xtc.lang.JavaEntities;
 
