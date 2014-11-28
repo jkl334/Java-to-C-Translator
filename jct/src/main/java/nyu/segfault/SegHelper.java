@@ -276,8 +276,8 @@ public class SegHelper {
                                 public void visitCharacterLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
                                 public void visitBooleanLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
                                 public void visitNullLiteral(GNode n) { mBod.append(" << " + "null"); }
-                                public void visitPrimaryIdentifier(GNode n) { mBod.append(" << "  + n.getString(0)); }
-                                        //className + "::toString(&" + n.getString(0) + ") /* <-This will likely have to change */"); }
+                                public void visitPrimaryIdentifier(GNode n) { mBod.append(" << "  +
+                                        "__String::"/*className*/ + "toString(&" + n.getString(0) + ") /* <-This will likely have to change */"); }
                                 public void visitCallExpression(GNode n) {
                                     String method = "";
                                     method += n.getNode(0).getString(0);
