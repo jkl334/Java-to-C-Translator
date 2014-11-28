@@ -72,7 +72,7 @@ public class Translator extends xtc.util.Tool {
         // Construct the symbol table.
         new SymbolTableBuilder(runtime, table).dispatch(node);
         // Set SegHelper's symbol table to the newly-constructed.
-        //SegHelper.symbolTable = table;
+        SegHelper.symbolTable = table;
 
 	    new SegHead().dispatch(node);
 	    new SegImp().dispatch(node);

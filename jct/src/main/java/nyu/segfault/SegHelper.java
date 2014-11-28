@@ -53,6 +53,9 @@ public class SegHelper {
     /**@var global variable to store constructor property in class declaration and to use to assign arguments in struct initialization in visitFieldDeclaration -Jeff */
     public static String constructorProp;
 
+    /**@var The symbol table corresponding to the Java input file. */
+    public static SymbolTable symbolTable;
+
 
 	/**
 	 * set the file_name data field and create files
