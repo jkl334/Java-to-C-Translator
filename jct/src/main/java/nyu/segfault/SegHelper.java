@@ -103,7 +103,7 @@ public class SegHelper {
 
 		/**@var STL macros for hpp file */
 
-		final String[] stlMacros=new String[]{"\"java_lang.h\"","<sstream>", "<iostream>", "<string>"};
+		final String[] stlMacros=new String[]{"\"java_lang.h\"", "\"ptr.h\"", "<sstream>", "<iostream>", "<string>"};
 
 		/**@var cpp macro definitions  */
 		final String [] cppMacros=new String[]{"#include \""+getFileName()+".hpp\"", "using namespace std;"};
