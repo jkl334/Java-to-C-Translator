@@ -76,7 +76,10 @@ public class Translator extends xtc.util.Tool {
 
 	    new SegHead().dispatch(node);
 	    new SegImp().dispatch(node);
-            SegHelper.printInheritanceTree();
+
+        // A convenient way to print the symbol table.
+        table.current().dump(runtime.console());
+        runtime.console().flush();
 	}
 
 	public static void main(String[] args) {
