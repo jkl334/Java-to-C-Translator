@@ -57,6 +57,9 @@ public class SegImp extends Visitor{
         declaration = declaration.substring(0, declaration.length() - 1);  // Remove the semi-colon.
         SegHelper.cpp_pln(declaration + " {");
         String body = SegHelper.getMethodBody(n);
+        if (SegHelper.getMethodName(n).equals("main")) {
+            body = SegHelper.getMainMethodArgumentsAsSmartPointers() + "\n" + body;
+        }
         SegHelper.cpp_pln(body);
         SegHelper.cpp_pln("}\n");
         SegHelper.cpp_flush();
