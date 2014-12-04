@@ -106,7 +106,7 @@ public class SegHelper {
 		final String[] stlMacros=new String[]{"\"java_lang.h\"", "\"ptr.h\"", "<sstream>", "<iostream>", "<string>"};
 
 		/**@var cpp macro definitions  */
-		final String [] cppMacros=new String[]{"#include \""+getFileName()+".hpp\"", "using namespace std;"};
+		final String [] cppMacros=new String[]{"#include \""+getFileName()+".hpp\"", "using namespace java::lang;"};
 
 		final StackTraceElement [] stack=Thread.currentThread().getStackTrace();
 
@@ -119,9 +119,7 @@ public class SegHelper {
 			for (String stlMacro : stlMacros )
 				hppWriter.pln("#include "+stlMacro);
 
-			hppWriter.pln("using namespace std;");
-			hppWriter.pln("namespace java{");
-			hppWriter.pln("\tnamespace lang{");;
+			hppWriter.pln("using namespace java::lang;");
 		}
 
 		else if(stack[2].getClassName().contains("SegImp")){
@@ -135,8 +133,6 @@ public class SegHelper {
 		cppWriter.flush(); hppWriter.flush();
 	}
 	public static  void endMacroScopes(){
-		/** close namespaces */
-		hppWriter.pln("\t}\n}");
 
 		/** end macro guard */
 		hppWriter.pln("#endif");
@@ -174,8 +170,8 @@ public class SegHelper {
                 else if (declarationType.equals("double")) { mBod.append("double "); }
                 else if (declarationType.equals("float")) { mBod.append("float "); }
                 else if (declarationType.equals("int")) { mBod.append("int "); }
-                else if (declarationType.equals("String")) { mBod.append("struct java::lang::__String "); }
-                else if (declarationType.equals("Object")) { mBod.append("struct java::lang::__Object " ); }
+                else if (declarationType.equals("String")) { mBod.append("struct __String "); }
+                else if (declarationType.equals("Object")) { mBod.append("struct __Object " ); }
                 else if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) { mBod.append("struct " + n.getNode(1).getNode(0).getString(0) + " "); }
 
                 /* Print the name of the field. */
@@ -192,7 +188,7 @@ public class SegHelper {
                                         && s.substring(0,1).equals("\"")
                                         && s.substring(s.length() - 1).equals("\"");
                                 if (isJavaString) {
-                                    mBod.append(" = java::lang::__String(" + s + ")");
+                                    mBod.append(" = __String(" + s + ")");
                                 }
                                 else{
                                     mBod.append(" = " + s);
@@ -225,7 +221,7 @@ public class SegHelper {
                 mBod.append("\t");  // Return statements will generally be indented (since they are located in the method body).
                 if (n.getNode(0) != null) mBod.append("return ");
                 new Visitor() {  // Visit assigned value if any
-                    public void visitStringLiteral(GNode n) { mBod.append("java::lang::__String(" + n.getString(0) + ")"); }
+                    public void visitStringLiteral(GNode n) { mBod.append("__String(" + n.getString(0) + ")"); }
                     public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
@@ -251,7 +247,7 @@ public class SegHelper {
                                 mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
                             }
                         } */
-                        public void visitStringLiteral(GNode n) { mBod.append("java::lang::__String(" + n.getString(0) + ")"); }
+                        public void visitStringLiteral(GNode n) { mBod.append("__String(" + n.getString(0) + ")"); }
                         public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
@@ -266,7 +262,7 @@ public class SegHelper {
                 boolean isEndLine = false; // used to check if the print statement has an ln
                 if (n.getNode(0).toString().contains("println")) isEndLine = true;
                 if (n.toString().contains("CallExpression") && n.toString().contains("SelectionExpression") && n.toString().contains("System") && n.toString().contains("out")) { //
-                    mBod.append("cout");
+                    mBod.append("std::cout");
                     final ArrayList<String> vars = new ArrayList<String>();
                     new Visitor() {
 
@@ -280,7 +276,7 @@ public class SegHelper {
                                 public void visitBooleanLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
                                 public void visitNullLiteral(GNode n) { mBod.append(" << " + "null"); }
                                 public void visitPrimaryIdentifier(GNode n) { mBod.append(" << "  +
-                                        "java::lang::__String::"/*className*/ + "toString(&" + n.getString(0) + ") /* <-This will likely have to change */"); }
+                                        "__String::"/*className*/ + "toString(&" + n.getString(0) + ") /* <-This will likely have to change */"); }
                                 public void visitCallExpression(GNode n) {
                                     String method = "";
                                     method += n.getNode(0).getString(0);
@@ -381,7 +377,7 @@ public class SegHelper {
 			isEndLine = true;
 		}
 
-		gCallExpression += "\tcout";
+		gCallExpression += "\tstd::cout";
 		final ArrayList<String> vars = new ArrayList<String>();
 
 		new Visitor() {
@@ -563,7 +559,7 @@ public class SegHelper {
 		 * produce struct <class_name>_VT data fields (function pointers)
 		 */
 
-		hppWriter.pln("java::lang::Class __isa");
+		hppWriter.pln("Class __isa");
 		for (int k=0; k<mbuffer.size(); k++){
 			String fptr="\t"+rbuffer.get(k)+"(*"+mbuffer.get(k)+")(";
 			int Q=0;
@@ -658,8 +654,8 @@ public class SegHelper {
                 else if (declarationType.equals("double")) { gVar.append("double "); }
                 else if (declarationType.equals("float")) { gVar.append("float "); }
                 else if (declarationType.equals("int")) { gVar.append("int "); }
-                else if (declarationType.equals("String")) { gVar.append("java::lang::__String "); }
-                else if (declarationType.equals("Object")) {gVar.append("java::lang::__Object"); }
+                else if (declarationType.equals("String")) { gVar.append("__String "); }
+                else if (declarationType.equals("Object")) {gVar.append("__Object"); }
                 else { gVar.append(declarationType + " "); }  // For non-primitive, non-String objects.
 
                 /* Get the name of the field. */
@@ -669,7 +665,7 @@ public class SegHelper {
                 /* Potentially visit the assigned value (if any). */
                 new Visitor() {
                     public void visitDeclarators(GNode n) { constructorProp = n.getNode(0).getString(0); }
-                    public void visitStringLiteral(GNode n) { gVar.append(" = java::lang::__String" + n.getString(0) + ")");}
+                    public void visitStringLiteral(GNode n) { gVar.append(" = __String" + n.getString(0) + ")");}
                     public void visitIntegerLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
                     public void visitFloatingPointLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
                     public void visitCharacterLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
@@ -712,7 +708,7 @@ public class SegHelper {
 
 		final String[] comp=new String[]{"Class","Method"};
 
-		for (int k=0;k<comp.length;k++) {
+		for (int k = 0; k < comp.length; k++) {
 			if(sh_xfunc.contains(comp[k]) &&  sh_yfunc.contains(comp[k])) return;
 		}
 		throw new RuntimeException("visit function  to not correspond to helper function");
@@ -856,7 +852,7 @@ public class SegHelper {
 
     public static String getMainMethodArgumentsAsSmartPointers () {
         String mainMethodArgumentsAsSmartPointers =
-                "\t__rt::Ptr<__rt::Array<java::lang::String> > args = new __rt::Array<java::lang::String>(argc - 1);\n" +   // Declare smart pointer of type Array(Strings) with size args-1.
+                "\t__rt::Ptr<__rt::Array<String> > args = new __rt::Array<String>(argc - 1);\n" +   // Declare smart pointer of type Array(Strings) with size args-1.
                 "\tfor (int32_t i = 1; i < argc; i++) {\n" +                                        // Loop through all arguments of the array parameter (except 1st).
                 "\t\t(*args)[i - 1] = __rt::literal(argv[i]);\n" +                                  // Dereferenced array contents set to args' contents.
                 "\t} ";
