@@ -170,8 +170,8 @@ public class SegHelper {
                 else if (declarationType.equals("double")) { mBod.append("double "); }
                 else if (declarationType.equals("float")) { mBod.append("float "); }
                 else if (declarationType.equals("int")) { mBod.append("int "); }
-                else if (declarationType.equals("String")) { mBod.append("struct __String "); }
-                else if (declarationType.equals("Object")) { mBod.append("struct __Object " ); }
+                else if (declarationType.equals("String")) { mBod.append("String "); }
+                else if (declarationType.equals("Object")) { mBod.append("Object " ); }
                 else if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) { mBod.append("struct " + n.getNode(1).getNode(0).getString(0) + " "); }
 
                 /* Print the name of the field. */
@@ -188,7 +188,7 @@ public class SegHelper {
                                         && s.substring(0,1).equals("\"")
                                         && s.substring(s.length() - 1).equals("\"");
                                 if (isJavaString) {
-                                    mBod.append(" = __String(" + s + ")");
+                                    mBod.append(" = new __String(" + s + ")");
                                 }
                                 else{
                                     mBod.append(" = " + s);
@@ -207,7 +207,7 @@ public class SegHelper {
                         }.dispatch(n);
                     }
 
-                    public void visitStringLiteral(GNode n) { mBod.append(" = java::lang::__String(" + n.getString(0) + ")"); }
+                    public void visitStringLiteral(GNode n) { mBod.append(" = new __String(" + n.getString(0) + ")"); }
                     public void visitIntegerLiteral(GNode n) { mBod.append(" = " + n.getString(0)); }
                     public void visitFloatingPointLiteral(GNode n) { mBod.append(" = " + n.getString(0)); }
                     public void visitCharacterLiteral(GNode n) { mBod.append(" = " + n.getString(0)); }
@@ -221,7 +221,7 @@ public class SegHelper {
                 mBod.append("\t");  // Return statements will generally be indented (since they are located in the method body).
                 if (n.getNode(0) != null) mBod.append("return ");
                 new Visitor() {  // Visit assigned value if any
-                    public void visitStringLiteral(GNode n) { mBod.append("__String(" + n.getString(0) + ")"); }
+                    public void visitStringLiteral(GNode n) { mBod.append("new __String(" + n.getString(0) + ")"); }
                     public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
@@ -247,7 +247,7 @@ public class SegHelper {
                                 mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
                             }
                         } */
-                        public void visitStringLiteral(GNode n) { mBod.append("__String(" + n.getString(0) + ")"); }
+                        public void visitStringLiteral(GNode n) { mBod.append("new __String(" + n.getString(0) + ")"); }
                         public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
@@ -269,14 +269,15 @@ public class SegHelper {
                         public void visitCallExpression(GNode n) { // If a method is called
                             Node arguments = n.getNode(3);
                             new Visitor() {
-                                public void visitStringLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
+                                public void visitStringLiteral(GNode n) { mBod.append(" << " + n.getString(0) + ")"); }
                                 public void visitIntegerLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
                                 public void visitFloatingPointLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
                                 public void visitCharacterLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
                                 public void visitBooleanLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
                                 public void visitNullLiteral(GNode n) { mBod.append(" << " + "null"); }
-                                public void visitPrimaryIdentifier(GNode n) { mBod.append(" << "  +
-                                        "__String::"/*className*/ + "toString(&" + n.getString(0) + ") /* <-This will likely have to change */"); }
+                                public void visitPrimaryIdentifier(GNode n) {
+                                    mBod.append(" << " + n.getString(0) + "->__vptr->toString(" + n.getString(0) + ")");
+                                }
                                 public void visitCallExpression(GNode n) {
                                     String method = "";
                                     method += n.getNode(0).getString(0);
