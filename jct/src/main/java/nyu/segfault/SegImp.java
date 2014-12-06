@@ -61,6 +61,9 @@ public class SegImp extends Visitor{
             body = SegHelper.getMainMethodArgumentsAsSmartPointers() + "\n" + body;
         }
         SegHelper.cpp_pln(body);
+        if(SegHelper.getMethodName(n).equals("main")) {
+            SegHelper.cpp_pln("\treturn 0;");
+        }
         SegHelper.cpp_pln("}\n");
         SegHelper.cpp_flush();
     }

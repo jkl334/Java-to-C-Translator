@@ -103,7 +103,7 @@ public class SegHelper {
 
 		/**@var STL macros for hpp file */
 
-		final String[] stlMacros=new String[]{"\"java_lang.h\"", "\"ptr.h\"", "<sstream>", "<iostream>", "<string>"};
+		final String[] stlMacros=new String[]{"\"java_lang.h\""};
 
 		/**@var cpp macro definitions  */
 		final String [] cppMacros=new String[]{"#include \""+getFileName()+".hpp\"", "using namespace java::lang;"};
@@ -172,7 +172,8 @@ public class SegHelper {
                 else if (declarationType.equals("int")) { mBod.append("int "); }
                 else if (declarationType.equals("String")) { mBod.append("String "); }
                 else if (declarationType.equals("Object")) { mBod.append("Object " ); }
-                else if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) { mBod.append("struct " + n.getNode(1).getNode(0).getString(0) + " "); }
+                /* CREATE THE SMART POINTER */
+                else if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) { mBod.append("__rt::Ptr<" + n.getNode(1).getNode(0).getString(0) + "> "); }
 
                 /* Print the name of the field. */
                 String fieldName = n.getNode(2).getNode(0).getString(0);
@@ -188,7 +189,7 @@ public class SegHelper {
                                         && s.substring(0,1).equals("\"")
                                         && s.substring(s.length() - 1).equals("\"");
                                 if (isJavaString) {
-                                    mBod.append(" = new __String(" + s + ")");
+                                    mBod.append(" = __rt::literal(" + s + ")");
                                 }
                                 else{
                                     mBod.append(" = " + s);
@@ -221,7 +222,7 @@ public class SegHelper {
                 mBod.append("\t");  // Return statements will generally be indented (since they are located in the method body).
                 if (n.getNode(0) != null) mBod.append("return ");
                 new Visitor() {  // Visit assigned value if any
-                    public void visitStringLiteral(GNode n) { mBod.append("new __String(" + n.getString(0) + ")"); }
+                    public void visitStringLiteral(GNode n) { mBod.append(n.getString(0)); }  // Should not be returned as a smart pointer.
                     public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
@@ -276,7 +277,7 @@ public class SegHelper {
                                 public void visitBooleanLiteral(GNode n) { mBod.append(" << " + n.getString(0)); }
                                 public void visitNullLiteral(GNode n) { mBod.append(" << " + "null"); }
                                 public void visitPrimaryIdentifier(GNode n) {
-                                    mBod.append(" << " + n.getString(0) + "->__vptr->toString(" + n.getString(0) + ")");
+                                    mBod.append(" << " + n.getString(0));
                                 }
                                 public void visitCallExpression(GNode n) {
                                     String method = "";
@@ -284,9 +285,9 @@ public class SegHelper {
                                     if (n.getString(2).isEmpty()) {
                                         method += "()";
                                     } else if (n.getString(2).equals("toString")) {
-                                        method = "std::to_string(" + method + ")";
+                                        method = "toString(" + method + ")";
                                     } else {
-                                        method += "." + n.getString(2) + "(";
+                                        method += "->__vptr->" + n.getString(2) + "(";
                                         if (n.getNode(3).isEmpty()) method += ")";
                                     }
                                     vars.add(method);
@@ -312,7 +313,7 @@ public class SegHelper {
                                 method += "()";
                             }
                             else if (n.getString(2).equals("toString")) {
-                                method = "std::to_string(" + method + ")";
+                                method = "toString(" + method + ")";
                             }
                             else {
                                 System.out.println(n.getString(2));
@@ -655,8 +656,8 @@ public class SegHelper {
                 else if (declarationType.equals("double")) { gVar.append("double "); }
                 else if (declarationType.equals("float")) { gVar.append("float "); }
                 else if (declarationType.equals("int")) { gVar.append("int "); }
-                else if (declarationType.equals("String")) { gVar.append("__String "); }
-                else if (declarationType.equals("Object")) {gVar.append("__Object"); }
+                else if (declarationType.equals("String")) { gVar.append("String "); }
+                else if (declarationType.equals("Object")) {gVar.append("Object "); }
                 else { gVar.append(declarationType + " "); }  // For non-primitive, non-String objects.
 
                 /* Get the name of the field. */
@@ -666,7 +667,7 @@ public class SegHelper {
                 /* Potentially visit the assigned value (if any). */
                 new Visitor() {
                     public void visitDeclarators(GNode n) { constructorProp = n.getNode(0).getString(0); }
-                    public void visitStringLiteral(GNode n) { gVar.append(" = __String" + n.getString(0) + ")");}
+                    public void visitStringLiteral(GNode n) { gVar.append(" = new String(" + n.getString(0) + ")");}
                     public void visitIntegerLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
                     public void visitFloatingPointLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
                     public void visitCharacterLiteral(GNode n) { gVar.append(" = " + n.getString(0)); }
