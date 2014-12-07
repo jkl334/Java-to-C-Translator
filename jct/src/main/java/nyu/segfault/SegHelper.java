@@ -554,49 +554,70 @@ public class SegHelper {
 	 * which includes function pointers and class information
 	 * @param n method declaration node
 	 */
-	public static void genVTable(){
-//		if(mbuffer.size() == 0) return;
-		// <return_type> (*<method name>)(<parameter type>);
+	public static void genVTable() {
+
 		hppWriter.pln("struct __" + getCurrClass() + "_VT {");
 
-		/**
-		 * produce struct <class_name>_VT data fields (function pointers)
-		 */
+        String[] methodPointers = SegHelper.getObjectVtableMethodPointers();
+        for (String pointer : methodPointers) {
+            hppWriter.pln("\t" + pointer + ";");
+        }
+        hppWriter.pln("");
 
-		hppWriter.pln("\tClass __isa;");
-		for (int k=0; k<mbuffer.size(); k++){
-			String fptr="\t"+rbuffer.get(k)+"(*"+mbuffer.get(k)+")(";
-			int Q=0;
-			if((pbuffer.size() == 0) || (k >= pbuffer.size())  ) fptr+=");";
-			else{
-				for(String param : pbuffer.get(k)){
-					if ( Q != pbuffer.get(k).size()-1)
-						fptr+=param+",";
-					else
-						fptr+=param+");";
-					Q++;
-				}
-			}
-			hppWriter.pln(fptr);
+        hppWriter.pln("\t// The virtual table constructor for class " + getCurrClass() + ".");
+        hppWriter.pln("\t__" + getCurrClass() + "_VT()");
+        String[] methodInitializers = SegHelper.getObjectVtableMethodInitializers();
+        hppWriter.pln("\t: " + methodInitializers[0]);
+        for (int initializer = 1; initializer < methodInitializers.length; initializer++) {
+            String suffixCharacter;
+            if (initializer == methodInitializers.length - 1) {
+                suffixCharacter = " {";
+            } else {
+                suffixCharacter = ",";
+            }
+            hppWriter.pln("\t  " + methodInitializers[initializer] + suffixCharacter);
+        }
+        hppWriter.pln("\t}");
 
-			/**
-			 * add function pointer string to node in inheritance tree
-			 */
-			//SegNode<CppClass> node=SegHelper.Root.dfs(Root,new CppClass(getCurrClass()));
-			//node.data.functionPtrs.add(fptr);
-		}
-		/**
-		 * produce struct <class_name>_VT constructor and initialized
-		 * initialized function form <function_name>(&<class_name>::<function_name>)
-		 */
-		hppWriter.pln("\t"+getCurrClass()+"_VT"+"():");
-		for(int n=0; n<mbuffer.size();n++){
-			String fref="\t\t"+mbuffer.get(n)+"(&"+getCurrClass()+"::"+mbuffer.get(n)+")";
-			if(n == mbuffer.size() -1) fref+="{};";
-			else fref+=",";
-			hppWriter.pln(fref);
-		}
-		hppWriter.pln("};\n");
+        hppWriter.pln("};\n");
+
+//		if(mbuffer.size() == 0) return;
+//        <return_type> (*<method name>)(<parameter type>);
+//        /**
+//         * produce struct <class_name>_VT data fields (function pointers)
+//         */
+//		for (int k=0; k<mbuffer.size(); k++){
+//			String fptr="\t"+rbuffer.get(k)+"(*"+mbuffer.get(k)+")(";
+//			int Q=0;
+//			if((pbuffer.size() == 0) || (k >= pbuffer.size())  ) fptr+=");";
+//			else{
+//				for(String param : pbuffer.get(k)){
+//					if ( Q != pbuffer.get(k).size()-1)
+//						fptr+=param+",";
+//					else
+//						fptr+=param+");";
+//					Q++;
+//				}
+//			}
+//			hppWriter.pln(fptr);
+//
+//			/**
+//			 * add function pointer string to node in inheritance tree
+//			 */
+//			//SegNode<CppClass> node=SegHelper.Root.dfs(Root,new CppClass(getCurrClass()));
+//			//node.data.functionPtrs.add(fptr);
+//		}
+//		/**
+//		 * produce struct <class_name>_VT constructor and initialized
+//		 * initialized function form <function_name>(&<class_name>::<function_name>)
+//		 */
+//		hppWriter.pln("\t"+getCurrClass()+"_VT"+"():");
+//		for(int n=0; n<mbuffer.size();n++){
+//			String fref="\t\t"+mbuffer.get(n)+"(&"+getCurrClass()+"::"+mbuffer.get(n)+")";
+//			if(n == mbuffer.size() -1) fref+="{};";
+//			else fref+=",";
+//			hppWriter.pln(fref);
+//		}
 	}
 	/**
 	 * buffer to communication between anonymous inner classes and SegHelper
@@ -870,24 +891,24 @@ public class SegHelper {
     public static String[] getObjectMethodDeclarations() {
         String[] objectMethodDeclarations =
                 new String[] {
-                    "static int32_t hashCode(Object);",
-                    "static bool equals(Object, Object);",
-                    "static Class getClass(Object);",
-                    "static String toString(Object);",
+                    "static int32_t hashCode(Object)",
+                    "static bool equals(Object, Object)",
+                    "static Class getClass(Object)",
+                    "static String toString(Object)",
                     "static Object init(Object __this) { return __this; }"
                  };
         return objectMethodDeclarations;
     }
 
-    public static String[] getObjectVtableMethodDeclarations() {
+    public static String[] getObjectVtableMethodPointers() {
         String[] objectVtableMethodPointers =
                 new String[] {
-                        "Class __isa;",
-                        "void (*__delete)(__Object*);",
-                        "int32_t (*hashCode)(Object);",
-                        "bool (*equals)(Object, Object);",
-                        "Class (*getClass)(Object);",
-                        "String (*toString)(Object);"
+                        "Class __isa",
+                        "void (*__delete)(__Object*)",
+                        "int32_t (*hashCode)(Object)",
+                        "bool (*equals)(Object, Object)",
+                        "Class (*getClass)(Object)",
+                        "String (*toString)(Object)"
                 };
         return objectVtableMethodPointers;
     }
@@ -907,35 +928,35 @@ public class SegHelper {
 
 
     public static String[] getStringMethodDeclarations() {
-        String[] objectMethodDeclarations =
+        String[] stringMethodDeclarations =
                 new String[] {
-                    "static int32_t hashCode(String);",
-                    "static bool equals(String, Object);",
-                    "static String toString(String);",
-                    "static int32_t length(String);",
-                    "static char charAt(String, int32_t);",
+                    "static int32_t hashCode(String)",
+                    "static bool equals(String, Object)",
+                    "static String toString(String)",
+                    "static int32_t length(String)",
+                    "static char charAt(String, int32_t)",
                     "static String init(String __this) { return __this; }"
                 };
-        return objectMethodDeclarations;
+        return stringMethodDeclarations;
     }
 
-    public static String[] getStringVtableMethodDeclarations() {
-        String[] objectVtableMethodPointers =
+    public static String[] getStringVtableMethodPointers() {
+        String[] stringVtableMethodPointers =
                 new String[] {
-                        "Class __isa;",
-                        "void (*__delete)(__String*);",
-                        "int32_t (*hashCode)(String);",
-                        "bool (*equals)(String, Object);",
-                        "Class (*getClass)(String);",
-                        "String (*toString)(String);",
-                        "int32_t (*length)(String);",
-                        "char (*charAt)(String, int32_t);"
+                        "Class __isa",
+                        "void (*__delete)(__String*)",
+                        "int32_t (*hashCode)(String)",
+                        "bool (*equals)(String, Object)",
+                        "Class (*getClass)(String)",
+                        "String (*toString)(String)",
+                        "int32_t (*length)(String)",
+                        "char (*charAt)(String, int32_t)"
                 };
-        return objectVtableMethodPointers;
+        return stringVtableMethodPointers;
     }
 
     public static String[] getStringVtableMethodInitializers() {
-        String[] objectVtableMethodInitializers =
+        String[] stringVtableMethodInitializers =
                 new String[] {
                         "__isa(__String::__class())",
                         "__delete(&__rt::__delete<__String>)",
@@ -946,6 +967,6 @@ public class SegHelper {
                         "length(&__String::length)",
                         "charAt(&__String::charAt)"
                 };
-        return objectVtableMethodInitializers;
+        return stringVtableMethodInitializers;
     }
 }
