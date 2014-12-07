@@ -552,7 +552,7 @@ public class SegHelper {
 	 * @param n method declaration node
 	 */
 	public static void genVTable(){
-		if(mbuffer.size() == 0) return;
+//		if(mbuffer.size() == 0) return;
 		// <return_type> (*<method name>)(<parameter type>);
 		hppWriter.pln("struct __" + getCurrClass() + "_VT {");
 
@@ -560,7 +560,7 @@ public class SegHelper {
 		 * produce struct <class_name>_VT data fields (function pointers)
 		 */
 
-		hppWriter.pln("Class __isa");
+		hppWriter.pln("\tClass __isa;");
 		for (int k=0; k<mbuffer.size(); k++){
 			String fptr="\t"+rbuffer.get(k)+"(*"+mbuffer.get(k)+")(";
 			int Q=0;
