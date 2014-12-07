@@ -859,4 +859,5 @@ public class SegHelper {
                 "\t} ";
         return mainMethodArgumentsAsSmartPointers;
     }
+
 }
