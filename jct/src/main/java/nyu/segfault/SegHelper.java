@@ -153,7 +153,7 @@ public class SegHelper {
         final boolean isPrivate = false;
 
         final GNode root = n;
-        final String return_type=n.getNode(2).toString();
+        final String return_type = n.getNode(2) == null ? "" : n.getNode(2).toString();
         try {
             method_return_type = n.getNode(2).getNode(0).getString(0);
         }
@@ -476,7 +476,7 @@ public class SegHelper {
 		rbuffer=new ArrayList<String>();
 		pbuffer=new ArrayList<ArrayList<String>>();
 		setCurrClass(n.getString(1));
-		return  "struct "+ n.getString(1);
+		return  "struct __"+ n.getString(1);
 	}
 	/**
 	 * @param node subclass node
@@ -506,9 +506,11 @@ public class SegHelper {
         }
 		String return_type="";
 
-		if(j2c(n.getNode(2).toString()).equals("void")) return_type="void";
-
-		else{
+		if(n.getNode(2) == null) {  // THIS IS THE CONSTRUCTOR, WHICH HAS NO RETURN TYPE.
+            return_type = "";
+        } else if (j2c(n.getNode(2).toString()).equals("void")) {
+            return_type="void";
+        } else {
 			new Visitor(){
 				public String rtype="";
 
@@ -544,7 +546,7 @@ public class SegHelper {
 		return null;
 	}
 	/**
-	 * create the vtable for the coressponding class
+	 * create the virtual table for the corresponding class
 	 * and save function pointer to tree
 	 * which includes function pointers and class information
 	 * @param n method declaration node
@@ -552,8 +554,7 @@ public class SegHelper {
 	public static void genVTable(){
 		if(mbuffer.size() == 0) return;
 		// <return_type> (*<method name>)(<parameter type>);
-		hppWriter.pln("struct "+getCurrClass()+"_VT");
-		hppWriter.pln("{");
+		hppWriter.pln("struct __" + getCurrClass() + "_VT {");
 
 		/**
 		 * produce struct <class_name>_VT data fields (function pointers)
@@ -592,7 +593,7 @@ public class SegHelper {
 			else fref+=",";
 			hppWriter.pln(fref);
 		}
-		hppWriter.pln("};");
+		hppWriter.pln("};\n");
 	}
 	/**
 	 * buffer to communication between anonymous inner classes and SegHelper
@@ -811,7 +812,7 @@ public class SegHelper {
 
         /* Determine the return type. */
         if (j2c(n.getNode(2).toString()).equals("void")) {
-	        returnType.append("void");
+            returnType.append("void");
         } else {
             new Visitor() {
                 public void visitQualifiedIdentifier(GNode n) {

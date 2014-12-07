@@ -44,19 +44,15 @@ public class SegHead extends Visitor{
 	public void visitCompilationUnit(GNode n){
 		SegHelper.writeMacros();
 		SegHelper.endMacroScopes();
-        SegHelper.pln("");
+        SegHelper.hpp_pln("");
         SegHelper.hpp_pln("using namespace java::lang;\n");
         SegHelper.hpp_pln("struct __" + SegHelper.getFileName() + ";");
         SegHelper.hpp_pln("struct __" + SegHelper.getFileName() + "_VT;");
-        SegHelper.hpp_pln("typedef __rt::Ptr<__" + SegHelper.getFileName() + "> __" + SegHelper.getFileName() + ";\n");
+        SegHelper.hpp_pln("typedef __rt::Ptr<__" + SegHelper.getFileName() + "> " + SegHelper.getFileName() + ";\n");
         visit(n);
     }
 	public void visitClassDeclaration(GNode n){
-		SegHelper.hpp_pln(SegHelper.getClassDeclaration(n));
-		SegHelper.hpp_pln("{");
-
-		//SegHelper.hpp_pln("\t"+n.getString(1)+"_VT* vptr;" );
-
+		SegHelper.hpp_pln(SegHelper.getClassDeclaration(n) + " {");
 
 		this.privateHPP = new HashSet<String>();
 		this.publicHPP = new HashSet<String>();
@@ -66,14 +62,12 @@ public class SegHead extends Visitor{
 		String super_class=SegHelper.getSuperClass(n);
 		if(super_class == null){
 			SegHelper.Root.addChild(new CppClass(SegHelper.getClassName(n)));
-		}
-
-		else{
+		} else{
 			SegNode<CppClass> parent=SegHelper.Root.dfs(SegHelper.Root,new CppClass(super_class));
 			parent.addChild(new CppClass(SegHelper.getClassName(n)));
 		}
 		visit(n);
-		SegHelper.hpp_pln("};");
+		SegHelper.hpp_pln("};\n");
 
 		/**generate vtable for that respective class*/
 		SegHelper.genVTable();
@@ -81,11 +75,12 @@ public class SegHead extends Visitor{
 
 
 	public void visitMethodDeclaration(GNode n){
+        if (n.getNode(2) == null) return;  // This is a constructor
+
 		String method_decl=SegHelper.getMethodDeclaration(n,SegHelper.getCurrClass());
 		if(method_decl != null){
 			SegHelper.hpp_pln("\t"+method_decl);
 		}
-
         String pointer = SegHelper.getPointerFromMethodDeclaration(n);
         System.out.println(pointer);
 	}
