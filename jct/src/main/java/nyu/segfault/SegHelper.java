@@ -56,6 +56,9 @@ public class SegHelper {
     /**@var The symbol table corresponding to the Java input file. */
     public static SymbolTable symbolTable;
 
+    /**@var A list of all class names that are declared in the Java input file. */
+    public static ArrayList<String> allDeclaredClassNames;
+
 
 	/**
 	 * set the file_name data field and create files
@@ -500,7 +503,7 @@ public class SegHelper {
 
         if(getMethodName(n).equals("main")) {
             if (className.contains("SegImp")) {
-                return "int main(int argc, const char* argv[]);";
+                return "static void main(__rt::Ptr<__rt::Array<String> > args);";
             }
             else return null;  // The header doesn't include a main method.
         }

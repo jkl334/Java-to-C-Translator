@@ -74,6 +74,9 @@ public class Translator extends xtc.util.Tool {
         // Set SegHelper's symbol table to the newly-constructed.
         SegHelper.symbolTable = table;
 
+        SegHelper.allDeclaredClassNames = new ArrayList<String>();
+        new ClassInformation().dispatch(node);
+
 	    new SegHead().dispatch(node);
 	    new SegImp().dispatch(node);
 
@@ -86,4 +89,9 @@ public class Translator extends xtc.util.Tool {
 		files = args;
 		new Translator().run(args);
 	}
+
+    class ClassInformation extends Visitor {
+        public void visitClassDeclaration(GNode n) { SegHelper.allDeclaredClassNames.add(n.getString(1)); visit(n); }
+        public void visit(GNode n) { for (Object o : n) if (o instanceof Node) dispatch((Node) o); } ;
+    }
 }

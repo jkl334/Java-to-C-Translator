@@ -48,10 +48,16 @@ public class SegHead extends Visitor{
         SegHelper.hpp_pln("using namespace java::lang;\n");
         SegHelper.hpp_pln("struct __" + SegHelper.getFileName() + ";");
         SegHelper.hpp_pln("struct __" + SegHelper.getFileName() + "_VT;");
-        SegHelper.hpp_pln("typedef __rt::Ptr<__" + SegHelper.getFileName() + "> " + SegHelper.getFileName() + ";\n");
+
+        for (String className : SegHelper.allDeclaredClassNames) {
+            SegHelper.hpp_pln("typedef __rt::Ptr<__" + className + "> " + className + ";");
+        }
+        SegHelper.hpp_pln("");
+
         visit(n);
     }
 	public void visitClassDeclaration(GNode n){
+
 		SegHelper.hpp_pln(SegHelper.getClassDeclaration(n) + " {");
         SegHelper.hpp_pln("\t__" + SegHelper.getClassName(n) + "_VT* __vptr;  // Virtual table pointer. \n");
 
@@ -70,7 +76,8 @@ public class SegHead extends Visitor{
 		}
 		visit(n);
 
-        SegHelper.hpp_pln("\t// The function returning the class object representing " + SegHelper.getClassName(n) + ".");
+
+        SegHelper.hpp_pln("\n\t// The function returning the class object representing " + SegHelper.getClassName(n) + ".");
         SegHelper.hpp_pln("\tstatic Class __class();\n");
         SegHelper.hpp_pln("\t// The vtable for " + SegHelper.getClassName(n) + ".");
         SegHelper.hpp_pln("\tstatic __" + SegHelper.getClassName(n) + "_VT __vtable;");
