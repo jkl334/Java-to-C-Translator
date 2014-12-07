@@ -865,6 +865,8 @@ public class SegHelper {
 
 
 
+
+
     public static String[] getObjectMethodDeclarations() {
         String[] objectMethodDeclarations =
                 new String[] {
@@ -903,4 +905,47 @@ public class SegHelper {
         return objectVtableMethodInitializers;
     }
 
+
+    public static String[] getStringMethodDeclarations() {
+        String[] objectMethodDeclarations =
+                new String[] {
+                    "static int32_t hashCode(String);",
+                    "static bool equals(String, Object);",
+                    "static String toString(String);",
+                    "static int32_t length(String);",
+                    "static char charAt(String, int32_t);",
+                    "static String init(String __this) { return __this; }"
+                };
+        return objectMethodDeclarations;
+    }
+
+    public static String[] getStringVtableMethodDeclarations() {
+        String[] objectVtableMethodPointers =
+                new String[] {
+                        "Class __isa;",
+                        "void (*__delete)(__String*);",
+                        "int32_t (*hashCode)(String);",
+                        "bool (*equals)(String, Object);",
+                        "Class (*getClass)(String);",
+                        "String (*toString)(String);",
+                        "int32_t (*length)(String);",
+                        "char (*charAt)(String, int32_t);"
+                };
+        return objectVtableMethodPointers;
+    }
+
+    public static String[] getStringVtableMethodInitializers() {
+        String[] objectVtableMethodInitializers =
+                new String[] {
+                        "__isa(__String::__class())",
+                        "__delete(&__rt::__delete<__String>)",
+                        "hashCode(&__String::hashCode)",
+                        "equals(&__String::equals)",
+                        "getClass((Class(*)(String))&__Object::getClass)",
+                        "toString(&__String::toString)",
+                        "length(&__String::length)",
+                        "charAt(&__String::charAt)"
+                };
+        return objectVtableMethodInitializers;
+    }
 }
