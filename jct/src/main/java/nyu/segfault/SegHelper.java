@@ -118,8 +118,6 @@ public class SegHelper {
 
 			for (String stlMacro : stlMacros )
 				hppWriter.pln("#include "+stlMacro);
-
-			hppWriter.pln("using namespace java::lang;");
 		}
 
 		else if(stack[2].getClassName().contains("SegImp")){

@@ -43,9 +43,14 @@ public class SegHead extends Visitor{
 	}
 	public void visitCompilationUnit(GNode n){
 		SegHelper.writeMacros();
-		visit(n);
 		SegHelper.endMacroScopes();
-	}
+        SegHelper.pln("");
+        SegHelper.hpp_pln("using namespace java::lang;\n");
+        SegHelper.hpp_pln("struct __" + SegHelper.getFileName() + ";");
+        SegHelper.hpp_pln("struct __" + SegHelper.getFileName() + "_VT;");
+        SegHelper.hpp_pln("typedef __rt::Ptr<__" + SegHelper.getFileName() + "> __" + SegHelper.getFileName() + ";\n");
+        visit(n);
+    }
 	public void visitClassDeclaration(GNode n){
 		SegHelper.hpp_pln(SegHelper.getClassDeclaration(n));
 		SegHelper.hpp_pln("{");
