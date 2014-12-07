@@ -863,4 +863,44 @@ public class SegHelper {
         return mainMethodArgumentsAsSmartPointers;
     }
 
+
+
+    public static String[] getObjectMethodDeclarations() {
+        String[] objectMethodDeclarations =
+                new String[] {
+                    "static int32_t hashCode(Object);",
+                    "static bool equals(Object, Object);",
+                    "static Class getClass(Object);",
+                    "static String toString(Object);",
+                    "static Object init(Object __this) { return __this; }"
+                 };
+        return objectMethodDeclarations;
+    }
+
+    public static String[] getObjectVtableMethodDeclarations() {
+        String[] objectVtableMethodPointers =
+                new String[] {
+                        "Class __isa;",
+                        "void (*__delete)(__Object*);",
+                        "int32_t (*hashCode)(Object);",
+                        "bool (*equals)(Object, Object);",
+                        "Class (*getClass)(Object);",
+                        "String (*toString)(Object);"
+                };
+        return objectVtableMethodPointers;
+    }
+
+    public static String[] getObjectVtableMethodInitializers() {
+        String[] objectVtableMethodInitializers =
+                new String[] {
+                        "__isa(__Object::__class())",
+                        "__delete(&__rt::__delete<__Object>)",
+                        "hashCode(&__Object::hashCode)",
+                        "equals(&__Object::equals)",
+                        "getClass(&__Object::getClass)",
+                        "toString(&__Object::toString)"
+        };
+        return objectVtableMethodInitializers;
+    }
+
 }
