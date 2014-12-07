@@ -53,8 +53,10 @@ public class SegHead extends Visitor{
     }
 	public void visitClassDeclaration(GNode n){
 		SegHelper.hpp_pln(SegHelper.getClassDeclaration(n) + " {");
+        SegHelper.hpp_pln("\t__" + SegHelper.getFileName() + "_VT* __vptr;  // Virtual table pointer. \n");
 
-		this.privateHPP = new HashSet<String>();
+
+        this.privateHPP = new HashSet<String>();
 		this.publicHPP = new HashSet<String>();
 		this.privateHPPMethods = new HashSet<String>();
 		this.publicHPPMethods = new HashSet<String>();
@@ -67,7 +69,7 @@ public class SegHead extends Visitor{
 			parent.addChild(new CppClass(SegHelper.getClassName(n)));
 		}
 		visit(n);
-		SegHelper.hpp_pln("};\n");
+		SegHelper.hpp_pln("};\n\n");
 
 		/**generate vtable for that respective class*/
 		SegHelper.genVTable();
