@@ -916,7 +916,7 @@ public class SegHelper {
     public static String[] getObjectVtableMethodInitializers() {
         String[] objectVtableMethodInitializers =
                 new String[] {
-                        "__isa(__Object::__class())",
+                        "__isa(__Object::__class()),",
                         "__delete(&__rt::__delete<__Object>)",
                         "hashCode(&__Object::hashCode)",
                         "equals(&__Object::equals)",

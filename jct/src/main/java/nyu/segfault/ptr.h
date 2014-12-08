@@ -110,7 +110,7 @@ namespace __rt {
     bool operator==(const Ptr<U,Q>& other) const {
       return addr == (T*)other.addr;
     }
-    
+
     template<typename U, template <typename> class Q>
     bool operator!=(const Ptr<U,Q>& other) const {
       return addr != (T*)other.addr;

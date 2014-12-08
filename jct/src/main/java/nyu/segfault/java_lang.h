@@ -154,7 +154,7 @@ namespace java {
       String (*toString)(String);
       int32_t (*length)(String);
       char (*charAt)(String, int32_t);
-      
+
       __String_VT()
       : __isa(__String::__class()),
         __delete(&__rt::__delete<__String>),
@@ -273,7 +273,7 @@ namespace java {
 
     class ArrayIndexOutOfBoundsException : public IndexOutOfBoundsException {
     };
-    
+
   }
 }
 
@@ -339,7 +339,7 @@ namespace __rt {
     bool (*equals)(Reference, java::lang::Object);
     java::lang::Class (*getClass)(Reference);
     java::lang::String (*toString)(Reference);
-    
+
     Array_VT()
     : __isa(Array<T>::__class()),
       __delete(&Array<T>::__delete),

@@ -57,7 +57,7 @@ public class JavaPrinter extends Visitor {
    * conditional expression nonterminal.
    */
   public static final int PREC_CONSTANT = 1;
-  
+
   /** The flag for any statement besides an if or if-else statement. */
   public static final int STMT_ANY = 0;
 
@@ -251,10 +251,10 @@ public class JavaPrinter extends Visitor {
       printer.p(n);
     }
   }
-  
+
   /**
    * Print empty square brackets for the given number of dimensions.
-   * 
+   *
    * @param n Number of dimensions to print.
    */
   protected void formatDimensions(final int n) {
@@ -284,10 +284,10 @@ public class JavaPrinter extends Visitor {
     isOpenLine     = false;
     boolean nested = isNested;
     isNested       = false;
-		
+
     return nested;
   }
- 
+
   /**
    * Prepare for a nested statement.
    *
@@ -372,7 +372,7 @@ public class JavaPrinter extends Visitor {
     if (prec < precedence) {
       printer.p('(');
     }
-		
+
     int old    = precedence;
     precedence = prec;
     return old;
@@ -409,18 +409,18 @@ public class JavaPrinter extends Visitor {
 
     printDeclsAndStmts(n);
   }
-    
+
   /** Visit the specified package declaration. */
-  public void visitPackageDeclaration(GNode n) {  
+  public void visitPackageDeclaration(GNode n) {
     GNode qid   = n.getGeneric(1);
     packageName = fold(qid, qid.size());
 
     printer.indent().p(n.getNode(0)).p("package ").p(n.getNode(1)).pln(';');
     isOpenLine  = false;
   }
-  
+
   /** Visit the specified import declaration. */
-  public void visitImportDeclaration(GNode n) {  
+  public void visitImportDeclaration(GNode n) {
     String p = getPackage(n);
     if ((null != packageName) && (! p.equals(packageName))) printer.pln();
     packageName = p;
@@ -432,7 +432,7 @@ public class JavaPrinter extends Visitor {
     printer.pln(';');
     isOpenLine  = false;
   }
-  
+
   /** Visit the specified modifiers. */
   public void visitModifiers(GNode n) {
     for (Object o : n) printer.p((Node)o).p(' ');
@@ -442,7 +442,7 @@ public class JavaPrinter extends Visitor {
   public void visitModifier(GNode n) {
     printer.p(n.getString(0));
   }
-  
+
   /** Visit the specified formal parameter. */
   public void visitFormalParameter(GNode n) {
     final int size = n.size();
@@ -453,12 +453,12 @@ public class JavaPrinter extends Visitor {
     if (null != n.get(size-3)) printer.p(n.getString(size-3));
     printer.p(' ').p(n.getString(size-2)).p(n.getNode(size-1));
   }
-  
+
   /** Visit the specified final clause. */
   public void visitFinalClause(GNode n) {
     printer.p("final");
   }
-  
+
   /** Visit the specified formal parameters. */
   public void visitFormalParameters(GNode n) {
     printer.p('(');
@@ -529,13 +529,13 @@ public class JavaPrinter extends Visitor {
     printer.pln('{').incr();
 
     printDeclsAndStmts(n);
-		
+
     printer.decr().indent().p('}');
     isOpenLine    = true;
     isNested      = false;
     isIfElse      = false;
   }
-  
+
   /** Visit the specified field declaration. */
   public void visitFieldDeclaration(GNode n) {
     printer.indent().p(n.getNode(0)).p(n.getNode(1)).p(' ').p(n.getNode(2)).
@@ -543,7 +543,7 @@ public class JavaPrinter extends Visitor {
     isDeclaration = true;
     isOpenLine    = false;
   }
-  
+
   /** Visit the specified method declaration. */
   public void visitMethodDeclaration(GNode n) {
     printer.indent().p(n.getNode(0));
@@ -567,9 +567,9 @@ public class JavaPrinter extends Visitor {
     }
     isOpenLine = false;
   }
-		
+
   /** Visit the specified constructor declaration. */
-  public void visitConstructorDeclaration(GNode n) { 
+  public void visitConstructorDeclaration(GNode n) {
     printer.indent().p(n.getNode(0));
     if (null != n.get(1)) printer.p(n.getNode(1));
     printer.p(n.getString(2)).p(n.getNode(3));
@@ -579,7 +579,7 @@ public class JavaPrinter extends Visitor {
     isOpenLine = true;
     printer.p(n.getNode(5));
   }
-  
+
   /** Visit the specified class declaration. */
   public void visitClassDeclaration(GNode n) {
     printer.indent().p(n.getNode(0)).p("class ").p(n.getString(1)).
@@ -595,7 +595,7 @@ public class JavaPrinter extends Visitor {
     isDeclaration = true;
     isOpenLine    = false;
   }
-		
+
   /** Visit the specified interface declaration. */
   public void visitInterfaceDeclaration(GNode n) {
     printer.indent().p(n.getNode(0)).p("interface ").p(n.getString(1)).
@@ -692,7 +692,7 @@ public class JavaPrinter extends Visitor {
     if (null != n.get(0)) {
       printer.p(n.getString(0));
       isOpenLine = true;
-    } 
+    }
     printer.p(n.getNode(1)).pln();
     isOpenLine = false;
   }
@@ -719,7 +719,7 @@ public class JavaPrinter extends Visitor {
       if (iter.hasNext()) printer.p(", ");
     }
    }
-  
+
   /** Visit the specified implementation. */
   public void visitImplementation(GNode n) {
     printer.p("implements ");
@@ -727,8 +727,8 @@ public class JavaPrinter extends Visitor {
       printer.p((Node)iter.next());
       if (iter.hasNext()) printer.p(", ");
     }
-  }		
-   
+  }
+
   /** Visit the specified block. */
   public void visitBlock(GNode n) {
     if (isOpenLine) {
@@ -786,7 +786,7 @@ public class JavaPrinter extends Visitor {
     printer.indent().p("for (").p(n.getNode(0)).p(')');
     prepareNested();
     printer.p(n.getNode(1));
-		
+
     endStatement(nested);
   }
 
@@ -814,12 +814,12 @@ public class JavaPrinter extends Visitor {
   /** Visit the specified enhanced for control. */
   public void visitEnhancedForControl(GNode n) {
     printer.p(n.getNode(0)).p(n.getNode(1)).p(' ').p(n.getString(2)).p(" : ");
-    
+
     final int prec = enterContext(PREC_BASE);
     printer.p(n.getNode(3));
     exitContext(prec);
   }
-  
+
   /** Visit the specified while statement. */
   public void visitWhileStatement(GNode n) {
     final boolean nested = startStatement(STMT_ANY);
@@ -881,7 +881,7 @@ public class JavaPrinter extends Visitor {
       if (iter.hasNext()) printer.pln(';').align(align);
     }
   }
-  
+
   /** Visit the specified catch clause. */
   public void visitCatchClause(GNode n) {
     printer.p("catch (").p(n.getNode(0)).p(")").p(n.getNode(1));
@@ -1048,7 +1048,7 @@ public class JavaPrinter extends Visitor {
       if (iter.hasNext()) printer.p(", ");
     }
   }
-  
+
   /** Visit the specified expression. */
   public void visitExpression(GNode n) {
     final int prec1 = startExpression(10);
@@ -1101,7 +1101,7 @@ public class JavaPrinter extends Visitor {
     exitContext(prec2);
     endExpression(prec1);
   }
-  
+
   /** Visit the specified bitwise or expression. */
   public void visitBitwiseOrExpression(GNode n) {
     final int prec1 = startExpression(50);
@@ -1112,7 +1112,7 @@ public class JavaPrinter extends Visitor {
     exitContext(prec2);
     endExpression(prec1);
   }
-  
+
   /** Visit the specified bitwise xor expression. */
   public void visitBitwiseXorExpression(GNode n) {
     final int prec1 = startExpression(60);
@@ -1221,7 +1221,7 @@ public class JavaPrinter extends Visitor {
     printer.p('!').p(n.getNode(0));
     endExpression(prec);
   }
-  
+
   /** Visit the specified basic cast expression. */
   public void visitBasicCastExpression(GNode n) {
     final int prec = startExpression(140);
@@ -1229,11 +1229,11 @@ public class JavaPrinter extends Visitor {
     if(null != n.get(1)) {
       printer.p(n.getNode(1));
     }
-    printer.p(')').p(n.getNode(2));  
-    
+    printer.p(')').p(n.getNode(2));
+
     endExpression(prec);
   }
-  
+
   /** Visit the specified cast expression. */
   public void visitCastExpression(GNode n) {
     final int prec = startExpression(140);
@@ -1301,7 +1301,7 @@ public class JavaPrinter extends Visitor {
     final int prec = startExpression(160);
     printer.p(n.getString(0));
     endExpression(prec);
-  }	  
+  }
 
   /** Visit the specified new class expression. */
   public void visitNewClassExpression(GNode n) {
@@ -1355,13 +1355,13 @@ public class JavaPrinter extends Visitor {
       if (iter.hasNext()) printer.p(", ");
     }
     printer.p(')');
-  } 
+  }
 
   /** Visit the specified void type specifier. */
   public void visitVoidType(GNode n) {
     printer.p("void");
   }
-	
+
   /** Visit the specified type. */
   public void visitType(GNode n) {
     printer.p(n.getNode(0));
@@ -1377,7 +1377,7 @@ public class JavaPrinter extends Visitor {
   /** Visit the specified primitive type. */
   public void visitPrimitiveType(GNode n) {
     printer.p(n.getString(0));
-  } 
+  }
 
   /** Visit the secified reference type. */
   public void visitInstantiatedType(GNode n) {
@@ -1488,7 +1488,7 @@ public class JavaPrinter extends Visitor {
   /** Visit the specified qualified identifier. */
   public void visitQualifiedIdentifier(GNode n) {
     final int prec = startExpression(160);
-   
+
     if (1 == n.size()) {
       printer.p(n.getString(0));
     } else {

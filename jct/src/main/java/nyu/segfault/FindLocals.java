@@ -30,7 +30,7 @@ public class FindLocals extends Visitor {
 
     table.enter(n);
     runtime.console().p("Entered scope ").pln(table.current().getName()).flush();
-    
+
     for (int i = 1; i < n.size(); i++) {
       GNode child = n.getGeneric(i);
       dispatch(child);
@@ -38,7 +38,7 @@ public class FindLocals extends Visitor {
 
     table.setScope(table.root());
   }
-  
+
   public void visitPackageDeclaration(final GNode n) {
     table.enter(n);
     runtime.console().p("Entered scope ").pln(table.current().getName()).flush();
@@ -71,7 +71,7 @@ public class FindLocals extends Visitor {
     visit(n);
     table.exit();
   }
-      
+
   public void visitPrimaryIdentifier(final GNode n) {
     String name = n.getString(0);
 
