@@ -1,41 +1,74 @@
 package nyu.segfault;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.io.Writer;
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 
-import xtc.lang.JavaAstSimplifier;
 import xtc.lang.JavaEntities;
 import xtc.lang.JavaExternalAnalyzer;
 import xtc.lang.JavaFiveParser;
+import xtc.lang.JavaPrinter;
+import xtc.lang.JavaAstSimplifier;
+
 import xtc.parser.ParseException;
 import xtc.parser.Result;
-import xtc.util.SymbolTable;
-import xtc.util.Tool;
+
 import xtc.tree.GNode;
 import xtc.tree.Node;
-import xtc.tree.Printer;
 import xtc.tree.Visitor;
+import xtc.tree.Printer;
+
+import xtc.util.Tool;
+import java.util.LinkedList;
+import xtc.util.SymbolTable;
+
+import java.util.logging.Logger;
+import java.util.logging.Handler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.SimpleFormatter;
+import java.util.logging.ConsoleHandler;
 
 
 
 
-public class Translator extends xtc.util.Tool {
+public class Translator extends Tool {
+	public final static Logger LOGGER = Logger.getLogger(SegDependency.class .getName());
 	public static String[] files; // an array used to store the files - args
+	
+	/** Create a new translator. */
+  	public Translator() {
+    	// Nothing to do.
+  	}
 
-
-	public interface ICommand {
-	    public void run();
-	}
-
-	  // Returns program description
+  	/* Returns program description */
 	public String getName() {
 	    return "SegFault - Java to C++ Translator";
 	}
 
-	  // Locates the file to be parsed
+  	public void init() {
+    	super.init();
+
+    	/* Declare command line arguments */
+    	runtime.
+    		bool("translate", "translate", false, "translate java to cpp");
+    }
+
+	public interface ICommand {
+	    public void run();
+	}
+  	public void prepare() {
+  		/* Perform consistency checks on command line arguments.*/
+    	super.prepare();
+  	}
+
+
+	 // Locates the file to be parsed
 	public File locate(String name) throws IOException {
 	    File file = super.locate(name);
 	    if (Integer.MAX_VALUE < file.length()) {
