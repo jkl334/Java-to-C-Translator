@@ -503,7 +503,8 @@ public class SegHelper {
 
         if(getMethodName(n).equals("main")) {
             if (className.contains("SegImp")) {
-                return "static void main(__rt::Ptr<__rt::Array<String> > args);";
+                //return "static void main(__rt::Ptr<__rt::Array<String> > args);";
+		return "int main(int argc,char** argv);";
             }
             else return null;  // The header doesn't include a main method.
         }
@@ -879,7 +880,7 @@ public class SegHelper {
         String mainMethodArgumentsAsSmartPointers =
                 "\t__rt::Ptr<__rt::Array<String> > args = new __rt::Array<String>(argc - 1);\n" +   // Declare smart pointer of type Array(Strings) with size args-1.
                 "\tfor (int32_t i = 1; i < argc; i++) {\n" +                                        // Loop through all arguments of the array parameter (except 1st).
-                "\t\t(*args)[i - 1] = __rt::literal(argv[i]);\n" +                                  // Dereferenced array contents set to args' contents.
+                "\t\t(*argv)[i - 1] = __rt::literal(argv[i]);\n" +                                  // Dereferenced array contents set to args' contents.
                 "\t} ";
         return mainMethodArgumentsAsSmartPointers;
     }
