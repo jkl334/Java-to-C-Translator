@@ -22,10 +22,11 @@ import java.util.LinkedList;
 import static org.junit.Assert.*;
 
 /**
- * Build the inheritance tree by creating nodes for each class and place them as children of Object. 
+ * Builds the inheritance tree by creating nodes for each class and place them as children of Object. 
  * Any class with "extends" gets a copy added to a stack. For everything in the stack, we look in the tree for it's parent and add the node as a child. 
  * Creates the headers for each class node. 
 */
+
 public class SegInheritance {
 	public GNode root;
 	public GNode stackNode; //A stack of nodes that have the extends keyword and thus must be moved in the tree to their correct place.
@@ -44,7 +45,7 @@ public class SegInheritance {
 	public SegInheritance(LinkedList<GNode> nodeList) {
 
 		for (GNode node : nodeList) {
-			setNodeOrderToJava(node);
+			setNodeOrder(node);
 		}
 
 		root = GNode.create("Object");
