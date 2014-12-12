@@ -34,6 +34,12 @@ public class SegHelper {
 
 	/**@var class inheritance tree */
 	public static final SegNode<CppClass> Root=new SegNode<CppClass>(new CppClass("Object"));
+	
+	/**@var methods part of java::lang::object static class **/
+	public static final String[] obj_methods=new String[]{"hashCode","equals","getClass","toString","init"};
+
+	/**@var current class node in inheritance tre **/
+	public static SegNode<CppClass> CNode;
 
 	/**@var current class name*/
 	public static String currClass;
@@ -287,9 +293,27 @@ public class SegHelper {
                                     method += n.getNode(0).getString(0);
                                     if (n.getString(2).isEmpty()) {
                                         method += "()";
-                                    } else if (n.getString(2).equals("toString")) {
+                                    } 
+				    /*else if (n.getString(2).equals("toString")) {
                                         method = "toString(" + method + ")";
-                                    } else {
+                                    }*/
+				    else {
+					SegNode<CppClass> target=SegHelper.Root.dfs(SegHelper.Root,new CppClass(SegHelper.getCurrClass()));
+					if(target.data.method_names.contains(n.getString(2))){
+						
+						/**insert relevant code if current class possesses the required method**/
+					}
+					else{
+						SegNode<CppClass> nparent=target.parent;
+						while(nparent != null){
+							if(nparent.data.method_names.contains(n.getString(2))){
+								
+								/**insert relevant code if parent class posesses the required method**/
+								
+								break;
+							}
+						}
+					}
                                         method += "->__vptr->" + n.getString(2) + "(";
                                         if (n.getNode(3).isEmpty()) method += ")";
                                     }
@@ -355,7 +379,6 @@ public class SegHelper {
 
 	public void visitCompilationUnit(GNode n) {
     }
-
 	/**
 	* Get the name of the method in visitMethodDeclaration.
 	*
@@ -546,6 +569,11 @@ public class SegHelper {
 			mbuffer.add(getMethodName(n));
 			rbuffer.add(return_type);
 
+			/**
+			 * write method name to tree
+			 **/
+			CNode.data.addMethodName(getMethodName(n));
+
             return "static " + return_type+" "+fp;
         } else if((s[2].getClassName().contains("SegImp"))) {
 			return return_type + " " + "__"+currClass + "::" + fp;
@@ -583,46 +611,8 @@ public class SegHelper {
             hppWriter.pln("\t  " + methodInitializers[initializer] + suffixCharacter);
         }
         hppWriter.pln("\t}");
-
         hppWriter.pln("};\n");
 
-//		if(mbuffer.size() == 0) return;
-//        <return_type> (*<method name>)(<parameter type>);
-//        /**
-//         * produce struct <class_name>_VT data fields (function pointers)
-//         */
-//		for (int k=0; k<mbuffer.size(); k++){
-//			String fptr="\t"+rbuffer.get(k)+"(*"+mbuffer.get(k)+")(";
-//			int Q=0;
-//			if((pbuffer.size() == 0) || (k >= pbuffer.size())  ) fptr+=");";
-//			else{
-//				for(String param : pbuffer.get(k)){
-//					if ( Q != pbuffer.get(k).size()-1)
-//						fptr+=param+",";
-//					else
-//						fptr+=param+");";
-//					Q++;
-//				}
-//			}
-//			hppWriter.pln(fptr);
-//
-//			/**
-//			 * add function pointer string to node in inheritance tree
-//			 */
-//			//SegNode<CppClass> node=SegHelper.Root.dfs(Root,new CppClass(getCurrClass()));
-//			//node.data.functionPtrs.add(fptr);
-//		}
-//		/**
-//		 * produce struct <class_name>_VT constructor and initialized
-//		 * initialized function form <function_name>(&<class_name>::<function_name>)
-//		 */
-//		hppWriter.pln("\t"+getCurrClass()+"_VT"+"():");
-//		for(int n=0; n<mbuffer.size();n++){
-//			String fref="\t\t"+mbuffer.get(n)+"(&"+getCurrClass()+"::"+mbuffer.get(n)+")";
-//			if(n == mbuffer.size() -1) fref+="{};";
-//			else fref+=",";
-//			hppWriter.pln(fref);
-//		}
 	}
 	/**
 	 * buffer to communication between anonymous inner classes and SegHelper
