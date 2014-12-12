@@ -8,7 +8,6 @@ import xtc.parser.Result;
 import java.io.File;
 import java.io.Reader;
 
-
 import java.util.Iterator;
 
 import xtc.tree.LineMarker;
@@ -26,23 +25,25 @@ import java.util.LinkedList;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
-/** Process java packages and import statements to produce list of files to be translated. */
-public class SegDependency extends Tool {
-	private final static Logger LOGGER = Logger.getLogger(SegDependency.class .getName()); 
+/* Handles dependency checking and adding */
+
+public class SegDependencyHandler extends Tool {
+
+  private final static Logger LOGGER = Logger.getLogger(SegDependencyHandler.class .getName());
 
   LinkedList<GNode> depList = new LinkedList<GNode>();
 
-	public SegDependency(LinkedList<GNode> ll){
+	public SegDependencyHandler(LinkedList<GNode> ll){
     depList = ll;
 	}
 
   public String getName(){
-    return "SegDependency";
+    return "SegDependencyHandler";
   }
 
-  /* fills the addresslist with the addresses of the dependencies */ 
+  /* fills the addresslist with the addresses of the dependencies */
   public void makeAddressList() {
-    LOGGER.setLevel(Level.INFO); 
+    LOGGER.setLevel(Level.INFO);
     for (int i = 0; i < depList.size(); i++) {
       if (depList.get(i) != null) {
         LOGGER.info("Looping through dependencies");
@@ -51,7 +52,6 @@ public class SegDependency extends Tool {
           /* visitExtension(GNode) will be called in the Inheritance Tree */
           /* visit the package and get all the files and then their nodes */
           public void visitPackageDeclaration(GNode n) {
-            /* WISH LIST: Check if we have already handled the package */
             String rootDir = System.getProperty("user.dir") + "/examples";
             String packageName;
             String path = getRelativePath(n);
@@ -60,21 +60,15 @@ public class SegDependency extends Tool {
             LOGGER.info("Package path: " + rootDir + path);
 
             processDirectory(rootDir + path, packageName);
-            
-
-            /* These files then have to each pass through SegDependency.java
-            before adding themselves to the list. */
 
             /* Pass a path to processPath() */
 
           }
-          /* visit the import statements and either get a single file or 
+          /* Visit the import statements and either get a single file or
              an entire folder */
           public void visitImportDeclaration(GNode n) {
-            LOGGER.setLevel(Level.INFO); 
+            LOGGER.setLevel(Level.INFO);
             LOGGER.info("Visiting import declaration");
-
-            /* There is no '*' character */
             if (n.getString(2) == null){
             LOGGER.info("Importing a file");
               String path = getNodeLoc(n) + getRelativePath(n);
@@ -98,13 +92,11 @@ public class SegDependency extends Tool {
       }
     }
   }
-  
-  /* return the depList . ONLY call after makeAddressList. */
+
   public LinkedList<GNode> makeNodeList() {
     return depList;
   }
 
-  /* returns a Java AST GNode */
   public GNode parse(Reader in, File file) throws IOException, ParseException {
     JavaFiveParser parser =
       new JavaFiveParser(in, file.toString(), (int)file.length());
@@ -112,7 +104,7 @@ public class SegDependency extends Tool {
     return (GNode)parser.value(result);
   }
 
-  /* returns the name of the packge given the package declaration GNode */
+  /* Returns the name of the packge given the package declaration GNode */
   private String getPackageName(GNode n){
     GNode qualId = (GNode)n.getNode(1);
     String name = "";
@@ -125,33 +117,30 @@ public class SegDependency extends Tool {
     return name;
   }
 
-  /* returns the path of the package or import statement given a GNode */
+  /* Returns the path of the package or import statement given a GNode */
   private String getRelativePath(GNode n){
     String path = "";
     Node qualId = n.getNode(1);
     for (int i = 0; i<qualId.size(); i++){
-      LOGGER.info("Appending: " + "/" + qualId.get(i).toString());
       path += "/" + qualId.get(i).toString();
     }
-    LOGGER.info("Got folder path: " + path);
     return path;
   }
 
-  /* gets the filepath of the node */
+  /* Gets the filepath of the node */
   private String getNodeLoc(GNode n){
     String nodeLoc = n.getLocation().toString();
     nodeLoc = nodeLoc.substring(0, nodeLoc.lastIndexOf("/"));
-    LOGGER.info("node loc is " + nodeLoc);
     return nodeLoc;
   }
 
-  /* used for importing an entire folder, basically calls processDirectory with an empty
-     package declaration */
+  /* Calls processDirectory with an empty
+     package declaration to import an entire folder */
   private void processDirectory(String path){
     processDirectory(path, "");
   }
 
-  /* get all the files in the directory and obtain their Java AST's  and then
+  /* Get all the files in the directory and obtain their Java AST's  and then
      put them in the deplist by calling processNode(node)*/
   private void processDirectory(String path, String packageName){
     File folder = new File(path);
@@ -167,7 +156,6 @@ public class SegDependency extends Tool {
           if (node.getNode(0) != null){
             if (packageName.length() > 0) {
               if (getPackageName((GNode)node.getNode(0)).equals(packageName)){
-                LOGGER.info(files[i] + " is in the package.");
                 processNode(node);
               }
             }
@@ -180,13 +168,13 @@ public class SegDependency extends Tool {
           LOGGER.warning("IO Exception on " + files[i].getPath());
         }
         catch (ParseException e){
-          LOGGER.warning("Parse Exception");          
+          LOGGER.warning("Parse Exception");
         }
-      } 
+      }
     }
   }
 
-  /* used for a single import file */
+  /* Used for a single import file */
   private void processFile(File file){
     try {
           Reader in = runtime.getReader(file);
@@ -197,25 +185,22 @@ public class SegDependency extends Tool {
           LOGGER.warning("IO Exception on " + file.getPath());
         }
         catch (ParseException e){
-          LOGGER.warning("Parse Exception");          
+          LOGGER.warning("Parse Exception");
         }
   }
 
-  /* check to see if the node is already in the list. if not then add it */
+  /* Check to see if the node is already in the list. if not then add it */
   private void processNode(GNode n){
     if (!depList.contains(n)){
       depList.add(n);
-      LOGGER.info("--- Added " + n.getLocation().toString() + " to the list.");
     }
   }
-  
+
 
   /* Remove any dependencies that are not actually used */
   public void trimDependencies(){
     /*
-      We can check if a class is actually used with
-      visitCallExpression(Gnode n)
+      Not sure if this is really necessary though
     */
   }
-
 }
