@@ -223,7 +223,9 @@ public class SegHelper {
                 mBod.append("\t");  // Return statements will generally be indented (since they are located in the method body).
                 if (n.getNode(0) != null) mBod.append("return ");
                 new Visitor() {  // Visit assigned value if any
-                    public void visitStringLiteral(GNode n) { mBod.append(n.getString(0)); }  // Should not be returned as a smart pointer.
+                    public void visitStringLiteral(GNode n) { 
+			    mBod.append("__String("+n.getString(0)+")"); 
+		    }  // Should not be returned as a smart pointer.
                     public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
@@ -503,33 +505,36 @@ public class SegHelper {
 
         if(getMethodName(n).equals("main")) {
             if (className.contains("SegImp")) {
-                return "static void main(__rt::Ptr<__rt::Array<String> > args);";
+                //return "static void main(__rt::Ptr<__rt::Array<String> > args);";
+		return "int main(int argc,char** argv);";
             }
             else return null;  // The header doesn't include a main method.
         }
 		String return_type="";
 
-		if(n.getNode(2) == null) {  // THIS IS THE CONSTRUCTOR, WHICH HAS NO RETURN TYPE.
+	if(n.getNode(2) == null) {  // THIS IS THE CONSTRUCTOR, WHICH HAS NO RETURN TYPE.
             return_type = "";
-        } else if (j2c(n.getNode(2).toString()).equals("void")) {
+        } 
+	else if (j2c(n.getNode(2).toString()).equals("void")) {
             return_type="void";
-        } else {
-			new Visitor(){
-				public String rtype="";
+        } 
+	else {
+		new Visitor(){
+			public String rtype="";
 
-				/**
-				 * extract return type
-				 */
-				public void visitQualifiedIdentifier(GNode n){
-					SegHelper.setBuffer(SegHelper.j2c(n.getString(0)));
-				}
-				public void visit(GNode n) {
-					for (Object o : n) if (o instanceof Node) dispatch((Node) o);
+			/**
+			 * extract return type
+			 */
+			public void visitQualifiedIdentifier(GNode n){
+				SegHelper.setBuffer(SegHelper.j2c(n.getString(0)));
+			}
+			public void visit(GNode n) {
+				for (Object o : n) if (o instanceof Node) dispatch((Node) o);
 
-				}
-			}.dispatch(n.getNode(2));
-			return_type=buffer;
-		}
+			}
+		}.dispatch(n.getNode(2));
+		return_type=buffer;
+	}
 
 		String fp=getMethodName(n)+"(";
 		if(n.getNode(4).size() == 0) fp+=");";
@@ -543,7 +548,7 @@ public class SegHelper {
 
             return "static " + return_type+" "+fp;
         } else if((s[2].getClassName().contains("SegImp"))) {
-			return return_type + " " + currClass + "::" + fp;
+			return return_type + " " + "__"+currClass + "::" + fp;
         }
 
 		return null;
@@ -711,11 +716,15 @@ public class SegHelper {
 	 *  @return formated c++ type
 	 */
 	private static String j2c(String jType){
+		System.out.println(jType);
 		String cType = "";
 		if (jType.equals("String")) cType="__String";
-        else if (jType.equals("Object")) cType = "__Object";
+        	else if (jType.equals("Object")) cType = "__Object";
 		else if(jType.equals("VoidType()")) cType="void";
 		else if (jType.equals("Integer")) cType="int";
+		else{
+			cType="__"+jType;
+		}
 		return cType;
 	}
 
