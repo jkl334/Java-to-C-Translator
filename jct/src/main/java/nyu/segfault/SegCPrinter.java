@@ -17,14 +17,12 @@ import xtc.tree.Visitor;
 /* Based off of src/xtc/lang/CPrinter.java */
 
 public class SegCPrinter extends Visitor {
-  private static final boolean VERBOSE = false;
   LinkedList<String> classFields = new LinkedList<String>();
 
   protected Printer printer;
   protected Printer header;
   public GNode root;
-
-
+  private boolean visitedConstructor;
   private String packageName;
   private String className;
   private String javaClassName;
@@ -34,7 +32,7 @@ public class SegCPrinter extends Visitor {
     printer.register(this);
 	}
 
-  public void visitLoveFieldDeclaration(GNode n){
+  public void visitSegFieldDeclaration(GNode n){
     StringBuilder sb = new StringBuilder();
     sb.append(n.getNode(1).getString(0));
     classFields.add(sb.toString());
@@ -49,7 +47,6 @@ public class SegCPrinter extends Visitor {
     visit(n);
   }
 
-  /* TRICKY need to have the namespace scope */
   public void visitPackageDeclaration(GNode n) {
     GNode qid  = n.getGeneric(1);
     int   size = qid.size();
@@ -64,10 +61,11 @@ public class SegCPrinter extends Visitor {
   }
 
 	public void visitClassBody(GNode n) {
-    /* Begin the namespace. */
+    // Begin the namespace
     printer.incr();
     printlnUnlessNull("namespace " + packageName + " {", packageName);
     visit(n);
+    printFallbackConstructor();
 
     printClassMethod();
 
@@ -86,12 +84,10 @@ public class SegCPrinter extends Visitor {
     else {
     printer.p(n.getNode(2));
     printer.p(" ");
-    // NEED: formal parameters
+
     printer.p(className + "::" + methodName);
     if (n.getNode(4).size() !=0) {
-      //printer.p("(").p(n.getNode(4)).p(") {");
       printer.p(n.getNode(4)).p(" {");
-      //printer.p("(parameters please)" + " {");
       printer.incr();
     }
     else {
@@ -124,11 +120,11 @@ public class SegCPrinter extends Visitor {
   }
 
   public void visitConstructorDeclaration(GNode n){
+    visitedConstructor = true;
     String constructorName = n.getString(2);
-    /* TODO: Allow constructor to accept parameters */
     printer.p(className + "::" + constructorName + "()" );
     printer.p(" : ");
-    printer.p("__vptr(&__vtable), ");
+    printer.p("__vptr(&__vtable)");
     visit(n);
     printer.p("{");
     printer.p("}");
@@ -278,6 +274,7 @@ public class SegCPrinter extends Visitor {
     else return;
   }
 
+
   private void printClassMethod(){
     if (javaClassName != null){
       printer.pln(className + "_VT " + className + "::__vtable;");
@@ -287,6 +284,17 @@ public class SegCPrinter extends Visitor {
       printer.pln("new __Class(__rt::literal(\"" + packageName + "." + javaClassName + "\"), (Class) __rt::null());");
       printer.pln("return k;");
       printer.pln("}");
+    }
+  }
+
+  private void printFallbackConstructor(){
+    if (!visitedConstructor){
+      printer.p(className + "::" + className + "()" );
+      printer.p(" : ");
+      printer.p("__vptr(&__vtable)");
+      printer.p("{");
+      printer.p("}");
+      printer.pln();
     }
   }
 

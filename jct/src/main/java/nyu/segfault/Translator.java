@@ -91,85 +91,96 @@ public class Translator extends Tool {
   }
 
   public void process(Node node) {
-    /* a list of Java AST nodes */
-    LinkedList<GNode> nodeList = new LinkedList<GNode>();
-    /* the main file's AST is at index 0 */
-    nodeList.add((GNode)node);
-    LOGGER.info("Calling SegDependencyHandler.java on " + node.getName());
-    SegDependencyHandler dep = new SegDependencyHandler(nodeList);
-    dep.makeAddressList();
-    nodeList = dep.makeNodeList();
-    /* now nodeList contain all the java files AST's */
-    LOGGER.info("Building inheritance tree:");
-    //Build the inheritance tree
-    SegInheritanceBuilder inheritanceTree = new SegInheritanceBuilder(nodeList);
-    // creates new output files
-
-
     String fileArgument = files[0];
     String[] filePath = fileArgument.split("/");
     int indexOfFileName = filePath.length - 1;
     this.setFileName(filePath[indexOfFileName]);
 
-      Writer outH = null;
-      try {
+    LinkedList<GNode> nodeList = new LinkedList<GNode>();
 
-          outH = new BufferedWriter(new OutputStreamWriter(
-                  new FileOutputStream("output/" + headFile), "utf-8"));
-          Printer pH = new Printer(outH);
+      /* Add input file to list at index 0 */
+      nodeList.add((GNode)node);
 
-          initOutputHFile(pH);
+      /* Scan for dependencies  */
+      LOGGER.info("Calling SegDependencyHandler.java on " + node.getName());
+      SegDependencyHandler dep = new SegDependencyHandler(nodeList);
+      dep.makeAddressList();
 
-          for (GNode listNode : nodeList){
-            LOGGER.info("Running SegTreePrinter on " + listNode.getLocation().toString());
-            GNode listNodeTree = inheritanceTree.parseNodeToInheritance(listNode);
-            new SegTreePrinter(pH).dispatch(listNodeTree);
-            runtime.console().format(listNodeTree).pln().flush();
-          }
+      /* Store the found dependencies as AST */
+      nodeList = dep.makeNodeList();
+      for (int i=0; i<nodeList.size();i++){
+        System.out.println(" -> " + nodeList.get(i).getLocation().toString());
+      }
+      
+      /* Build inheritance tree */
+      LOGGER.info("Building inheritance tree:");
+      SegInheritanceBuilder inheritanceTree = new SegInheritanceBuilder(nodeList);
 
-      } catch (IOException ex){
-        // report
-      } finally {
-         try {outH.close();} catch (Exception ex) {}
+      /* Write VTables to file 'output.h' */
+      LOGGER.info("Writing VTables to output.h");
+      writeInheritanceAsCPP(inheritanceTree, nodeList);
+
+      /* Make modifications to AST needed for printing */
+      LOGGER.info("Building AST:");
+      for (GNode listNode : nodeList){
+        new SegASTHelper().dispatch(listNode);
+        //runtime.console().format(listNode).pln().flush();
       }
 
+      /* Write each AST in the list to output.cc as CPP */
+        writeTreeAsCPP(nodeList);
+  }
+  
 
-    LOGGER.info("Modifying AST:");
-    for (GNode listNode : nodeList){
-      SegASTHelper CppT = new SegASTHelper(listNode);
-      CppT.dispatch(listNode);
-    }
-      Writer outCC = null;
-      Writer mainCC = null;
-
-      try {
-          outCC = new BufferedWriter(new OutputStreamWriter(
-                  new FileOutputStream("output/" + impFile), "utf-8"));
-          Printer pCC = new Printer(outCC);
-
-          mainCC = new BufferedWriter(new OutputStreamWriter(
-                  new FileOutputStream("output/main.cc"), "utf-8"));
-          Printer mCC = new Printer(mainCC);
-
-          initOutputCCFile(pCC);
-          initMainFile(mCC);
-
-          LOGGER.info("Running SegCPrinter on " + nodeList.getFirst().getLocation().toString());
-          new SegCPrinter(mCC).dispatch(nodeList.getFirst());
-          nodeList.removeFirst();
-          for (GNode listNode : nodeList){
-            LOGGER.info("Running SegCPrinter on " + listNode.getLocation().toString());
-            new SegCPrinter(pCC).dispatch(listNode);
-          }
-
-      } catch (IOException ex){
-        
-      } finally {
-         try {outCC.close();} catch (Exception ex) {}
-         try {outH.close();} catch (Exception ex) {}
-         try {mainCC.close();} catch (Exception ex) {}
+  /* Write VTables to file 'output.h'  */
+  /* This method must be called before ASTModifier runs. */
+  private void writeInheritanceAsCPP(SegInheritanceBuilder inheritanceTree, LinkedList<GNode> nodeList){
+    Writer outH = null;
+    try {
+      outH = new BufferedWriter(new OutputStreamWriter(
+              new FileOutputStream("output/" + headFile), "utf-8"));
+      Printer pH = new Printer(outH);
+      
+      LOGGER.info("calling initOutputHFile()");
+      initOutputHFile(pH);
+      for (GNode listNode : nodeList){
+        LOGGER.info("Running SegTreePrinter on " + listNode.getLocation().toString());
+        LinkedList<GNode> listNodeTree = inheritanceTree.parseNodeToInheritance(listNode);
+        for (GNode node : listNodeTree) {
+          new SegTreePrinter(pH).dispatch(node);
+          //runtime.console().format(node).pln().flush();
+        }
       }
+
+    } catch (IOException ex){
+      LOGGER.warning("IO Exception");
+    } finally {
+       try {outH.close();} catch (Exception ex) {LOGGER.warning("IO Exception");}
     }
+  }
+
+  private void writeTreeAsCPP(LinkedList<GNode> nodeList){
+    Writer outCC = null;
+
+    try {
+      outCC = new BufferedWriter(new OutputStreamWriter(
+              new FileOutputStream("output/" + impFile), "utf-8"));
+      Printer pCC = new Printer(outCC);
+
+      initOutputCCFile(pCC);
+      initMainFile(pCC);
+
+      for (GNode listNode : nodeList){
+        LOGGER.info("Running SegCPrinter on " + listNode.getLocation().toString());
+        new SegCPrinter(pCC).dispatch(listNode);
+      }
+
+    } catch (IOException ex){
+
+    } finally {
+       try {outCC.close();} catch (Exception ex) {}
+    }
+  }
 
   private void initOutputCCFile(Printer p){
     p.pln("#include \"" + headFile + "\"");

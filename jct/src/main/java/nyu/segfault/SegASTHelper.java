@@ -16,17 +16,11 @@ import xtc.tree.Visitor;
 public class SegASTHelper extends Visitor {
 
 	// Based of XTC's CPrinter
-  public GNode root;
   public String className;
   public String a,b,c;
-  public SegASTHelper(GNode n){
-    root = n;
-	}
+  public SegASTHelper(){
 
-  public GNode getRoot(){
-    return root;
   }
-
   public String getName(){
     return className;
   }
@@ -36,11 +30,13 @@ public class SegASTHelper extends Visitor {
   }
 
   public void visitPrimitiveType(GNode n){
-    if(n.getString(0).equals("int")){ n.set(0,"int32_t");}
+    if(n.getString(0).equals("int")){
+      n.set(0,"int32_t");
+    }
   }
 
   public void visitClassDeclaration(GNode n) {
-  	className = n.getString(1);
+    className = n.getString(1);
     n.set(1, "__" + className);
     n.set(3, null);
     visit(n);
@@ -49,7 +45,6 @@ public class SegASTHelper extends Visitor {
   public void visitPackageDeclaration(GNode n) {
     visit(n);
   }
-
   public void visitImportDeclaration(GNode n) {
     visit(n);
   }
@@ -58,19 +53,19 @@ public class SegASTHelper extends Visitor {
     visit(n);
     for (int i = 0; i< n.size(); i++) {
       if(n.getNode(i).hasName("FieldDeclaration")) {
-        GNode segFieldDeclaration = GNode.create("segFieldDeclaration");
-        GNode segType = GNode.create("segType");
-        GNode segDeclarator = GNode.create("segDeclarator");
+        GNode loveFieldDeclaration = GNode.create("LoveFieldDeclaration");
+        GNode loveType = GNode.create("LoveType");
+        GNode loveDeclarator = GNode.create("LoveDeclarator");
         String ls = n.getNode(i).getNode(1).getNode(0).getString(0);
         String rs = n.getNode(i).getNode(2).getNode(0).getString(0);
-        segType.add(ls);
-        segDeclarator.add(rs);
-        segFieldDeclaration.add(segType);
-        segFieldDeclaration.add(segDeclarator);
-        n.set(i,segFieldDeclaration);
+        loveType.add(ls);
+        loveDeclarator.add(rs);
+        loveFieldDeclaration.add(loveType);
+        loveFieldDeclaration.add(loveDeclarator);
+        n.set(i,loveFieldDeclaration);
       }
     }
-
+    
   }
 
   public void visitConstructorDeclaration(GNode n){
@@ -108,7 +103,11 @@ public class SegASTHelper extends Visitor {
     }
     GNode temp = n.getGeneric(0);
     if(temp != null && n.getNode(0).getString(0).equals(a)){
-      n.getNode(0).set(0,"("+b+")"+c);
+      GNode castS = GNode.create("CastS");
+      castS.add(a);
+      castS.add("("+b+")"+c);
+      //n.getNode(0).set(0,"("+b+")"+c);
+      n.set(0,castS);
     }
     visit(n);
   }
@@ -118,7 +117,7 @@ public class SegASTHelper extends Visitor {
   }
 
   public void visitFieldDeclaration(GNode n){
-	  visit(n);
+    visit(n);
   }
 
   public void visitDeclarator(GNode n){
@@ -129,7 +128,7 @@ public class SegASTHelper extends Visitor {
         c = n.getNode(2).getNode(1).getString(0);
       }
 
-	  visit(n);
+    visit(n);
   }
 
   public void visit(Node n) {
