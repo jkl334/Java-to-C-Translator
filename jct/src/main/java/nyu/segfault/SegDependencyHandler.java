@@ -195,12 +195,4 @@ public class SegDependencyHandler extends Tool {
       depList.add(n);
     }
   }
-
-
-  /* Remove any dependencies that are not actually used */
-  public void trimDependencies(){
-    /*
-      Not sure if this is really necessary though
-    */
-  }
 }

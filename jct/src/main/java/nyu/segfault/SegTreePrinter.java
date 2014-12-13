@@ -68,41 +68,40 @@ public class SegTreePrinter extends Visitor {
           if (!(n.get(0) == null)) printer.p(n.getNode(0));
           if (!(n.get(1) == null)) printer.p(n.getString(1)).p(" ");
     String methodName = n.getString(2);
-          printer.p(methodName);
-          printer.p("(");
-    if(methodName.equals("equals")){
-      printer.p(className + ", Object");
-    }
-    else if (methodName.equals("__class")){
-      printer.p("");
-    }
-    else if (methodName.equals("returnX")){
-      printer.p("String");
-    }
-    else{
-      printer.p(className);
-    }
+    printer.p(methodName);
+    printer.p("(");
+    
+    printer.p(n.getNode(4));
+    if ((n.getNode(4).size()==0) && !(n.getString(2).equals("__class"))){
+        printer.p(className);
+      }
+    
           printer.pln(");");
   }
 
-  public void visitVTable(GNode n){
+public void visitVTable(GNode n){
     printer.pln("struct __" + className + "_VT {");
     printer.pln("Class __isa;");
 
     new Visitor(){
       public void visitDataLayoutMethodDeclaration(GNode n){
         if(!(n.getString(2).equals("__class"))){
-          printer.p(n.getString(1) + " (*");
+          if (n.getString(1) != null) {
+            printer.p(n.getString(1) + " (*");
+          }
+          else {
+            printer.p("void" + " (*");
+          }
           printer.p(n.getString(2));
           printer.p(")(");
-          printer.p(className);
+          //printer.p(className);
+          printer.p(n.getNode(4));
+          if ((n.getNode(4).size()==0) && !(n.getString(2).equals("__class"))){
+            printer.p(className);
+          }
           printer.p(");");
           printer.pln();
         }
-      }
-
-      public void visitParameters(GNode n){
-        if (n.size() > 0) printer.p(n.getString(0));
       }
 
       public void visit(Node n) {
@@ -128,7 +127,11 @@ public class SegTreePrinter extends Visitor {
       printer.p(",");
       printer.pln();
       printer.p(n.getString(2)).p("(");
-      if (n.get(1) != null) printer.p("(").p(n.getString(1)).p("(*)(").p(className).p("))");
+      if (n.get(1) != null) {printer.p("(").p(n.getString(1)).p("(*)(").p(n.getNode(4));}
+      if (n.getNode(4).size()==0){
+        printer.p(className);
+      }
+      printer.p("))");
       printer.p(" &__" + n.getString(3) + "::" + n.getString(2));
       printer.p(")");
     }

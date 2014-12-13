@@ -1,11 +1,12 @@
 package nyu.segfault;
 
 import java.lang.*;
-
+import xtc.lang.JavaEntities;
 import java.util.Iterator;
-
+import xtc.Constants;
 import java.util.LinkedList;
 import xtc.tree.LineMarker;
+import xtc.tree.Attribute;
 import xtc.tree.Node;
 import xtc.tree.GNode;
 import xtc.tree.Pragma;
@@ -13,6 +14,9 @@ import xtc.tree.Printer;
 import xtc.tree.SourceIdentity;
 import xtc.tree.Token;
 import xtc.tree.Visitor;
+import xtc.util.SymbolTable;
+import xtc.util.SymbolTable.Scope;
+import xtc.type.*;
 
 /* Based off of src/xtc/lang/CPrinter.java */
 
@@ -26,9 +30,11 @@ public class SegCPrinter extends Visitor {
   private String packageName;
   private String className;
   private String javaClassName;
+  final private SymbolTable table;
 
-	public SegCPrinter(Printer p){
+	public SegCPrinter(Printer p, SymbolTable table){
     this.printer = p;
+    this.table = table;
     printer.register(this);
 	}
 
@@ -39,18 +45,35 @@ public class SegCPrinter extends Visitor {
   }
 
 	public void visitCompilationUnit(GNode n) {
-    visit(n);
+    if (null == n.get(0))
+      visitPackageDeclaration(null);
+    else
+      dispatch(n.getNode(0));
+
+    table.enter(n);
+    
+    for (int i = 1; i < n.size(); i++) {
+      GNode child = n.getGeneric(i);
+      dispatch(child);
+    }
+
+    table.setScope(table.root());
   }
 
 	public void visitClassDeclaration(GNode n) {
+    table.enter(n);
     className = n.getString(1);
     visit(n);
+    table.exit();
   }
 
   public void visitPackageDeclaration(GNode n) {
-    GNode qid  = n.getGeneric(1);
-    int   size = qid.size();
-    packageName = fold(qid,size);
+    if (! (n == null)){
+      table.enter(n);
+      GNode qid  = n.getGeneric(1);
+      int   size = qid.size();
+      packageName = fold(qid,size);
+    }
 
   }
   public void visitImportDeclaration(GNode n) {
@@ -65,15 +88,17 @@ public class SegCPrinter extends Visitor {
     printer.incr();
     printlnUnlessNull("namespace " + packageName + " {", packageName);
     visit(n);
-    printFallbackConstructor();
-
-    printClassMethod();
+    if (javaClassName != null) {
+      printFallbackConstructor();
+      printClassMethod(); 
+    }
 
     printlnUnlessNull("}",packageName); //Closing namespace
     printer.decr();
   }
 
   public void visitMethodDeclaration(GNode n){
+    table.enter(n);
     String methodName = n.getString(3);
     if (methodName.equals("main")) {
       printer.pln("int main(void){");
@@ -83,11 +108,16 @@ public class SegCPrinter extends Visitor {
     }
     else {
     printer.p(n.getNode(2));
+    if (n.getNode(2).hasName("VoidType")){
+      printer.p("void");
+    }
     printer.p(" ");
-
+    
     printer.p(className + "::" + methodName);
     if (n.getNode(4).size() !=0) {
+      
       printer.p(n.getNode(4)).p(" {");
+      
       printer.incr();
     }
     else {
@@ -97,14 +127,15 @@ public class SegCPrinter extends Visitor {
     printer.pln();
     printer.p(n.getNode(7));
     printer.pln("}");
+    }
+    table.exit();
   }
-  }
-  /** Visit the specified type. */
+  // Visit the specified type
   public void visitType(GNode n) {
     printer.p(n.getNode(0));
   }
 
-  /** Visit the specified primitive type. */
+  // Visit the specified primitive type
   public void visitPrimitiveType(GNode n) {
     printer.p(n.getString(0));
   }
@@ -114,9 +145,11 @@ public class SegCPrinter extends Visitor {
   }
 
   public void visitBlock(GNode n){
+    table.enter(n);
     visit(n);
     printer.decr();
     printer.pln();
+    table.exit();
   }
 
   public void visitConstructorDeclaration(GNode n){
@@ -142,44 +175,107 @@ public class SegCPrinter extends Visitor {
   }
   public void visitReturnStatement(GNode n){
     printer.p("return ");
-    visit(n);
-    printer.p(";").pln();
-  }
-
-  public void visitExpressionStatement(GNode n){
-
-    if ((n.getNode(0).getName().equals("CallExpression")) &&
-       (n.getNode(0).getNode(0).getString(0).equals("cout"))){
-        printer.p("cout << ");
-        printer.p(n.getNode(0).getNode(3).getNode(0).getNode(0).getString(0));
-        printer.p("->__vptr->");
-        String functionName = n.getNode(0).getNode(3).getNode(0).getString(2);
-        printer.p(functionName);
-        printer.p("(");
-        visit(n);
-        printer.p(")");
-        if (functionName.equals("toString")){
-          printer.p("->data");
-        }
-        printer.p(" <<endl");
+    if (n.getNode(0).getName().equals("StringLiteral")){
+      printer.p("new __String(");
+      visit(n);
+      printer.p(")");
     }
     else{
       visit(n);
     }
+    printer.p(";").pln();
+  }
+
+    public void visitExpressionStatement(GNode n){
+    visit(n);
     printer.pln(";");
+  }
+
+  public void visitCallExpression(GNode n){
+    printer.p(n.getNode(0));
+    printer.p("->__vptr->");
+    printer.p(n.getString(2) + "(");
+    printer.p(n.getNode(3));
+    printer.p(")");
+  }
+
+  public void visitArguments(GNode n){
+    for (int i = 0; i < n.size() ; i++){
+      printer.p(n.getNode(i));
+      if (! (i==n.size()-1)){
+        printer.p(",");
+      }
+    }
+  }  
+
+  public void visitCoutExpression(GNode n){
+    printer.p("cout << ");
+    visit(n);
+    printer.p(" <<endl");
+  }
+
+  public void visitCoutCallExpression(GNode n){
+    printer.p(n.getNode(0));
+    printer.p("->__vptr->");
+    String functionName = n.getString(1);
+    printer.p(functionName);
+    printer.p("(");
+    visit(n);
+    printer.p(")");
+    if (functionName.equals("toString")){
+      printer.p("->data");
+    }
+
+  }
+  public void visitCoutAdditiveExpression(GNode n){
+    String variableName = n.getNode(2).getString(0);
+    if (n.getNode(0).hasName("visitCoutAdditiveExpression")){
+      visit(n);
+    }
+    else {
+      printer.p(n.getNode(0));
+    }
+    printer.p(" << ");
+    boolean primT = false;
+    boolean castAsInt = false;
+
+    if (table.current().isDefined(variableName)) {
+      Type type = (Type) table.current().lookup(variableName);
+      if (!type.hasAlias()){
+        primT = true;
+      }
+      String typeAsString = type.toString();
+      if (typeAsString.contains("(byte,")){
+        castAsInt = true;
+      }
+    }
+    if (castAsInt) printer.p("(int)");
+    printer.p(n.getNode(2));
+    if ((!primT) && n.getNode(2).hasName("PrimaryIdentifier")){
+      printer.p("->__vptr->toString(");
+      printer.p(n.getNode(2));
+      printer.p(")->data");
+    }
   }
 
   public void visitExpression(GNode n) {
     printer.p(n.getNode(0));
     if (n.get(1) != null) printer.p(" = ");
     if (n.get(2) != null) printer.p(n.getNode(2));
-    //visit(n);
+    
   }
+
   public void visitPrimaryIdentifier(GNode n) {
     //if this is a field, prepend "__this->"
     String variableName = n.getString(0);
-    if (classFields.contains(variableName)){
-      printer.p("__this->" + variableName);
+    if (table.current().isDefined(variableName)) {
+      Type type = (Type) table.current().lookup(variableName);
+      if (JavaEntities.isFieldT(type)){
+        printer.p("__this->" + variableName);
+      }
+      else {
+        printer.p(variableName);
+      }
     }
     else{
         printer.p(variableName);
@@ -210,11 +306,11 @@ public class SegCPrinter extends Visitor {
     printer.p(")");
   }
 
-  /** Visit the specified formal parameter. */
+  // Visit the specified formal parameter
   public void visitFormalParameter(GNode n) {
     final int size = n.size();
     printer.p(n.getNode(0)).p(n.getNode(1));
-    for (int i=2; i<size-3; i++) { // Print multiple catch types.
+    for (int i=2; i<size-3; i++) { // Print multiple catch types
       printer.p(" | ").p(n.getNode(i));
     }
     if (null != n.get(size-3)) printer.p(n.getString(size-3));
@@ -233,7 +329,7 @@ public class SegCPrinter extends Visitor {
     }
   }
 
-  /** Visit the qualified identifier. */
+  // Visit the qualified identifier
   public void visitQualifiedIdentifier(GNode n) {
     if (1 == n.size()) {
         printer.p(n.getString(0));
