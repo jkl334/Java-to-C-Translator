@@ -31,7 +31,7 @@ public class SymbolTableBuilder extends Visitor {
         table.enter(table.freshName(name));
         table.mark(n);
               visit(n);
-              table.exit();            
+              table.exit();
             }
             public void visitFormalParameter(GNode n){
               String name = n.getString(3);
@@ -45,9 +45,9 @@ public class SymbolTableBuilder extends Visitor {
                 for (int i = 0 ; i < n.getNode(2).size(); i++ ){
                   String name = n.getNode(2).getNode(i).getString(0);
                   table.current().addDefinition(name, type);
-                }               
+                }
                 visit(n);
-            } 
+            }
 
 
       public void visit(GNode n) {

@@ -31,7 +31,7 @@ public class SegTreePrinter extends Visitor {
   }
 
   public void visitHeaderDeclaration(GNode n){
-    packageName = n.getString(0); 
+    packageName = n.getString(0);
     if (packageName != null){
       printer.pln("namespace " + n.getString(0) + " {");
       className = n.getString(1);

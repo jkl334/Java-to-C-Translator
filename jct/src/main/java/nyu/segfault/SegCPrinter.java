@@ -27,10 +27,10 @@ public class SegCPrinter extends Visitor {
   private String className;
   private String javaClassName;
 
-	public SegCPrinter(Printer p){
+  public SegCPrinter(Printer p){
     this.printer = p;
     printer.register(this);
-	}
+  }
 
   public void visitSegFieldDeclaration(GNode n){
     StringBuilder sb = new StringBuilder();
@@ -38,11 +38,11 @@ public class SegCPrinter extends Visitor {
     classFields.add(sb.toString());
   }
 
-	public void visitCompilationUnit(GNode n) {
+  public void visitCompilationUnit(GNode n) {
     visit(n);
   }
 
-	public void visitClassDeclaration(GNode n) {
+  public void visitClassDeclaration(GNode n) {
     className = n.getString(1);
     visit(n);
   }
@@ -60,7 +60,7 @@ public class SegCPrinter extends Visitor {
     printer.pln("");
   }
 
-	public void visitClassBody(GNode n) {
+  public void visitClassBody(GNode n) {
     // Begin the namespace
     printer.incr();
     printlnUnlessNull("namespace " + packageName + " {", packageName);
@@ -136,7 +136,7 @@ public class SegCPrinter extends Visitor {
   }
 
   public void visitFieldDeclaration(GNode n){
-	  visit(n);
+    visit(n);
     printer.p(";");
     printer.pln();
   }
@@ -187,7 +187,7 @@ public class SegCPrinter extends Visitor {
   }
 
   public void visitDeclarators(GNode n){
-	  visit(n);
+    visit(n);
   }
   public void visitDeclarator(GNode n){
     printer.p(" " + n.getString(0) + " = ");

@@ -12,7 +12,7 @@ public class SegNode {
 	public SegNode() {
 	}
 
-    // Parses the ClassBody node into children of the class root 
+    // Parses the ClassBody node into children of the class root
 	protected GNode handleClassBody(GNode inheritNode, GNode astNode, boolean isVTable) {
 		for (int i = 0; i < astNode.size(); i++) {
 			if (astNode.get(i) != null && astNode.get(i) instanceof Node) {
@@ -49,7 +49,7 @@ public class SegNode {
 
 		if (!isVTable){
 			String className = inheritNode.getProperty("parent").toString();
-			inheritNode.add(2,createConstructor(className, null));	
+			inheritNode.add(2,createConstructor(className, null));
 		}
 		return inheritNode;
 	}
@@ -59,7 +59,7 @@ public class SegNode {
 		for (int i = 0; i < astNode.size(); i++) {
 			if (astNode.get(i) != null && astNode.get(i) instanceof Node) {
 				Node child = astNode.getNode(i);
-		if (child.hasName("Type")) { 
+		if (child.hasName("Type")) {
 			type = convertType(((GNode) child.get(0)).getString(0));
 		} else if (child.hasName("Declarators")) {
 			GNode dec = (GNode) child.getNode(0);
@@ -172,7 +172,7 @@ public class SegNode {
 
 		GNode modifierDeclaration = GNode.create("Modifiers");
 		GNode parameters = GNode.create("Parameters");
-		
+
 		if (modifiers != null) {
 			for (String mod : modifiers) {
 				modifierDeclaration.add(mod);
@@ -183,14 +183,14 @@ public class SegNode {
 		methodDeclaration.add(name);
 		if(className != null)
 			methodDeclaration.add(className);
-		
+
 		if (args != null) {
 			for (String arg : args) {
 				parameters.add(arg);
 			}
 		}
 		methodDeclaration.add(parameters);
-		
+
 		return methodDeclaration;
 	}
 

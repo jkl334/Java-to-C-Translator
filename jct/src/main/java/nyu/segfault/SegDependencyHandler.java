@@ -33,9 +33,9 @@ public class SegDependencyHandler extends Tool {
 
   LinkedList<GNode> depList = new LinkedList<GNode>();
 
-	public SegDependencyHandler(LinkedList<GNode> ll){
+  public SegDependencyHandler(LinkedList<GNode> ll){
     depList = ll;
-	}
+  }
 
   public String getName(){
     return "SegDependencyHandler";

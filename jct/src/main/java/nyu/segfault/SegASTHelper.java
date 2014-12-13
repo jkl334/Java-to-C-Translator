@@ -15,7 +15,7 @@ import xtc.tree.Visitor;
 
 public class SegASTHelper extends Visitor {
 
-	// Based of XTC's CPrinter
+  // Based of XTC's CPrinter
   public String className,val,sec_val,third_val;
 
   public SegASTHelper(){
