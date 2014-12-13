@@ -8,18 +8,19 @@ public class  CppClass{
 	public ArrayList<String> functionPtrs; /** function pointers*/
 
 	/**
-	 * constructor
-	 * @param class_name
+	 * Constructor
+	 * @param className
 	 */
 	public CppClass(String className){
 		this.className=className;
 	}
+
 	/**
-	 * equals method between to CppClass objects
+	 * Implemented equals method between two CppClass objects
 	 * @return true if both objects have same className
 	 */
 	@Override
-	public  boolean equals(Object other){
+	public boolean equals(Object other){
 		if(other instanceof CppClass)
 			return (this.className.equals(((CppClass)other).className));
 		return false;
