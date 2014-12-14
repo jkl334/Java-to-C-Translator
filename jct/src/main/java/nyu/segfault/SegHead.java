@@ -77,8 +77,16 @@ public class SegHead extends Visitor{
             SegHelper.hpp_pln("\t" + tailoredDeclaration + ";");
         }
 
-        // Print any superclass method declarations.
-            // get list of all superclasses in order from closest to furthest (Object)
+        // Print any other superclass method declarations.
+        ArrayList<String> superclasses = SegHelper.getListOfSuperclasses(className);
+        int numberOfSuperClasses = superclasses.size() - 1;  // Subtract 1 because Object methods are already accounted for.
+        for (int c = 0; c < numberOfSuperClasses; c++) {
+            ArrayList<String> superclassDeclarations = SegHelper.classNameToMethodDeclarations.get(superclasses.get(c));
+            for (String declaration : superclassDeclarations) {  // Print the declarations of this super class (with the modified "this" parameter).
+                String tailoredDeclaration = SegHelper.getDeclarationWithNewThisParameter(declaration, className);
+                SegHelper.hpp_pln("\t" + tailoredDeclaration);
+            }
+        }
 
         // Print this class's method declarations.
         for (String methodDeclaration : SegHelper.classNameToMethodDeclarations.get(className)) {
