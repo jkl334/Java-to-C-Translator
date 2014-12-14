@@ -557,7 +557,9 @@ public class SegHelper {
         ArrayList<String> methodDeclarations = SegHelper.classToAllAvailableMethodDeclarations.get(className);
 
         // Write the function pointers.
-        hppWriter.pln("\t// The function pointers of class " + className + "'s virtual table..");
+        hppWriter.pln("\t// The function pointers of class " + className + "'s virtual table.");
+        hppWriter.pln("\tClass __isa;");  // __isa is a tricky case, that we've chosen to hard code.
+        hppWriter.pln("\tvoid (*__delete)(__" + className + "*);");  // __delete is a tricky case, that we've chosen to hard code.
         for (String declaration : methodDeclarations) {
             String pointer = SegHelper.getMethodPointerFromDeclaration(declaration);
             hppWriter.pln("\t" + pointer + ";");
@@ -566,7 +568,8 @@ public class SegHelper {
         hppWriter.pln("\n\t// The virtual table constructor for class " + className + ".");
         hppWriter.pln("\t__" + className + "_VT()");
         String[] methodInitializers = SegHelper.getObjectVtableMethodInitializers();
-        hppWriter.pln("\t: " + methodInitializers[0] + ",");  // CHANGE THIS TO ISA
+        hppWriter.pln("\t: __isa(__" + className + "::__class()),");  // __isa is a tricky case, that we've chosen to hard code.
+        hppWriter.pln("\t  __delete(&__rt::__delete<__" + className + ">),");  // __delete is a tricky case, that we've chosen to hard code.
 
         /* Iterate through method declarations, and convert the declaration to the pointer value. */
         for (int d = 0; d < methodDeclarations.size(); d++) {
