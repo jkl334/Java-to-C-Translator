@@ -49,8 +49,10 @@ public class SegHead extends Visitor{
 		SegHelper.endMacroScopes();
         SegHelper.hpp_pln("");
         SegHelper.hpp_pln("using namespace java::lang;\n");
-        SegHelper.hpp_pln("struct __" + SegHelper.getFileName() + ";");
-        SegHelper.hpp_pln("struct __" + SegHelper.getFileName() + "_VT;");
+        for (String className : SegHelper.allDeclaredClassNames) {
+            SegHelper.hpp_pln("struct __" + className + ";");
+            SegHelper.hpp_pln("struct __" + className + "_VT;");
+        }
 
         for (String className : SegHelper.allDeclaredClassNames) {
             SegHelper.hpp_pln("typedef __rt::Ptr<__" + className + "> " + className + ";");
