@@ -4,4 +4,8 @@ public class SimpleTest {
 		String t = "hello";
 		System.out.print(t);
 	}
+	
+	public void eat(String i, int x) {
+
+	}
 }

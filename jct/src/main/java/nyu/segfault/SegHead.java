@@ -52,6 +52,7 @@ public class SegHead extends Visitor{
         for (String className : SegHelper.allDeclaredClassNames) {
             SegHelper.hpp_pln("struct __" + className + ";");
             SegHelper.hpp_pln("struct __" + className + "_VT;");
+            SegHelper.hpp_pln("");
         }
 
         for (String className : SegHelper.allDeclaredClassNames) {

@@ -88,7 +88,8 @@ namespace java {
       static bool equals(Object, Object);
       static Class getClass(Object);
       static String toString(Object);
-      static Object init(Object __this) { return __this; }      
+      static Object init(Object __this) { return __this; }
+
 
       // The function returning the class object representing
       // java.lang.Object.
