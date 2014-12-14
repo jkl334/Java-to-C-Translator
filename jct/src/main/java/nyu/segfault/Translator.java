@@ -76,6 +76,7 @@ public class Translator extends xtc.util.Tool {
 
         SegHelper.allDeclaredClassNames = new ArrayList<String>();
         SegHelper.classNameToMethodDeclarations = new HashMap<String, ArrayList<String>>();
+        SegHelper.classToSuperclass = new HashMap<String, String>();
         new ClassInformation().dispatch(node);
 
         // Add Object and String declarations to classNameToMethodDeclarations.
@@ -102,6 +103,23 @@ public class Translator extends xtc.util.Tool {
             SegHelper.allDeclaredClassNames.add(n.getString(1));
             currentClass = n.getString(1);
             SegHelper.classNameToMethodDeclarations.put(currentClass, new ArrayList<String>());
+
+            // Handle classes that extend other (non-object) classes.
+            String superclass = "";
+            boolean superclassIsObject = true;
+            try {
+                superclass += n.getNode(3).getNode(0).getNode(0).getString(0);
+                superclassIsObject = false;
+            } catch (Exception e) {
+                System.out.println("Class " + currentClass + " directly extends class Object.");
+            }
+
+            // Hash this class to its correct super class.
+            if (superclassIsObject) {
+                SegHelper.classToSuperclass.put(currentClass, "Object");
+            } else {
+                SegHelper.classToSuperclass.put(currentClass, superclass);
+            }
             visit(n);
         }
 

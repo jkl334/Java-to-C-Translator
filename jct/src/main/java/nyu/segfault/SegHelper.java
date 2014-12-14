@@ -62,6 +62,9 @@ public class SegHelper {
     /**@var A list of all class names that are declared in the Java input file. */
     public static HashMap<String, ArrayList<String>> classNameToMethodDeclarations;
 
+    /**@var A hashmap of class names to superclass names. */
+    public static HashMap<String, String> classToSuperclass;
+
 
 	/**
 	 * set the file_name data field and create files
@@ -978,7 +981,6 @@ public class SegHelper {
                 requestedDeclaration += splitParameters[p] + ", ";
             }
             requestedDeclaration = requestedDeclaration.substring(0, requestedDeclaration.length() - 2);  // Remove last ", ";
-            requestedDeclaration += ")";
         }
         return requestedDeclaration;
     }

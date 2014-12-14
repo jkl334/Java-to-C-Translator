@@ -70,16 +70,19 @@ public class SegHead extends Visitor{
         SegHelper.hpp_pln("\t// The constructor.");
         SegHelper.hpp_pln("\n\n");
 
-        // Print the superclass method declarations.  CURRENTLY ASSUMES THAT THIS CLASS INHERITS SOLELY FROM OBJECT.
+        // Print the Object superclass method declarations.
         SegHelper.hpp_pln("\t// This class's method declarations.");
         for (String methodDeclaration : SegHelper.getObjectMethodDeclarations()) {
             String tailoredDeclaration = SegHelper.getDeclarationWithNewThisParameter(methodDeclaration, className);
-            SegHelper.hpp_pln("\t" + tailoredDeclaration);
+            SegHelper.hpp_pln("\t" + tailoredDeclaration + ";");
         }
+
+        // Print any superclass method declarations.
+            // get list of all superclasses in order from closest to furthest (Object)
 
         // Print this class's method declarations.
         for (String methodDeclaration : SegHelper.classNameToMethodDeclarations.get(className)) {
-            SegHelper.hpp_pln("\t" + methodDeclaration);
+            SegHelper.hpp_pln("\t" + methodDeclaration + ";");
         }
 
         // Print the function returning this class's object.
