@@ -137,6 +137,10 @@ public class Translator extends xtc.util.Tool {
                 } else {
                     returnType = n.getNode(2).getNode(0).getString(0);
                 }
+
+                if (returnType.equals("boolean")) {
+                    returnType = "bool";
+                }
             } catch (NullPointerException e) {  // This will be thrown if there is no return type (i.e. constructor method.)
                 return;  // This constructor should not be dealt with now.
             }
@@ -160,6 +164,7 @@ public class Translator extends xtc.util.Tool {
 
             // Create the method declaration string.
             String methodDeclaration = "static " + returnType + " " + methodName + "(";
+
             for (String parameterType : parameterTypes) { methodDeclaration += parameterType + ", "; }
             methodDeclaration = methodDeclaration.substring(0, methodDeclaration.length() - 2);  // Remove the final ", "
             methodDeclaration += ")";

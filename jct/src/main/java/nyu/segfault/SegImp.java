@@ -44,12 +44,9 @@ public class SegImp extends Visitor{
 
     public void visitClassDeclaration(GNode n) {
         String className = SegHelper.getClassDeclaration(n).split(" ")[1];  // Set the SegHelper's curr_class, and returns the name of the current class.
-//        SegHelper.cpp_pln("class " + className + " {");
         SegHelper.getGlobalVariables(n);
         for (String gVar : SegHelper.currentClassGlobalVariables) SegHelper.cpp_pln(gVar + ";");
         visit(n);
-//        SegHelper.cpp_pln("}\n");
-
     }
 
     public void visitMethodDeclaration(GNode n){

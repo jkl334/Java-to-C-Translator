@@ -494,55 +494,38 @@ public class SegHelper {
 	 * @param node node from java parse tree
 	 * @return formated function prototype c++
 	 */
-	public static String getMethodDeclaration(GNode n,String className){
-		validCall();
+	public static String getMethodDeclaration(GNode n, String className) {
+        // Determine the method name.
+        String methodName = n.getString(3);
+        if (methodName.equals("main")) {
+            return "int main(int argc, char** argv);";
+        }
 
-        if(getMethodName(n).equals("main")) {
-            if (className.contains("SegImp")) {
-                return "static void main(__rt::Ptr<__rt::Array<String> > args);";
+        // Determine the return type.
+        String returnType;
+        try {
+            returnType = n.getNode(2).toString();
+            if (returnType.equals("VoidType()")) {
+                returnType = "void";
+            } else {
+                returnType = n.getNode(2).getNode(0).getString(0);
             }
-            else return null;  // The header doesn't include a main method.
-        }
-		String return_type="";
 
-		if(n.getNode(2) == null) {  // THIS IS THE CONSTRUCTOR, WHICH HAS NO RETURN TYPE.
-            return_type = "";
-        } else if (j2c(n.getNode(2).toString()).equals("void")) {
-            return_type="void";
+            if (returnType.equals("boolean")) {
+                returnType = "bool";
+            }
+        } catch (NullPointerException e) {  // This will be thrown if there is no return type (i.e. constructor method.)
+            returnType = "";  // There is no return type.
+        }
+
+        // Determine the parameter types and names.
+        String methodDeclaration = returnType + " " + methodName + "(";
+        if (n.getNode(4).size() == 0) {
+            methodDeclaration += ");";
         } else {
-			new Visitor(){
-				public String rtype="";
-
-				/**
-				 * extract return type
-				 */
-				public void visitQualifiedIdentifier(GNode n){
-					SegHelper.setBuffer(SegHelper.j2c(n.getString(0)));
-				}
-				public void visit(GNode n) {
-					for (Object o : n) if (o instanceof Node) dispatch((Node) o);
-
-				}
-			}.dispatch(n.getNode(2));
-			return_type=buffer;
-		}
-
-		String fp=getMethodName(n)+"(";
-		if(n.getNode(4).size() == 0) fp+=");";
-		else fp+=getFormalParameters((GNode)n.getNode(4));
-
-		final StackTraceElement[] s=Thread.currentThread().getStackTrace();
-
-		if(s[2].getClassName().contains("SegHead")){
-			mbuffer.add(getMethodName(n));
-			rbuffer.add(return_type);
-
-            return "static " + return_type+" "+fp;
-        } else if((s[2].getClassName().contains("SegImp"))) {
-			return return_type + " " + currClass + "::" + fp;
+            methodDeclaration += getFormalParameters((GNode)n.getNode(4));
         }
-
-		return null;
+        return methodDeclaration;
 	}
 	/**
 	 * create the virtual table for the corresponding class
@@ -643,7 +626,7 @@ public class SegHelper {
 
                 /* Determine the declarator type. */
                 String declarationType = n.getNode(1).getNode(0).getString(0);
-                if (declarationType.equals("boolean")) { gVar.append("boolean "); }
+                if (declarationType.equals("boolean")) { gVar.append("bool "); }
                 else if (declarationType.equals("char")) { gVar.append("char "); }
                 else if (declarationType.equals("double")) { gVar.append("double "); }
                 else if (declarationType.equals("float")) { gVar.append("float "); }
@@ -676,13 +659,13 @@ public class SegHelper {
 
 	/**
 	 *  convert raw type provided by xtc to c++ type
-	 *  @param javaType  raw java type from xtc node
-	 *  @return formated c++ type
+	 *  @param jType  raw java type from xtc node
+	 *  @return formatted c++ type
 	 */
 	private static String j2c(String jType){
 		String cType = "";
-		if (jType.equals("String")) cType="__String";
-        else if (jType.equals("Object")) cType = "__Object";
+		if (jType.equals("String")) cType="String";
+        else if (jType.equals("Object")) cType = "Object";
 		else if(jType.equals("VoidType()")) cType="void";
 		else if (jType.equals("Integer")) cType="int";
 		return cType;
@@ -846,7 +829,7 @@ public class SegHelper {
         String mainMethodArgumentsAsSmartPointers =
                 "\t__rt::Ptr<__rt::Array<String> > args = new __rt::Array<String>(argc - 1);\n" +   // Declare smart pointer of type Array(Strings) with size args-1.
                 "\tfor (int32_t i = 1; i < argc; i++) {\n" +                                        // Loop through all arguments of the array parameter (except 1st).
-                "\t\t(*args)[i - 1] = __rt::literal(argv[i]);\n" +                                  // Dereferenced array contents set to args' contents.
+                "\t\t(*argv)[i - 1] = __rt::literal(argv[i]);\n" +                                  // Dereferenced array contents set to args' contents.
                 "\t} ";
         return mainMethodArgumentsAsSmartPointers;
     }
@@ -1011,6 +994,7 @@ public class SegHelper {
 
         String[] splitDeclaration = declaration.split(" ");
         String returnType = splitDeclaration[0];
+
         String methodName = splitDeclaration[1].split("\\(")[0];
         String parameterList = "(" + declaration.split("\\(")[1];
 
@@ -1043,7 +1027,7 @@ public class SegHelper {
             }
         }
 
-        return methodName + "((" + returnType + "(*)" + parameterList +  address + ")";
+        return methodName + "((" + returnType + "(*)" + parameterList + ")" + address + ")";
     }
 }
 /**
