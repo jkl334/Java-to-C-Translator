@@ -551,12 +551,13 @@ public class SegHelper {
 	 * @param n method declaration node
 	 */
 	public static void generateVtableForClass(String className) {
+        hppWriter.pln("struct __" + className + "_VT {");
 
-		hppWriter.pln("struct __" + className + "_VT {");
+        // The method declarations of all methods usable by className's class.
+        ArrayList<String> methodDeclarations = SegHelper.classToAllAvailableMethodDeclarations.get(className);
 
         // Write the function pointers.
         hppWriter.pln("\t// The function pointers of class " + className + "'s virtual table..");
-        ArrayList<String> methodDeclarations = SegHelper.classToAllAvailableMethodDeclarations.get(className);
         for (String declaration : methodDeclarations) {
             String pointer = SegHelper.getMethodPointerFromDeclaration(declaration);
             hppWriter.pln("\t" + pointer + ";");
@@ -565,18 +566,21 @@ public class SegHelper {
         hppWriter.pln("\n\t// The virtual table constructor for class " + className + ".");
         hppWriter.pln("\t__" + className + "_VT()");
         String[] methodInitializers = SegHelper.getObjectVtableMethodInitializers();
-        hppWriter.pln("\t: " + methodInitializers[0] + ",");
-        for (int initializer = 1; initializer < methodInitializers.length; initializer++) {
+        hppWriter.pln("\t: " + methodInitializers[0] + ",");  // CHANGE THIS TO ISA
+
+        /* Iterate through method declarations, and convert the declaration to the pointer value. */
+        for (int d = 0; d < methodDeclarations.size(); d++) {
             String suffixCharacter;
-            if (initializer == methodInitializers.length - 1) {
+            if (d == methodDeclarations.size() - 1) {
                 suffixCharacter = " {";
             } else {
                 suffixCharacter = ",";
             }
-            hppWriter.pln("\t  " + methodInitializers[initializer] + suffixCharacter);
+            String pointerValue = SegHelper.getPointerValueFromMethodDeclaration(methodDeclarations.get(d), className);
+            hppWriter.pln("\t  " + pointerValue + suffixCharacter);
         }
-        hppWriter.pln("\t}");
 
+        hppWriter.pln("\t}");
         hppWriter.pln("};\n");
 	}
 
@@ -982,11 +986,61 @@ public class SegHelper {
     public static String getMethodPointerFromDeclaration(String declaration) {
         // Remove "static ".
         declaration = declaration.substring(7);
+
         String[] splitDeclaration = declaration.split(" ");
         String returnType = splitDeclaration[0];
         String methodName = splitDeclaration[1].split("\\(")[0];
         String parameterList = "(" + declaration.split("\\(")[1];
         return returnType + " (*" + methodName + ")" + parameterList;
+    }
+
+    /**
+     * Given a method declaration and a class name, returns the corresponding method pointer.
+     *
+     * @param declaration   The given method declaration.
+     * @param className     The class to which the declaration belongs.
+     *
+     * @return              The corresponding method pointer.
+     */
+    public static String getPointerValueFromMethodDeclaration(String declaration, String className) {
+        // Remove "static ".
+        declaration = declaration.substring(7);
+
+        String[] splitDeclaration = declaration.split(" ");
+        String returnType = splitDeclaration[0];
+        String methodName = splitDeclaration[1].split("\\(")[0];
+        String parameterList = "(" + declaration.split("\\(")[1];
+
+        String address = "&__";  // The prefix of each address in the virtual table's initializer list.
+        /* Determine whether the given method is originally declared in the given class. */
+        boolean originallyDeclaredInAnotherClass = true;
+        ArrayList<String> declarationsOfTheGivenClass = SegHelper.classNameToMethodDeclarations.get(className);
+        for (String d : declarationsOfTheGivenClass) {
+            if (d.contains(methodName + "(")) {
+                address += className + "::" + methodName;
+                originallyDeclaredInAnotherClass = false;
+                break;
+            }
+        }
+
+        /* Iterate through superclasses to determine which class originally declared the declaration. */
+        if (originallyDeclaredInAnotherClass) {
+            boolean foundOriginalClassWhereMethodIsDeclared = false;
+            while (!foundOriginalClassWhereMethodIsDeclared) {
+                String superclass = SegHelper.classToSuperclass.get(className);
+                ArrayList<String> superclassDeclarations = SegHelper.classNameToMethodDeclarations.get(superclass);
+                for (String d : superclassDeclarations) {
+                    if (d.contains(methodName + "(")) {
+                        foundOriginalClassWhereMethodIsDeclared = true;
+                        address += superclass + "::" + methodName;
+                        break;
+                    }
+                }
+                className = superclass;
+            }
+        }
+
+        return methodName + "((" + returnType + "(*)" + parameterList +  address + ")";
     }
 }
 /**
