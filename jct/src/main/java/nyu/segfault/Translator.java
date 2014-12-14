@@ -75,13 +75,18 @@ public class Translator extends xtc.util.Tool {
         SegHelper.symbolTable = table;
 
         SegHelper.allDeclaredClassNames = new ArrayList<String>();
+        SegHelper.classNameToMethodDeclarations = new HashMap<String, ArrayList<String>>();
         new ClassInformation().dispatch(node);
 
-	    new SegHead().dispatch(node);
+        // Add Object and String declarations to classNameToMethodDeclarations.
+        SegHelper.classNameToMethodDeclarations.put("Object", new ArrayList<String>(Arrays.asList(SegHelper.getObjectMethodDeclarations())));
+        SegHelper.classNameToMethodDeclarations.put("String", new ArrayList<String>(Arrays.asList(SegHelper.getStringMethodDeclarations())));
+
+        new SegHead().dispatch(node);
 	    new SegImp().dispatch(node);
 
         // A convenient way to print the symbol table.
-        table.current().dump(runtime.console());
+        // table.current().dump(runtime.console());
         runtime.console().flush();
 	}
 
@@ -91,7 +96,58 @@ public class Translator extends xtc.util.Tool {
 	}
 
     class ClassInformation extends Visitor {
-        public void visitClassDeclaration(GNode n) { SegHelper.allDeclaredClassNames.add(n.getString(1)); visit(n); }
-        public void visit(GNode n) { for (Object o : n) if (o instanceof Node) dispatch((Node) o); } ;
+        String currentClass = "";
+
+        public void visitClassDeclaration(GNode n) {
+            SegHelper.allDeclaredClassNames.add(n.getString(1));
+            currentClass = n.getString(1);
+            SegHelper.classNameToMethodDeclarations.put(currentClass, new ArrayList<String>());
+            visit(n);
+        }
+
+        public void visitMethodDeclaration(GNode n) {
+            // Determine the return type.
+            String returnType;
+            try {
+                returnType = n.getNode(2).toString();
+                if (returnType.equals("VoidType()")) {
+                    returnType = "void";
+                } else {
+                    returnType = n.getNode(2).getNode(0).getString(0);
+                }
+            } catch (NullPointerException e) {  // This will be thrown if there is no return type (i.e. constructor method.)
+                return;  // This constructor should not be dealt with now.
+            }
+
+            // Determine the method name.
+            String methodName = n.getString(3);
+
+            // Determine the class name.
+            String className = currentClass;
+
+            // Determine the parameter types.
+            ArrayList<String> parameterTypes = new ArrayList<String>();
+            parameterTypes.add(currentClass);  // "this" must be the first parameter of the method.
+            Node formalParameters = n.getNode(4);
+            if (formalParameters != null && formalParameters.size() > 0) {
+                int parameterIndex = 0;
+                while (formalParameters.size() > parameterIndex) {
+                    parameterTypes.add(formalParameters.getNode(parameterIndex++).getNode(1).getNode(0).getString(0));
+                }
+            }
+
+            // Create the method declaration string.
+            String methodDeclaration = "static " + returnType + " " + methodName + "(";
+            for (String parameterType : parameterTypes) { methodDeclaration += parameterType + ", "; }
+            methodDeclaration = methodDeclaration.substring(0, methodDeclaration.length() - 2);  // Remove the final ", "
+            methodDeclaration += ")";
+
+            SegHelper.classNameToMethodDeclarations.get(currentClass).add(methodDeclaration);
+        }
+
+        public void visit(GNode n) {
+            for (Object o : n) if (o instanceof Node) dispatch((Node) o);
+        }
+
     }
 }

@@ -59,6 +59,9 @@ public class SegHelper {
     /**@var A list of all class names that are declared in the Java input file. */
     public static ArrayList<String> allDeclaredClassNames;
 
+    /**@var A list of all class names that are declared in the Java input file. */
+    public static HashMap<String, ArrayList<String>> classNameToMethodDeclarations;
+
 
 	/**
 	 * set the file_name data field and create files
@@ -126,7 +129,6 @@ public class SegHelper {
 		else if(stack[2].getClassName().contains("SegImp")){
 			for(String cppMacro : cppMacros) {
                 cppWriter.pln(cppMacro);
-                System.out.println("in cppMacro loop:" + cppMacro);
             }
 		}
         cppWriter.pln();
@@ -242,20 +244,13 @@ public class SegHelper {
                 mBod.append("\t");  // Indent the expression statement once.
                 if (n.getNode(0).getName().equals("Expression")) { // checks if regular expression is being made
                     new Visitor() {  // Visit assigned value if any
-                       /* public void visitExpression(GNode n) {
-                            if (n.getNode(2).getName().equals("AdditiveExpression")) {
-                                mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getNode(0).getString(0) + " " + n.getNode(2).getString(1) + " " + n.getNode(2).getNode(2).getString(0));
-                            } else {
-                                mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0));
-                            }
-                        } */
                         public void visitStringLiteral(GNode n) { mBod.append("new __String(" + n.getString(0) + ")"); }
                         public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitBooleanLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitNullLiteral(GNode n) { mBod.append("null"); }
-                        public void visitPrimaryIdentifier(GNode n) { mBod.append(n.getString(0)); }
+                        public void visitPrimaryIdentifier(GNode n) { mBod.append(" = " + n.getString(0)); }
                         public void visitAdditiveExpression(GNode n) { mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0)); }
                         public void visit(Node n){ for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
                     }.dispatch(n);
@@ -282,7 +277,7 @@ public class SegHelper {
                                 }
                                 public void visitCallExpression(GNode n) {
                                     String method = "";
-                                    method += n.getNode(0).getString(0);
+                                    method += n.getNode(0) == null ? n.getString(2) : n.getNode(0).getString(0);
                                     if (n.getString(2).isEmpty()) {
                                         method += "()";
                                     } else if (n.getString(2).equals("toString")) {
@@ -317,7 +312,6 @@ public class SegHelper {
                                 method = "toString(" + method + ")";
                             }
                             else {
-                                System.out.println(n.getString(2));
                                 method += "." + n.getString(2) + "(";
                                 if (n.getNode(3).isEmpty()){
                                     method += ")";
@@ -343,11 +337,8 @@ public class SegHelper {
             }
         }.dispatch(n);
         String bod = mBod.toString();
-        //System.out.println(bod);
         mBod.setLength(0);
-        return bod.substring(0, bod.length() - 1);  // Remove the final new line.
-            // Node body = n.getNode(7);
-            // if (null != body) visit(body);
+        return bod.length() == 0 ? "" : bod.substring(0, bod.length() - 1);  // Remove the final new line.
         }
 
 
@@ -451,7 +442,6 @@ public class SegHelper {
 	*		a print statement.
 	*/
 	public static boolean isPrintStatement(GNode n) {
-		System.out.println(n.toString());
 		return (n.toString().contains("CallExpression") &&
 				n.toString().contains("SelectionExpression") &&
 				n.toString().contains("System") &&
@@ -567,7 +557,7 @@ public class SegHelper {
         hppWriter.pln("\t// The virtual table constructor for class " + getCurrClass() + ".");
         hppWriter.pln("\t__" + getCurrClass() + "_VT()");
         String[] methodInitializers = SegHelper.getObjectVtableMethodInitializers();
-        hppWriter.pln("\t: " + methodInitializers[0]);
+        hppWriter.pln("\t: " + methodInitializers[0] + ",");
         for (int initializer = 1; initializer < methodInitializers.length; initializer++) {
             String suffixCharacter;
             if (initializer == methodInitializers.length - 1) {
@@ -641,7 +631,6 @@ public class SegHelper {
 			String arg=j2c(fparam.getNode(1).getNode(0).getString(0));
 			param.add(arg);
 			fp+=arg+" ";
-			System.out.println(arg);
 
 			//retrieve argument name
 			fp+=fparam.getString(3);
@@ -728,8 +717,6 @@ public class SegHelper {
 
 		String sh_yfunc=s[y].getMethodName();
 		String sh_xfunc=s[x].getMethodName();
-
-		//System.out.println(sh_yfunc+" : "+sh_xfunc);
 
 		final String[] comp=new String[]{"Class","Method"};
 
@@ -969,4 +956,66 @@ public class SegHelper {
                 };
         return stringVtableMethodInitializers;
     }
+
+    /**
+     * Given a method declaration and a "this" parameter (i.e. the first parameter in each method's declaration), return
+     * a new method declaration, with the original "this" parameter name substituted for the desired one.
+     *
+     * @param declaration   The original method declaration.
+     * @param _this         The desired new "this" parameter.
+     * @return              The new, altered method declaration.
+     */
+    public static String getDeclarationWithNewThisParameter(String declaration, String _this) {
+        String requestedDeclaration = "";
+        String[] splitDeclaration = declaration.split("\\(");  // Length 2 array, where [1] contains the parameters.
+        String parameters = splitDeclaration[1];
+        if (parameters.indexOf(',') == -1) {  // There is only one parameter (i.e., the 'this' parameter).
+            requestedDeclaration += splitDeclaration[0] + "(" + _this + ")";
+        } else {  // There is more than one parameter.
+            String[] splitParameters = parameters.split(", ");  // Length ? array, where [0] contains original _this parameter.
+            requestedDeclaration += splitDeclaration[0] + "(" + _this + ", ";
+            for (int p = 1; p < splitParameters.length; p++) {
+                requestedDeclaration += splitParameters[p] + ", ";
+            }
+            requestedDeclaration = requestedDeclaration.substring(0, requestedDeclaration.length() - 2);  // Remove last ", ";
+            requestedDeclaration += ")";
+        }
+        return requestedDeclaration;
+    }
+
+//    public static String getSuperClass() {
+//
+//    }
 }
+/**
+ For method overloading:
+    For every class
+        For each method declaration of each class
+            If the name of a method appears more than once
+                Change the name of the method to "methodName" + "1" (or 2 or 3 etc) in the method declaration
+                Change the name of the method to "methodName" + "1" (or 2 or 3 etc) in the vtable method pointer
+                Change the name of the method to "methodName" + "1" (or 2 or 3 etc) in the vtable method initializer
+
+    When a method is called (i.e., visitCallExpression(GNode n))
+        if there exists only one method with its name
+            call that method
+        else
+            get the static types of the method parameters via SegHelper's Symbol Table
+            get the number of parameters via SegHelper's Symbol Table
+ */
+
+/**
+ For inheritance:
+    Data Structures
+        Class name -> vector of declarations            // DONE
+        Class name -> vector of function pointers
+        Class name -> vector of function initializers
+
+    To get the parent class of smart pointer a:
+        use classToSuperClass
+        need a new method that overwrites first parameter of declaration with a given class
+        same for method pointer
+        same for initializer
+        method for casting parameters
+
+ */
