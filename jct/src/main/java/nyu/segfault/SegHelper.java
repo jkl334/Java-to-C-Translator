@@ -231,7 +231,7 @@ public class SegHelper {
                 mBod.append("\t");  // Return statements will generally be indented (since they are located in the method body).
                 if (n.getNode(0) != null) mBod.append("return ");
                 new Visitor() {  // Visit assigned value if any
-                    public void visitStringLiteral(GNode n) { mBod.append("new __String(std::string(" + n.getString(0) + "))"); }
+                    public void visitStringLiteral(GNode n) { mBod.append("new __String(" + n.getString(0) + ")"); }
                     public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
@@ -286,10 +286,8 @@ public class SegHelper {
                                     method += n.getNode(0) == null ? n.getString(2) : n.getNode(0).getString(0);
                                     if (n.getString(2).isEmpty()) {
                                         method += "()";
-                                    } else if (n.getString(2).equals("toString")) {
-                                        method = "toString(" + method + ")";
                                     } else {
-                                        method += "->__vptr->" + n.getString(2) + "(";
+                                        method += "->__vptr->" + n.getString(2) + "(" + getCurrClass();
                                         if (n.getNode(3).isEmpty()) method += ")";
                                     }
                                     vars.add(method);
@@ -313,13 +311,10 @@ public class SegHelper {
                             method += n.getNode(0).getString(0);
                             if (n.getString(2).isEmpty()) {
                                 method += "()";
-                            }
-                            else if (n.getString(2).equals("toString")) {
-                                method = "toString(" + method + ")";
-                            }
-                            else {
-                                method += "." + n.getString(2) + "(";
-                                if (n.getNode(3).isEmpty()){
+                            } else {
+                                method += "->__vptr-->" + n.getString(2) + "(" + n.getNode(0).getString(0) + ", ";
+                                if (n.getNode(3).isEmpty()) {
+                                    method = method.substring(0, method.length() - 2);  // Remove the ", ".
                                     method += ")";
                                 }
                                 else {
@@ -827,10 +822,10 @@ public class SegHelper {
 
     public static String getMainMethodArgumentsAsSmartPointers () {
         String mainMethodArgumentsAsSmartPointers =
-                "\t__rt::Ptr<__rt::Array<String> > args = new __rt::Array<String>(argc - 1);\n" +   // Declare smart pointer of type Array(Strings) with size args-1.
-                "\tfor (int32_t i = 1; i < argc; i++) {\n" +                                        // Loop through all arguments of the array parameter (except 1st).
-                "\t\t(*args)[i - 1] = __rt::literal(argv[i]);\n" +                                  // Dereferenced array contents set to args' contents.
-                "\t} ";
+                "\t//  __rt::Ptr<__rt::Array<String> > args = new __rt::Array<String>(argc - 1);\n" +   // Declare smart pointer of type Array(Strings) with size args-1.
+                "\t//  for (int32_t i = 1; i < argc; i++) {\n" +                                        // Loop through all arguments of the array parameter (except 1st).
+                "\t\t//  (*args)[i - 1] = __rt::literal(argv[i]);\n" +                                  // Dereferenced array contents set to args' contents.
+                "\t//  } ";
         return mainMethodArgumentsAsSmartPointers;
     }
 

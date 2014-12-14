@@ -13,6 +13,7 @@ class C extends B {
 
 public class IClass {
 	public static void main(String[] args) {
-		
+		C c = new C();
+		c.toString();
 	}
 }
