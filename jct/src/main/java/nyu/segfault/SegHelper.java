@@ -985,9 +985,22 @@ public class SegHelper {
         return requestedDeclaration;
     }
 
-//    public static String getSuperClass() {
-//
-//    }
+    /**
+     * Given a class name, this method returns a list of all of this class's superclasses, starting from the closest
+     * superclass to the farthest superclass (Object).
+     *
+     * @param className The name of the class for which the user desires to get all super classes.
+     * @return  An array list of all super classes.
+     */
+    public static ArrayList<String> getListOfSuperclasses(String className) {
+        ArrayList<String> allSuperclasses = new ArrayList<String>();
+        while (SegHelper.classToSuperclass.get(className) != null) {
+            String currentSuperclass = SegHelper.classToSuperclass.get(className);
+            allSuperclasses.add(currentSuperclass);
+            className = currentSuperclass;
+        }
+        return allSuperclasses;
+    }
 }
 /**
  For method overloading:
