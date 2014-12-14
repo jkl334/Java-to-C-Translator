@@ -18,104 +18,102 @@ import java.util.LinkedList;
 
 public class SegOverloadASTHelper extends Visitor {
 
-	public String className;
-	private LinkedList<GNode> methodList = new LinkedList<GNode>();
-	private LinkedList<String> parameterList = new LinkedList<String>();
-	private LinkedList<String> overloadedList = new LinkedList<String>();
-	private Boolean ready = false;
+	private Boolean finished = false;
+	public String cName;
+	private LinkedList<String> listOfParameters = new LinkedList<String>();
+	private LinkedList<GNode> listOfMethods = new LinkedList<GNode>();
+	private LinkedList<String> listOfOverloadedMethods = new LinkedList<String>();
 
 	public SegOverloadASTHelper() {
 
 	}
 
 	public String getName() {
-		return className;
+		return cName;
 	}
 
 	public LinkedList<String> getOverloadedList() {
-		return overloadedList;
+		return listOfOverloadedMethods;
 	}
 
 	public void visitCompilationUnit(GNode n) {
 		visit(n);
-		
-		for (int i=0;i<methodList.size();i++) {
-			executeOverloading((GNode)methodList.get(i));
-		}
+
+		for (int i=0;i<listOfMethods.size();i++)
+			executeOverloading((GNode)listOfMethods.get(i));
 	}
 
 	public void visitClassBody(GNode n) {
 		visit(n);
-
 		sortList();
 	}
 
-	//Removes elements from the list that aren't overloaded.
+	// If an element in the list isn't being overloaded we remove it.
 	public void sortList() {
 		boolean match = false;
 
-		for (int k=methodList.size()-1;k>-1;k--) {
-			GNode endNode = methodList.get(k);
-			for (int i=0;i<methodList.size()-1;i++) {
-				if (endNode.get(3).equals(methodList.get(i).get(3))) {
+		for (int k=listOfMethods.size()-1;k>-1;k--) {
+			GNode endNode = listOfMethods.get(k);
+			for (int i=0;i<listOfMethods.size()-1;i++) {
+				if (endNode.get(3).equals(listOfMethods.get(i).get(3))) {
 					match = true;
 					break;
 				}
 			}
-			if (!match) {
-				methodList.remove(k);
-			}
+			if (!match)
+				listOfMethods.remove(k);
 			match = false;
 		}
 	}
 
 	public void visitMethodDeclaration(GNode n) {
-		if (n.size()>3 && n.get(3) instanceof String) {
-			methodList.add(n); //creates a list with all the method nodes.
-		}
+		if (n.size()>3 && n.get(3) instanceof String)
+			listOfMethods.add(n);
 
 		visit(n);
 	}
 
 	public void visitQualifiedIdentifier(GNode n) {
-		if (!ready) {return;}
-		parameterList.add(n.getString(0));
+		if (!finished)
+			return;
+		listOfParameters.add(n.getString(0));
 	}
 
 	public void visitPrimitiveType(GNode n) {
-		if (!ready) {return;}
-		parameterList.add(n.getString(0));
+		if (!finished)
+			return;
+		listOfParameters.add(n.getString(0));
 	}
 
 	public void visit(Node n) {
     	for (Object o : n) if (o instanceof Node) dispatch((Node) o);
   	}
 
-	protected void executeOverloading(GNode overload) {	
-      	String newNodeString = overload.getString(3);
-      	addElementToOverloadedList(newNodeString);
-      	if (overload.getNode(4).size() > 0) {
-      		ready=true;
-        	visit(overload.getNode(4));
-        	ready=false;
-        	for (int i=0;i<parameterList.size();i++) {
-        		if (parameterList.get(i).equals("int")) {
-        			parameterList.set(i, "int32_t");
+	protected void executeOverloading(GNode node) {
+      	String nodeStr = node.getString(3);
+      	addElementToOverloadedList(nodeStr);
+      	if (node.getNode(4).size() > 0) {
+      		finished=true;
+        	visit(node.getNode(4));
+        	finished=false;
+        	for (int i=0;i<listOfParameters.size();i++) {
+        		if (listOfParameters.get(i).equals("int")) {
+        			listOfParameters.set(i, "int32_t");
         		}
-       			newNodeString = newNodeString+"_"+parameterList.get(i);
+       			nodeStr = nodeStr+"_"+listOfParameters.get(i);
        		}
-       		parameterList = new LinkedList<String>();
+       		listOfParameters = new LinkedList<String>();
       	}
-      	overload.set(3, newNodeString);
+      	node.set(3, nodeStr);
     }
 
-    protected void addElementToOverloadedList(String a) {
-    	for (int i=0;i<overloadedList.size();i++) {
-    		if (overloadedList.get(i).equals(a)) {
+    protected void addElementToOverloadedList(String ele) {
+    	for (int i=0;i<listOfOverloadedMethods.size();i++) {
+    		if (listOfOverloadedMethods.get(i).equals(ele)) {
     			return;
     		}
     	}
-    	overloadedList.add(a);
+    	listOfOverloadedMethods.add(ele);
     	return;
     }
 

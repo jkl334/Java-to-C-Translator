@@ -23,55 +23,53 @@ import java.util.LinkedList;
 
 public class SegInheritanceBuilder {
 	public GNode root;
-
-    public GNode stackNode;
-	int childCount = 3;
-	String packageName = null;
-
-   	SegDataLayoutHandler dataLayout = new SegDataLayoutHandler();
-   	SegVTableHandler vTable = new SegVTableHandler();
+	public GNode nodeStack;
+	int children = 3;
+	String pck = null;
+   	SegVTableHandler segVTable = new SegVTableHandler();
+   	SegDataLayoutHandler segDataLayout = new SegDataLayoutHandler();
 
 	public SegInheritanceBuilder(LinkedList<GNode> nodeList) {
 
+		GNode hNode = GNode.create("HeaderDeclaration");
+		GNode cNode = GNode.create("Class");
+		GNode nodeStr = GNode.create("String");
 		root = GNode.create("Object");
-		GNode headerNode = GNode.create("HeaderDeclaration");
-		GNode stringNode = GNode.create("String");
-		GNode classNode = GNode.create("Class");
 
-		root.add(headerNode);
+		root.add(hNode);
 
-		headerNode.add("null");
-		headerNode.add("Object");
-		headerNode.add(dataLayout.getObjectDataLayout());
-		headerNode.add(vTable.getObjectVTable());
+		hNode.add("null");
+		hNode.add("Object");
+		hNode.add(segDataLayout.getObjectDataLayout());
+		hNode.add(segVTable.getObjectVTable());
 
-		root.add(stringNode);
-		GNode stringHeader = GNode.create("HeaderDeclaration");
-		stringHeader.add("null");
-		stringHeader.add("String");
-		stringNode.add(stringHeader);
-		stringHeader.add(dataLayout.getStringDataLayout());
-		stringHeader.add(vTable.getStringVTable());
+		root.add(nodeStr);
+		GNode strHead = GNode.create("HeaderDeclaration");
+		strHead.add("null");
+		strHead.add("String");
+		nodeStr.add(strHead);
+		strHead.add(segDataLayout.getStringDataLayout());
+		strHead.add(segVTable.getStringVTable());
 
-		GNode classHeader = GNode.create("HeaderDeclaration");
-		classHeader.add("null");
-		classHeader.add("Class");
-		classHeader.add(dataLayout.getClassDataLayout());
-		classHeader.add(vTable.getClassVTable());
-		classNode.add(classHeader);
-		root.add(classNode);
+		GNode cHead = GNode.create("HeaderDeclaration");
+		cHead.add("null");
+		cHead.add("Class");
+		cHead.add(segDataLayout.getClassDataLayout());
+		cHead.add(segVTable.getClassVTable());
+		cNode.add(cHead);
+		root.add(cNode);
 
 		root.setProperty("type", "CompilationUnit");
-		stringNode.setProperty("type", "CompilationUnit");
-		classNode.setProperty("type", "CompilationUnit");
+		cNode.setProperty("type", "CompilationUnit");
+		nodeStr.setProperty("type", "CompilationUnit");
 
-		stackNode = GNode.create("FirstStackNode");
+		nodeStack = GNode.create("FirstStackNode");
 
 		for (int i = 0; i < nodeList.size(); i++) {
 			buildTree(nodeList.get(i));
 		}
 
-		for (GNode s=stackNode;s.getName()!="FirstStackNode";s=(GNode)s.getNode(0)) {
+		for (GNode s=nodeStack;s.getName()!="FirstStackNode";s=(GNode)s.getNode(0)) {
 		    GNode parent = findParentNode(root, (String)s.getProperty("parentString"));
 		    if (parent == null) {
 				System.out.println("NO PARENT FOUND IN THE TREE!");
@@ -95,41 +93,41 @@ public class SegInheritanceBuilder {
 		    new Visitor() {
 
 		    public void visitPackageDeclaration(GNode n){
-		    	packageName = n.getNode(1).getString(0);
+		    	pck = n.getNode(1).getString(0);
 		    }
 
 		    public void visitClassDeclaration(GNode n) {
 				String classname = n.getString(1);
-				GNode classNode = GNode.create(classname);
-				classNode.setProperty("type", "CompilationUnit"); //all class nodes should have type compilationunit so we can easily identify them.
-				root.add(classNode);
-				childCount++;
-				classNode.setProperty("javaAST", n);
+				GNode cNode = GNode.create(classname);
+				cNode.setProperty("type", "CompilationUnit"); //all class nodes should have type compilationunit so we can easily identify them.
+				root.add(cNode);
+				children++;
+				cNode.setProperty("javaAST", n);
 
 				visit(n);
 				return;
 			}
 
 			public void visitExtension(GNode n) {
-			    GNode thisNode = (GNode)root.getNode(childCount-1);
+			    GNode thisNode = (GNode)root.getNode(children-1);
 			    String parentString = n.getNode(0).getNode(0).getString(0);
 			    GNode copiedNode = copyNode(thisNode);
-			    copiedNode.setProperty("numberInRoot", childCount-1);
+			    copiedNode.setProperty("numberInRoot", children-1);
 			    copiedNode.setProperty("parentString", parentString);
-			    copiedNode.add(stackNode);
-			    stackNode = copiedNode;
+			    copiedNode.add(nodeStack);
+			    nodeStack = copiedNode;
 			    return;
 			}
 
 			public void visitClassBody(GNode n) {
-			    if (childCount > root.size()) {
+			    if (children > root.size()) {
 					return;
 			    }
 
-			    childCount--;
-			    GNode node = (GNode)root.getNode(childCount);
+			    children--;
+			    GNode node = (GNode)root.getNode(children);
 			    node.setProperty("parent", null);
-			    childCount++;
+			    children++;
 			    return;
 			}
 
@@ -204,10 +202,10 @@ public class SegInheritanceBuilder {
 
     public GNode buildHeader(GNode astNode, GNode parentNode) {
 		GNode header = GNode.create("HeaderDeclaration");
-		header.add(packageName);
+		header.add(pck);
 		header.add(astNode.getString(1));
-		header.add(dataLayout.getNodeDataLayout(astNode, getParentDataLayout(parentNode)));
-		header.add(vTable.getNodeVTable(astNode, getParentVTable(parentNode)));
+		header.add(segDataLayout.getNodeDataLayout(astNode, getParentDataLayout(parentNode)));
+		header.add(segVTable.getNodeVTable(astNode, getParentVTable(parentNode)));
 		return header;
 	}
 
@@ -284,14 +282,14 @@ public class SegInheritanceBuilder {
 		final LinkedList<GNode> returnList = new LinkedList<GNode>();
 		new Visitor(){
 			public void visitPackageDeclaration(GNode n){
-				packageName = n.getNode(1).getString(0);
+				pck = n.getNode(1).getString(0);
 			}
 
 			public void visitClassDeclaration(GNode n){
 				GNode targetNode = (GNode) n;
-				GNode classNode = searchForNode(root, targetNode.getString(1));
+				GNode cNode = searchForNode(root, targetNode.getString(1));
 				GNode returnNode = GNode.create(targetNode.getString(1));
-				returnNode.add((GNode)classNode.getNode(0));
+				returnNode.add((GNode)cNode.getNode(0));
 
 				returnList.add(returnNode);
 			}
@@ -310,7 +308,7 @@ public class SegInheritanceBuilder {
 	private GNode getParentDataLayout(GNode parent) {
 		GNode dataLayoutNode = null;
 		if (parent == null) {
-			GNode temp = dataLayout.getObjectDataLayout();
+			GNode temp = segDataLayout.getObjectDataLayout();
 			dataLayoutNode = copyNode(temp);
 		} else {
 			GNode olddataLayout = (GNode) parent.getNode(0).getNode(2);
@@ -322,7 +320,7 @@ public class SegInheritanceBuilder {
 	private GNode getParentVTable(GNode parent) {
 	        GNode vTableNode = null;
 		if (parent == null) {
-			GNode temp = vTable.getObjectVTable();
+			GNode temp = segVTable.getObjectVTable();
 			vTableNode = copyNode(temp);
 		} else {
 			GNode oldvTable = (GNode) parent.getNode(0).getNode(3);
