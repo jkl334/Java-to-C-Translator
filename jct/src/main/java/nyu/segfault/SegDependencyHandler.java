@@ -46,10 +46,8 @@ public class SegDependencyHandler extends Tool {
     LOGGER.setLevel(Level.INFO);
     for (int i = 0; i < depList.size(); i++) {
       if (depList.get(i) != null) {
-        LOGGER.info("Looping through dependencies");
+        LOGGER.info("Looping through the dependencies");
         new Visitor() {
-
-          /* visitExtension(GNode) will be called in the Inheritance Tree */
           /* visit the package and get all the files and then their nodes */
           public void visitPackageDeclaration(GNode n) {
             String rootDir = System.getProperty("user.dir") + "/examples";
@@ -194,13 +192,5 @@ public class SegDependencyHandler extends Tool {
     if (!depList.contains(n)){
       depList.add(n);
     }
-  }
-
-
-  /* Remove any dependencies that are not actually used */
-  public void trimDependencies(){
-    /*
-      Not sure if this is really necessary though
-    */
   }
 }

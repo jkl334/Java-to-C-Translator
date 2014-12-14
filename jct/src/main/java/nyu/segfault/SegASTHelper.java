@@ -30,7 +30,12 @@ public class SegASTHelper extends Visitor {
   }
 
   public void visitPrimitiveType(GNode n){
-    if(n.getString(0).equals("int")) {n.set(0,"int32_t");}
+    if(n.getString(0).equals("int")){
+      n.set(0,"int32_t");
+    }
+    else if(n.getString(0).equals("byte")){
+      n.set(0,"unsigned char");
+    }
   }
 
   public void visitClassDeclaration(GNode n){
@@ -89,18 +94,55 @@ public class SegASTHelper extends Visitor {
   }
 
   public void visitCallExpression(GNode n){
-    if(n.getString(2).equals("println")){
-      n.set(2, null);
-      GNode print = GNode.create("print");
-      print.add("print");
-      n.set(0, print);
+    visit(n);
+  }
+
+  public void visitExpressionStatement(GNode n){
+    if (n.getNode(0).hasName("CallExpression")){
+      if (n.getNode(0).getString(2).equals("println")){
+        GNode cout = GNode.create("CoutExpression");
+        cout.add("Cout");
+        cout.add(n.getNode(0).getNode(3));
+        n.set(0, cout);
+      }
     }
-    GNode holder = n.getGeneric(0);
-    if(holder != null && n.getNode(0).getString(0).equals(val)){
-      GNode value = GNode.create("value");
-      value.add(val);
-      value.add("("+sec_val+")"+third_val);
-      n.set(0,value);
+    visit(n);
+  }
+
+  public void visitCoutExpression(GNode n){
+    GNode coutArgs = GNode.create("CoutArguments");
+    for (int i = 0; i < n.getNode(1).size(); i++){
+      coutArgs.add(n.getNode(1).getNode(i));
+    }
+    n.set(1, coutArgs);
+    visit(n);
+  }
+
+  public void visitCoutArguments(GNode n){
+    if (n.getNode(0).hasName("AdditiveExpression")){
+      GNode coutAdd = GNode.create("CoutAdditiveExpression");
+      coutAdd.add(n.getNode(0).getNode(0));
+      coutAdd.add(n.getNode(0).getString(1));
+      coutAdd.add(n.getNode(0).getNode(2));
+      n.set(0,coutAdd);
+    }
+    else if(n.getNode(0).hasName("CallExpression")){
+      GNode coutCall = GNode.create("CoutCallExpression");
+      coutCall.add(n.getNode(0).getNode(0));
+      coutCall.add(n.getNode(0).getString(2));
+      coutCall.add(n.getNode(0).getNode(3));
+      n.set(0,coutCall);
+    }
+    visit(n);
+  }
+
+  public void visitCoutAdditiveExpression(GNode n){
+    if (n.getNode(0).hasName("AdditiveExpression")){
+      GNode coutAdd = GNode.create("CoutAdditiveExpression");
+      coutAdd.add(n.getNode(0).getNode(0));
+      coutAdd.add(n.getNode(0).getString(1));
+      coutAdd.add(n.getNode(0).getNode(2));
+      n.set(0,coutAdd);
     }
     visit(n);
   }
@@ -114,12 +156,7 @@ public class SegASTHelper extends Visitor {
   }
 
   public void visitDeclarator(GNode n){
-    GNode holder = n.getGeneric(2);
-      if(holder != null && n.getNode(2).hasName("CastExpression")) {
-        val = n.getString(0);
-        sec_val = n.getNode(2).getNode(0).getNode(0).getString(0);
-        third_val = n.getNode(2).getNode(1).getString(0);
-      }
+
     visit(n);
   }
 
