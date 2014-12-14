@@ -83,6 +83,9 @@ public class Translator extends xtc.util.Tool {
         SegHelper.classNameToMethodDeclarations.put("Object", new ArrayList<String>(Arrays.asList(SegHelper.getObjectMethodDeclarations())));
         SegHelper.classNameToMethodDeclarations.put("String", new ArrayList<String>(Arrays.asList(SegHelper.getStringMethodDeclarations())));
 
+        // Hash String to Object (where Object is String's super class).
+        SegHelper.classToSuperclass.put("String", "Object");
+
         new SegHead().dispatch(node);
 	    new SegImp().dispatch(node);
 
