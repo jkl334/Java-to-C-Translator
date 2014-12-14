@@ -65,6 +65,9 @@ public class SegHelper {
     /**@var A hashmap of class names to superclass names. */
     public static HashMap<String, String> classToSuperclass;
 
+    /**@var A hashmap of class names to the method declarations of all methods it has access to. */
+    public static HashMap<String, ArrayList<String>> classToAllAvailableMethodDeclarations;
+
 
 	/**
 	 * set the file_name data field and create files
@@ -1001,6 +1004,11 @@ public class SegHelper {
         }
         return allSuperclasses;
     }
+
+
+//    public static String getMethodPointerFromDeclaration(String declaration) {
+//
+//    }
 }
 /**
  For method overloading:
@@ -1032,5 +1040,7 @@ public class SegHelper {
         same for method pointer
         same for initializer
         method for casting parameters
+
+    STILL NEED TO FIX CONSTRUCTOR
 
  */

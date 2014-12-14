@@ -61,34 +61,36 @@ public class SegHead extends Visitor{
     }
 	public void visitClassDeclaration(GNode n) {
         String className = n.getString(1);
+        SegHelper.classToAllAvailableMethodDeclarations.put(className, new ArrayList<String>());
 
         // Print the virtual table pointer data field.
 		SegHelper.hpp_pln(SegHelper.getClassDeclaration(n) + " {");
-        SegHelper.hpp_pln("\t__" + SegHelper.getClassName(n) + "_VT* __vptr;  // Virtual table pointer. \n\n");
+        SegHelper.hpp_pln("\t__" + SegHelper.getClassName(n) + "_VT* __vptr;  // Virtual table pointer. \n");
 
         // Print the constructor.
         SegHelper.hpp_pln("\t// The constructor.");
-        SegHelper.hpp_pln("\n\n");
+        SegHelper.hpp_pln("");
 
-        // Print the Object superclass method declarations.
-        SegHelper.hpp_pln("\t// This class's method declarations.");
+        /* The following two blocks are crucial for correct listing of methods in the header file. */
+        // Get the Object superclass method declarations.
         for (String methodDeclaration : SegHelper.getObjectMethodDeclarations()) {
             String tailoredDeclaration = SegHelper.getDeclarationWithNewThisParameter(methodDeclaration, className);
-            SegHelper.hpp_pln("\t" + tailoredDeclaration + ";");
+            SegHelper.classToAllAvailableMethodDeclarations.get(className).add(tailoredDeclaration);
         }
 
-        // Print any other superclass method declarations.
+        // Get any other superclass method declarations.
         ArrayList<String> superclasses = SegHelper.getListOfSuperclasses(className);
         int numberOfSuperClasses = superclasses.size() - 1;  // Subtract 1 because Object methods are already accounted for.
         for (int c = 0; c < numberOfSuperClasses; c++) {
             ArrayList<String> superclassDeclarations = SegHelper.classNameToMethodDeclarations.get(superclasses.get(c));
             for (String declaration : superclassDeclarations) {  // Print the declarations of this super class (with the modified "this" parameter).
                 String tailoredDeclaration = SegHelper.getDeclarationWithNewThisParameter(declaration, className);
-                SegHelper.hpp_pln("\t" + tailoredDeclaration);
+                SegHelper.classToAllAvailableMethodDeclarations.get(className).add(tailoredDeclaration);
             }
         }
 
         // Print this class's method declarations.
+        SegHelper.hpp_pln("\t// This class's method declarations.");
         for (String methodDeclaration : SegHelper.classNameToMethodDeclarations.get(className)) {
             SegHelper.hpp_pln("\t" + methodDeclaration + ";");
         }
@@ -108,15 +110,6 @@ public class SegHead extends Visitor{
 
 		/**generate vtable for that respective class*/
 		SegHelper.genVTable();
-
-//		String super_class=SegHelper.getSuperClass(n);
-//		if(super_class == null){
-//			SegHelper.Root.addChild(new CppClass(SegHelper.getClassName(n)));
-//		} else {
-//			SegNode<CppClass> parent=SegHelper.Root.dfs(SegHelper.Root,new CppClass(super_class));
-//			parent.addChild(new CppClass(SegHelper.getClassName(n)));
-//		}
-//		visit(n);
 	}
 
 

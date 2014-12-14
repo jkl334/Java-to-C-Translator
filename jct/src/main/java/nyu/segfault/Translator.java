@@ -76,6 +76,7 @@ public class Translator extends xtc.util.Tool {
 
         SegHelper.allDeclaredClassNames = new ArrayList<String>();
         SegHelper.classNameToMethodDeclarations = new HashMap<String, ArrayList<String>>();
+        SegHelper.classToAllAvailableMethodDeclarations = new HashMap<String, ArrayList<String>>();
         SegHelper.classToSuperclass = new HashMap<String, String>();
         new ClassInformation().dispatch(node);
 
