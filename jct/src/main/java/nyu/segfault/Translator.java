@@ -7,9 +7,11 @@ import java.io.Writer;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.FileOutputStream;
+import java.io.PrintWriter;
 
 import xtc.lang.JavaFiveParser;
 import xtc.lang.JavaPrinter;
+import xtc.lang.JavaAstSimplifier;
 
 import xtc.parser.ParseException;
 import xtc.parser.Result;
@@ -21,6 +23,7 @@ import xtc.tree.Printer;
 
 import xtc.util.Tool;
 import java.util.LinkedList;
+import xtc.util.SymbolTable;
 
 import java.util.logging.Logger;
 import java.util.logging.Handler;
@@ -98,42 +101,36 @@ public class Translator extends Tool {
 
     LinkedList<GNode> nodeList = new LinkedList<GNode>();
 
-      /* Add input file to list at index 0 */
       nodeList.add((GNode)node);
 
-      /* Scan for dependencies  */
       LOGGER.info("Calling SegDependencyHandler.java on " + node.getName());
       SegDependencyHandler dep = new SegDependencyHandler(nodeList);
       dep.makeAddressList();
-
-      /* Store the found dependencies as AST */
+      // Store dependencies on the AST
       nodeList = dep.makeNodeList();
       for (int i=0; i<nodeList.size();i++){
         System.out.println(" -> " + nodeList.get(i).getLocation().toString());
       }
 
-      /* Build inheritance tree */
       LOGGER.info("Building inheritance tree:");
       SegInheritanceBuilder inheritanceTree = new SegInheritanceBuilder(nodeList);
-
-      /* Write VTables to file 'output.h' */
-      LOGGER.info("Writing VTables to output.h");
-      writeInheritanceAsCPP(inheritanceTree, nodeList);
-
-      /* Make modifications to AST needed for printing */
+      LOGGER.info("Writing VTables to " + headFile);
+      writeInheritanceAsCPP(inheritanceTree,  inheritanceTree.getNodeList());
+      SymbolTable table = new SymbolTable();
       LOGGER.info("Building AST:");
       for (GNode listNode : nodeList){
+        SegOverloadASTHelper oModifier = new SegOverloadASTHelper();
+        oModifier.dispatch(listNode);
+        LinkedList<String> overloadedNames = oModifier.getOverloadedList();
+        LOGGER.info("Building the Symbol Table:");
+        new SymbolTableBuilder(runtime, table).dispatch(listNode);
         new SegASTHelper().dispatch(listNode);
-        //runtime.console().format(listNode).pln().flush();
+        new SegOverloading(table, inheritanceTree, overloadedNames).dispatch(listNode);
       }
 
-      /* Write each AST in the list to output.cc as CPP */
-        writeTreeAsCPP(nodeList);
+        writeTreeAsCPP(nodeList, table, inheritanceTree);
   }
 
-
-  /* Write VTables to file 'output.h'  */
-  /* This method must be called before ASTModifier runs. */
   private void writeInheritanceAsCPP(SegInheritanceBuilder inheritanceTree, LinkedList<GNode> nodeList){
     Writer outH = null;
     try {
@@ -148,7 +145,6 @@ public class Translator extends Tool {
         LinkedList<GNode> listNodeTree = inheritanceTree.parseNodeToInheritance(listNode);
         for (GNode node : listNodeTree) {
           new SegTreePrinter(pH).dispatch(node);
-          //runtime.console().format(node).pln().flush();
         }
       }
 
@@ -159,7 +155,7 @@ public class Translator extends Tool {
     }
   }
 
-  private void writeTreeAsCPP(LinkedList<GNode> nodeList){
+  private void writeTreeAsCPP(LinkedList<GNode> nodeList,  SymbolTable table, SegInheritanceBuilder inh){
     Writer outCC = null;
 
     try {
@@ -172,7 +168,7 @@ public class Translator extends Tool {
 
       for (GNode listNode : nodeList){
         LOGGER.info("Running SegCPrinter on " + listNode.getLocation().toString());
-        new SegCPrinter(pCC).dispatch(listNode);
+        new SegCPrinter(pCC, table, inh).dispatch(listNode);
       }
 
     } catch (IOException ex){
@@ -217,7 +213,6 @@ public class Translator extends Tool {
     Translator t = new Translator();
     t.files = args;
     t.run(args);
-
   }
 
 }

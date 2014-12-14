@@ -21,6 +21,7 @@ public class SegOverloadASTHelper extends Visitor {
 	public String className;
 	private LinkedList<GNode> methodList = new LinkedList<GNode>();
 	private LinkedList<String> parameterList = new LinkedList<String>();
+	private LinkedList<String> overloadedList = new LinkedList<String>();
 	private Boolean ready = false;
 
 	public SegOverloadASTHelper() {
@@ -31,13 +32,22 @@ public class SegOverloadASTHelper extends Visitor {
 		return className;
 	}
 
+	public LinkedList<String> getOverloadedList() {
+		return overloadedList;
+	}
+
+	public void visitCompilationUnit(GNode n) {
+		visit(n);
+		
+		for (int i=0;i<methodList.size();i++) {
+			executeOverloading((GNode)methodList.get(i));
+		}
+	}
+
 	public void visitClassBody(GNode n) {
 		visit(n);
 
 		sortList();
-		for (int i=0;i<methodList.size();i++) {
-			executeOverloading((GNode)methodList.get(i));
-		}
 	}
 
 	//Removes elements from the list that aren't overloaded.
@@ -81,19 +91,32 @@ public class SegOverloadASTHelper extends Visitor {
     	for (Object o : n) if (o instanceof Node) dispatch((Node) o);
   	}
 
-
-	protected void executeOverloading(GNode overload) {
-		
+	protected void executeOverloading(GNode overload) {	
       	String newNodeString = overload.getString(3);
+      	addElementToOverloadedList(newNodeString);
       	if (overload.getNode(4).size() > 0) {
       		ready=true;
         	visit(overload.getNode(4));
         	ready=false;
         	for (int i=0;i<parameterList.size();i++) {
+        		if (parameterList.get(i).equals("int")) {
+        			parameterList.set(i, "int32_t");
+        		}
        			newNodeString = newNodeString+"_"+parameterList.get(i);
        		}
        		parameterList = new LinkedList<String>();
       	}
       	overload.set(3, newNodeString);
     }
+
+    protected void addElementToOverloadedList(String a) {
+    	for (int i=0;i<overloadedList.size();i++) {
+    		if (overloadedList.get(i).equals(a)) {
+    			return;
+    		}
+    	}
+    	overloadedList.add(a);
+    	return;
+    }
+
 }

@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Iterator;
 import xtc.Constants;
 import java.util.LinkedList;
+import xtc.lang.JavaEntities;
 import xtc.tree.LineMarker;
 import xtc.tree.Attribute;
 import xtc.tree.Node;
@@ -34,9 +35,12 @@ public class SegCPrinter extends Visitor {
   private String javaClassName;
   final private SymbolTable table;
 
-  public SegCPrinter(Printer p){
+  public SegCPrinter(Printer p, SymbolTable table, SegInheritanceBuilder inh){
     this.printer = p;
+    this.table = table;
     printer.register(this);
+    this.inheritanceTree = inh;
+
   }
 
   public void visitSegFieldDeclaration(GNode n){

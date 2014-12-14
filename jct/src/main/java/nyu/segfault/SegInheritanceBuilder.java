@@ -1,4 +1,4 @@
-package nyu.segfault;
+ package nyu.segfault;
 
 import xtc.tree.GNode;
 
@@ -143,6 +143,29 @@ public class SegInheritanceBuilder {
 		}.dispatch(node);
 	}
 
+	public LinkedList<GNode> getNodeList() {
+		LinkedList<GNode> nodeList = new LinkedList<GNode>();
+		if (root.size() < 2) {
+			return nodeList;
+		}
+
+		for (int i=3;i<root.size();i++) {
+			getNodeList(nodeList, (GNode)root.getNode(i));
+		}
+
+		return nodeList;
+	}
+
+	private void getNodeList(LinkedList<GNode> nodeList, GNode nodeToAdd) {
+		nodeList.add((GNode)nodeToAdd.getProperty("javaAST"));
+		if (nodeToAdd.size() < 2) {
+			return;
+		}
+		for (int i=1;i<nodeToAdd.size();i++) {
+			getNodeList(nodeList, (GNode)nodeToAdd.getNode(i));
+		}
+	}
+
 	private GNode findParentNode(GNode startNode, String name) {
 		if (startNode.getName().equals(name)) {
 			return startNode;
@@ -192,6 +215,52 @@ public class SegInheritanceBuilder {
 		return root;
 	}
 
+	public LinkedList<String> getVTableForNode(String name) {
+		GNode node = searchForNode(root, name);
+		LinkedList<String> vTableList = new LinkedList<String>();
+		if (node==null) {
+			vTableList.add("Node not found");
+			return vTableList;
+		}
+		for (int i=0;i<node.getNode(0).getNode(3).size();i++) {
+			vTableList.add(node.getNode(0).getNode(3).getNode(i).getString(2));
+		}
+		return vTableList;
+	}
+
+	public String getParentOfNode(String childName) {
+		for (int i=1;i<root.size();i++) {
+			if (root.getNode(i).getName().equals(childName)) {
+				return root.getName();
+			}
+			else {
+				String temp = getParentOfNode(childName, (GNode)root.getNode(i));
+				if (temp != null) {
+					return temp;
+				}
+			}
+		}
+		return "Parent not found";
+	}
+
+	private String getParentOfNode(String childName, GNode node) {
+		if (node.size()<1) {
+			return null;
+		}
+
+		for (int i=1;i<node.size();i++) {
+			if (node.getNode(i).getName().equals(childName)) {
+				return node.getName();
+			}
+			else {
+				String temp = getParentOfNode(childName, (GNode)node.getNode(i));
+				if (temp != null) {
+					return temp;
+				}
+			}
+		}
+		return null;
+	}
 
     private GNode searchForNode(GNode node, String name) {
 		if (node.getNode(0).getString(1).equals(name)) {
