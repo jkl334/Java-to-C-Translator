@@ -231,7 +231,7 @@ public class SegHelper {
                 mBod.append("\t");  // Return statements will generally be indented (since they are located in the method body).
                 if (n.getNode(0) != null) mBod.append("return ");
                 new Visitor() {  // Visit assigned value if any
-                    public void visitStringLiteral(GNode n) { mBod.append(n.getString(0)); }  // Should not be returned as a smart pointer.
+                    public void visitStringLiteral(GNode n) { mBod.append("new __String(std::string(" + n.getString(0) + "))"); }
                     public void visitIntegerLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitFloatingPointLiteral(GNode n) { mBod.append(n.getString(0)); }
                     public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
@@ -498,7 +498,7 @@ public class SegHelper {
         // Determine the method name.
         String methodName = n.getString(3);
         if (methodName.equals("main")) {
-            return "int main(int argc, char** argv);";
+            return "int main(int argc, char* argv[]);";
         }
 
         // Determine the return type.
@@ -829,7 +829,7 @@ public class SegHelper {
         String mainMethodArgumentsAsSmartPointers =
                 "\t__rt::Ptr<__rt::Array<String> > args = new __rt::Array<String>(argc - 1);\n" +   // Declare smart pointer of type Array(Strings) with size args-1.
                 "\tfor (int32_t i = 1; i < argc; i++) {\n" +                                        // Loop through all arguments of the array parameter (except 1st).
-                "\t\t(*argv)[i - 1] = __rt::literal(argv[i]);\n" +                                  // Dereferenced array contents set to args' contents.
+                "\t\t(*args)[i - 1] = __rt::literal(argv[i]);\n" +                                  // Dereferenced array contents set to args' contents.
                 "\t} ";
         return mainMethodArgumentsAsSmartPointers;
     }
