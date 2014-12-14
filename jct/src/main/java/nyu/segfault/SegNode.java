@@ -1,3 +1,7 @@
+package nyu.segfault;
+
+import java.util.ArrayList;
+
 /**
  * nonbinary unbalanced tree
  * pre-order traversal

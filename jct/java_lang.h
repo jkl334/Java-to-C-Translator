@@ -1,7 +1,6 @@
 /*
  * Object-Oriented Programming
  * Copyright (C) 2012 Robert Grimm
- * Modifications copyright (C) 2013 Thomas Wies
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,7 +49,7 @@ namespace java {
     struct __Class_VT;
 
     // Definition of type names, which are equivalent to Java semantics,
-    // i.e., an instance is the address of the object's data layout.
+    // i.e., a smart pointer to a data layout.
     typedef __rt::Ptr<__Object> Object;
     typedef __rt::Ptr<__Class> Class;
     typedef __rt::Ptr<__String> String;
@@ -89,6 +88,8 @@ namespace java {
       static bool equals(Object, Object);
       static Class getClass(Object);
       static String toString(Object);
+      static Object init(Object __this) { return __this; }
+
 
       // The function returning the class object representing
       // java.lang.Object.
@@ -133,6 +134,7 @@ namespace java {
       static String toString(String);
       static int32_t length(String);
       static char charAt(String, int32_t);
+      static String init(String __this) { return __this; }
 
       // The function returning the class object representing
       // java.lang.String.
@@ -191,6 +193,7 @@ namespace java {
       static bool isArray(Class);
       static Class getComponentType(Class);
       static bool isInstance(Class, Object);
+      static Class init(Class __this) { return __this; }
 
       // The function returning the class object representing
       // java.lang.Class.
@@ -321,6 +324,9 @@ namespace __rt {
       return __data[index];
     }
 
+    static Ptr<Array<T> > init(Ptr<Array<T> > __this) {return __this; }
+
+
     // The function returning the class object representing the array.
     static java::lang::Class __class();
 
@@ -363,7 +369,7 @@ namespace __rt {
 
   // ========================================================================
 
-  // Function for converting a C string literal to a translated
+  // Function for converting a C string lieral to a translated
   // Java string.
   inline java::lang::String literal(const char * s) {
     // C++ implicitly converts the C string to a std::string.
@@ -391,6 +397,18 @@ namespace __rt {
         throw java::lang::ArrayStoreException();
       }
     }
+  }
+
+  // Template function for translated Java casts.
+  template <typename T, typename U>
+  T java_cast(U object) {
+    java::lang::Class c = T::value_type::__class();
+    
+    if (! c->__vptr->isInstance(c, object)) {
+      throw java::lang::ClassCastException();
+    }
+
+    return T(object);
   }
 
 }

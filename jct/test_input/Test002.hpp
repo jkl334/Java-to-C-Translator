@@ -1,17 +1,18 @@
+#include java_lang.h
 #include <sstream>
 #include <iostream>
 #include <string>
 using namespace std;
 struct A
 {
-	static string getFld();
+	static string toString();
 };
 struct A_VT
 {
-	string(*getFld)(
+	string(*toString)(
 	A_VT():
-		getFld(&A::getFld){}
+		toString(&A::toString){}
 };
-struct Test003
+struct Test002
 {
 };
