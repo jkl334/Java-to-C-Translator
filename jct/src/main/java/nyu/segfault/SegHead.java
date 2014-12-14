@@ -72,7 +72,15 @@ public class SegHead extends Visitor{
         SegHelper.hpp_pln("\t__" + SegHelper.getClassName(n) + "_VT* __vptr;");
 
         // Print the constructor.
-        SegHelper.hpp_pln("\t// The constructor.");
+        SegHelper.hpp_pln("\n\t// The constructor.");
+        SegHelper.hpp_pln("\t__" + className + "();");
+
+        // Print the data fields.
+        SegHelper.hpp_pln("");
+        ArrayList<String> dataFields = SegHelper.getGlobalVariables(n);
+        for (String field : dataFields) {
+            SegHelper.hpp_pln("\t" + field + ";");
+        }
         SegHelper.hpp_pln("");
 
         /* The following two blocks are crucial for correct listing of methods in the header file. */

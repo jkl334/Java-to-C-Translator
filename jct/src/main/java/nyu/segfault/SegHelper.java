@@ -607,7 +607,7 @@ public class SegHelper {
      *@param n  The node from the Java AST.
      *@return   An ArrayList of the class's global variables.
      */
-    public static void getGlobalVariables(GNode n) {
+    public static ArrayList<String> getGlobalVariables(GNode n) {
         new Visitor() {
             public void visitFieldDeclaration(GNode n) {
                 final StringBuilder gVar = new StringBuilder();
@@ -650,6 +650,8 @@ public class SegHelper {
             public void visitMethodDeclaration(GNode n) { }
             public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
         }.dispatch(n);
+
+        return currentClassGlobalVariables;
     }
 
 	/**
