@@ -550,18 +550,20 @@ public class SegHelper {
 	 * which includes function pointers and class information
 	 * @param n method declaration node
 	 */
-	public static void genVTable() {
+	public static void generateVtableForClass(String className) {
 
-		hppWriter.pln("struct __" + getCurrClass() + "_VT {");
+		hppWriter.pln("struct __" + className + "_VT {");
 
-        String[] methodPointers = SegHelper.getObjectVtableMethodPointers();
-        for (String pointer : methodPointers) {
+        // Write the function pointers.
+        hppWriter.pln("\t// The function pointers of class " + className + "'s virtual table..");
+        ArrayList<String> methodDeclarations = SegHelper.classToAllAvailableMethodDeclarations.get(className);
+        for (String declaration : methodDeclarations) {
+            String pointer = SegHelper.getMethodPointerFromDeclaration(declaration);
             hppWriter.pln("\t" + pointer + ";");
         }
-        hppWriter.pln("");
 
-        hppWriter.pln("\t// The virtual table constructor for class " + getCurrClass() + ".");
-        hppWriter.pln("\t__" + getCurrClass() + "_VT()");
+        hppWriter.pln("\n\t// The virtual table constructor for class " + className + ".");
+        hppWriter.pln("\t__" + className + "_VT()");
         String[] methodInitializers = SegHelper.getObjectVtableMethodInitializers();
         hppWriter.pln("\t: " + methodInitializers[0] + ",");
         for (int initializer = 1; initializer < methodInitializers.length; initializer++) {
@@ -576,45 +578,8 @@ public class SegHelper {
         hppWriter.pln("\t}");
 
         hppWriter.pln("};\n");
-
-//		if(mbuffer.size() == 0) return;
-//        <return_type> (*<method name>)(<parameter type>);
-//        /**
-//         * produce struct <class_name>_VT data fields (function pointers)
-//         */
-//		for (int k=0; k<mbuffer.size(); k++){
-//			String fptr="\t"+rbuffer.get(k)+"(*"+mbuffer.get(k)+")(";
-//			int Q=0;
-//			if((pbuffer.size() == 0) || (k >= pbuffer.size())  ) fptr+=");";
-//			else{
-//				for(String param : pbuffer.get(k)){
-//					if ( Q != pbuffer.get(k).size()-1)
-//						fptr+=param+",";
-//					else
-//						fptr+=param+");";
-//					Q++;
-//				}
-//			}
-//			hppWriter.pln(fptr);
-//
-//			/**
-//			 * add function pointer string to node in inheritance tree
-//			 */
-//			//SegNode<CppClass> node=SegHelper.Root.dfs(Root,new CppClass(getCurrClass()));
-//			//node.data.functionPtrs.add(fptr);
-//		}
-//		/**
-//		 * produce struct <class_name>_VT constructor and initialized
-//		 * initialized function form <function_name>(&<class_name>::<function_name>)
-//		 */
-//		hppWriter.pln("\t"+getCurrClass()+"_VT"+"():");
-//		for(int n=0; n<mbuffer.size();n++){
-//			String fref="\t\t"+mbuffer.get(n)+"(&"+getCurrClass()+"::"+mbuffer.get(n)+")";
-//			if(n == mbuffer.size() -1) fref+="{};";
-//			else fref+=",";
-//			hppWriter.pln(fref);
-//		}
 	}
+
 	/**
 	 * buffer to communication between anonymous inner classes and SegHelper
 	 * @param s String to be sent from anonymous class to SegHelper
@@ -622,6 +587,8 @@ public class SegHelper {
 	public static void setBuffer(String s){
 		buffer=s;
 	}
+
+
 	/**
 	 * extract function parameters
 	 * @param n node from java parse tree
@@ -792,80 +759,80 @@ public class SegHelper {
         for (SegNode<CppClass> child : treeNode.children) printInheritanceTree(child, numTabs + 1);
     }
 
-    /**
-     * Returns a function pointer String corresponding to the given method declaration.
-     *
-     * @param methodDeclarationNode	A generic node representing a method declaration.
-     * @return A string representing the method declaration’s corresponding function pointer.
-     */
-    public static String getPointerFromMethodDeclaration(GNode methodDeclarationNode) {
-        return convertDeclarationToPointer(methodDeclarationNode, currClass);
-    }
-
-
-    /**
-     * Returns a function pointer String corresponding to the given method
-     * declaration. Assumes that the given className is correct.
-     *
-     * @param methodDeclarationNode	A generic node representing a method declaration.
-     * @param className				The name of the class to which this methodDeclaration belongs.
-     *
-     * @return A string representing the method declaration’s corresponding
-     * function pointer.
-     */
-    public static String getPointerFromMethodDeclaration(GNode methodDeclarationNode, String className) {
-        return convertDeclarationToPointer(methodDeclarationNode, className);
-    }
-
-    public static String convertDeclarationToPointer(GNode methodDeclarationNode, String className) {
-        GNode n = methodDeclarationNode;
-        if (getMethodName(n).equals("main")) {
-            return "Function pointer not necessary for main method.";
-        }
-
-        String methodName = getMethodName(n);
-        String formalParameters = getFormalParameters((GNode)n.getNode(4));
-        final StringBuilder returnType = new StringBuilder();
-
-        /* Determine the return type. */
-        if (j2c(n.getNode(2).toString()).equals("void")) {
-            returnType.append("void");
-        } else {
-            new Visitor() {
-                public void visitQualifiedIdentifier(GNode n) {
-                    returnType.append(SegHelper.j2c(n.getString(0)));
-                }
-
-                public void visit(GNode n) {
-                    for (Object o : n) if (o instanceof Node) dispatch((Node) o);
-                }
-            }.dispatch(n.getNode(2));
-        }
-
-        boolean inHeader = false;
-        boolean inImplementation = false;
-        final StackTraceElement[] stackTraceElement = Thread.currentThread().getStackTrace();
-        if(stackTraceElement[3].getClassName().contains("SegHead")) {
-            inHeader = true;
-        } else if (stackTraceElement[3].getClassName().contains("SegImp")) {
-            inImplementation = true;
-        }
-
-        String functionPointer = methodName + (inHeader ? ")(" : "(");
-        if(n.getNode(4).size() == 0) {
-            functionPointer += className + ");";
-        } else {
-            functionPointer += className + ", " + formalParameters;
-        }
-
-        if(inHeader) {
-            return returnType.toString() + " (*" + functionPointer;
-        } else if(inImplementation) {
-            return returnType.toString() + " " + className + "::" + functionPointer;
-        } else {
-            return "****Error in getPointerFromMethodDeclaration*****";
-        }
-    }
+//    /**
+//     * Returns a function pointer String corresponding to the given method declaration.
+//     *
+//     * @param methodDeclarationNode	A generic node representing a method declaration.
+//     * @return A string representing the method declaration’s corresponding function pointer.
+//     */
+//    public static String getPointerFromMethodDeclaration(GNode methodDeclarationNode) {
+//        return convertDeclarationToPointer(methodDeclarationNode, currClass);
+//    }
+//
+//
+//    /**
+//     * Returns a function pointer String corresponding to the given method
+//     * declaration. Assumes that the given className is correct.
+//     *
+//     * @param methodDeclarationNode	A generic node representing a method declaration.
+//     * @param className				The name of the class to which this methodDeclaration belongs.
+//     *
+//     * @return A string representing the method declaration’s corresponding
+//     * function pointer.
+//     */
+//    public static String getPointerFromMethodDeclaration(GNode methodDeclarationNode, String className) {
+//        return convertDeclarationToPointer(methodDeclarationNode, className);
+//    }
+//
+//    public static String convertDeclarationToPointer(GNode methodDeclarationNode, String className) {
+//        GNode n = methodDeclarationNode;
+//        if (getMethodName(n).equals("main")) {
+//            return "Function pointer not necessary for main method.";
+//        }
+//
+//        String methodName = getMethodName(n);
+//        String formalParameters = getFormalParameters((GNode)n.getNode(4));
+//        final StringBuilder returnType = new StringBuilder();
+//
+//        /* Determine the return type. */
+//        if (j2c(n.getNode(2).toString()).equals("void")) {
+//            returnType.append("void");
+//        } else {
+//            new Visitor() {
+//                public void visitQualifiedIdentifier(GNode n) {
+//                    returnType.append(SegHelper.j2c(n.getString(0)));
+//                }
+//
+//                public void visit(GNode n) {
+//                    for (Object o : n) if (o instanceof Node) dispatch((Node) o);
+//                }
+//            }.dispatch(n.getNode(2));
+//        }
+//
+//        boolean inHeader = false;
+//        boolean inImplementation = false;
+//        final StackTraceElement[] stackTraceElement = Thread.currentThread().getStackTrace();
+//        if(stackTraceElement[3].getClassName().contains("SegHead")) {
+//            inHeader = true;
+//        } else if (stackTraceElement[3].getClassName().contains("SegImp")) {
+//            inImplementation = true;
+//        }
+//
+//        String functionPointer = methodName + (inHeader ? ")(" : "(");
+//        if(n.getNode(4).size() == 0) {
+//            functionPointer += className + ");";
+//        } else {
+//            functionPointer += className + ", " + formalParameters;
+//        }
+//
+//        if(inHeader) {
+//            return returnType.toString() + " (*" + functionPointer;
+//        } else if(inImplementation) {
+//            return returnType.toString() + " " + className + "::" + functionPointer;
+//        } else {
+//            return "****Error in getPointerFromMethodDeclaration*****";
+//        }
+//    }
 
 
     public static String getMainMethodArgumentsAsSmartPointers () {
@@ -1006,9 +973,21 @@ public class SegHelper {
     }
 
 
-//    public static String getMethodPointerFromDeclaration(String declaration) {
-//
-//    }
+    /**
+     * Given a method declaration, returns the corresponding method pointer.
+     *
+     * @param declaration   The given method declaration.
+     * @return              The corresponding method pointer.
+     */
+    public static String getMethodPointerFromDeclaration(String declaration) {
+        // Remove "static ".
+        declaration = declaration.substring(7);
+        String[] splitDeclaration = declaration.split(" ");
+        String returnType = splitDeclaration[0];
+        String methodName = splitDeclaration[1].split("\\(")[0];
+        String parameterList = "(" + declaration.split("\\(")[1];
+        return returnType + " (*" + methodName + ")" + parameterList;
+    }
 }
 /**
  For method overloading:
@@ -1025,6 +1004,8 @@ public class SegHelper {
         else
             get the static types of the method parameters via SegHelper's Symbol Table
             get the number of parameters via SegHelper's Symbol Table
+
+ CHECK IF IS SUBCLASS OF AND NAME MANGLED
  */
 
 /**
@@ -1042,5 +1023,5 @@ public class SegHelper {
         method for casting parameters
 
     STILL NEED TO FIX CONSTRUCTOR
-
+    FIX INIT, ISA, DELETE METHODS
  */

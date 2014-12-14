@@ -65,7 +65,8 @@ public class SegHead extends Visitor{
 
         // Print the virtual table pointer data field.
 		SegHelper.hpp_pln(SegHelper.getClassDeclaration(n) + " {");
-        SegHelper.hpp_pln("\t__" + SegHelper.getClassName(n) + "_VT* __vptr;  // Virtual table pointer. \n");
+        SegHelper.hpp_pln("\t// Virtual table pointer.");
+        SegHelper.hpp_pln("\t__" + SegHelper.getClassName(n) + "_VT* __vptr;");
 
         // Print the constructor.
         SegHelper.hpp_pln("\t// The constructor.");
@@ -93,6 +94,7 @@ public class SegHead extends Visitor{
         SegHelper.hpp_pln("\t// This class's method declarations.");
         for (String methodDeclaration : SegHelper.classNameToMethodDeclarations.get(className)) {
             SegHelper.hpp_pln("\t" + methodDeclaration + ";");
+            SegHelper.classToAllAvailableMethodDeclarations.get(className).add(methodDeclaration);
         }
 
         // Print the function returning this class's object.
@@ -109,19 +111,19 @@ public class SegHead extends Visitor{
 		SegHelper.hpp_pln("};\n\n");
 
 		/**generate vtable for that respective class*/
-		SegHelper.genVTable();
+		SegHelper.generateVtableForClass(className);
 	}
 
 
 	public void visitMethodDeclaration(GNode n){
         if (n.getNode(2) == null) return;  // This is a constructor
 
-		String method_decl=SegHelper.getMethodDeclaration(n,SegHelper.getCurrClass());
-		if(method_decl != null){
-			SegHelper.hpp_pln("\t"+method_decl);
-		}
-        String pointer = SegHelper.getPointerFromMethodDeclaration(n);
-        System.out.println(pointer);
+//		String method_decl=SegHelper.getMethodDeclaration(n,SegHelper.getCurrClass());
+//		if(method_decl != null){
+//			SegHelper.hpp_pln("\t"+method_decl);
+//		}
+//        String pointer = SegHelper.getMethodPointerFromDeclaration(n);
+//        System.out.println(pointer);
 	}
 
 
