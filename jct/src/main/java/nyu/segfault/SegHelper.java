@@ -178,7 +178,7 @@ public class SegHelper {
                 else if (declarationType.equals("String")) { mBod.append("String "); }
                 else if (declarationType.equals("Object")) { mBod.append("Object " ); }
                 /* CREATE THE SMART POINTER */
-                else if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) { mBod.append("__rt::Ptr<" + n.getNode(1).getNode(0).getString(0) + "> "); }
+                else if (n.getNode(1).getNode(0).getName().equals("QualifiedIdentifier")) { mBod.append(n.getNode(1).getNode(0).getString(0) + " "); }
 
                 /* Print the name of the field. */
                 String fieldName = n.getNode(2).getNode(0).getString(0);
@@ -200,11 +200,12 @@ public class SegHelper {
                                     mBod.append(" = " + s);
                                 }
                             }
-                        } catch(Exception e) { }
+                        } catch(Exception e) { }  // A a = __A::init(new __A());
                         new Visitor() {
                             public void visitNewClassExpression(GNode n) {
+                                System.out.println(n + "\n\n\n");
                                 if (n.getNode(3).size() > 0) {  // if arguments exist for object initializing
-                                    mBod.append(" = (" + n.getNode(2).getString(0) + ")" + " {" + "." + constructorProp + " = " + n.getNode(3).getNode(0).getString(0) + "}");  //  only 1 argument works for now
+                                    mBod.append(" = __" + n.getNode(2).getString(0) + "::init(new __" + n.getNode(2).getString(0) + "())");
                                 } else if (n.getNode(3).toString().equals("Arguments()"))  // Arguments do not exist.
                                     ;// mBod.append("(" + n.getNode(2).getString(0) + ")" + " {" + " }");
 
@@ -252,7 +253,7 @@ public class SegHelper {
                         public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitBooleanLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitNullLiteral(GNode n) { mBod.append("null"); }
-                        public void visitPrimaryIdentifier(GNode n) { mBod.append(" = " + n.getString(0)); }
+                        public void visitPrimaryIdentifier(GNode n) { mBod.append(n.getString(0)); }
                         public void visitAdditiveExpression(GNode n) { mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0)); }
                         public void visit(Node n){ for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
                     }.dispatch(n);
@@ -279,12 +280,13 @@ public class SegHelper {
                                 }
                                 public void visitCallExpression(GNode n) {
                                     String method = "";
-                                    method += n.getNode(0) == null ? n.getString(2) : n.getNode(0).getString(0);
+                                    String caller = n.getNode(0) == null ? n.getString(2) : n.getNode(0).getString(0);
+                                    method += caller;
                                     if (n.getString(2).isEmpty()) {
                                         method += "()";
                                     } else {
-                                        method += "->__vptr->" + n.getString(2) + "(" + getCurrClass();
-                                        if (n.getNode(3).isEmpty()) method += ")";
+                                        method += "->__vptr->" + n.getString(2) + "(" + caller + ")";
+//                                        if (n.getNode(3).isEmpty()) method += ")";  // NEEDS TO BE EDITED TO TAKE MORE THAN ONE PARAMETER.
                                     }
                                     vars.add(method);
                                     mBod.append(" << " + method);
@@ -308,7 +310,7 @@ public class SegHelper {
                             if (n.getString(2).isEmpty()) {
                                 method += "()";
                             } else {
-                                method += "->__vptr-->" + n.getString(2) + "(" + n.getNode(0).getString(0) + ", ";
+                                method += "->__vptr->" + n.getString(2) + "(" + n.getNode(0).getString(0) + ", ";
                                 if (n.getNode(3).isEmpty()) {
                                     method = method.substring(0, method.length() - 2);  // Remove the ", ".
                                     method += ")";
@@ -605,6 +607,7 @@ public class SegHelper {
      */
     public static ArrayList<String> getGlobalVariables(GNode n) {
         new Visitor() {
+            boolean initializingCustomClass = false;
             public void visitFieldDeclaration(GNode n) {
                 final StringBuilder gVar = new StringBuilder();
                 /* Determine the variable modifiers (e.g. "static", "private"). */
@@ -1022,6 +1025,18 @@ public class SegHelper {
         }
 
         return methodName + "((" + returnType + "(*)" + parameterList + ")" + address + ")";
+    }
+
+
+    public static String getClassMethod(String className) {
+        String classMethod =
+                "Class " + className + "::__class() {" + "\n" +
+                "\tstatic Class k =" + "\n" +
+                "\t\tnew __Class(__rt::literal(\"" + className + "\"), java::lang::__Object::__class());" + "\n" +
+                "\treturn k;" + "\n" +
+                "}";
+
+        return classMethod;
     }
 }
 /**

@@ -44,6 +44,7 @@ public class SegImp extends Visitor{
 
     public void visitClassDeclaration(GNode n) {
         className = SegHelper.getClassDeclaration(n).split(" ")[1];  // Set the SegHelper's curr_class, and returns the name of the current class.
+        SegHelper.currClass = className;
         SegHelper.getGlobalVariables(n);
 //        for (String gVar : SegHelper.currentClassGlobalVariables) SegHelper.cpp_pln(gVar + ";");
         visit(n);
@@ -57,13 +58,43 @@ public class SegImp extends Visitor{
         } catch (Exception e) {
             returnType = "";  // This is the constructor or main, with no return type.
         }
-        if (returnType.equals("") && (!n.getString(3).equals("main"))) {  // If this is a constructor, return.
-            System.out.println(n + "\n" + "returnType: " + returnType + "\n\n\n");
+        if (returnType.equals("") && (!n.getString(3).equals("main"))) {  // If this is a constructor, handle it, then return.
+            System.out.println("in constructor declaration");
+
+            SegHelper.cpp_pln(className + "::" + className + "()");
+            SegHelper.cpp_pln(":  __vptr(&__vtable) {");
+            SegHelper.cpp_pln("}\n");
+
+            // Note: Substring(2) removes the "__".
+            SegHelper.cpp_p(className.substring(2) + " " + className + "::init(" + className.substring(2) + " __this) {");
+            SegHelper.cpp_pln("\t//  Make implicit call to constructor of " + className + " explicit.");
+            SegHelper.cpp_pln("\t" + SegHelper.classToSuperclass.get(className) + "::init(__this)");
+
+            SegHelper.cpp_pln("\t// Translation of " + className + "'s constructor body.");
+            String constructorBody = SegHelper.getMethodBody(n);
+            SegHelper.cpp_pln(constructorBody);
+            SegHelper.cpp_pln("}");
+
+            SegHelper.cpp_pln("");
+            SegHelper.cpp_pln(SegHelper.getClassMethod(className));
+            SegHelper.cpp_pln("");
             return;
         }
 
         String declaration = SegHelper.getMethodDeclaration(n, className);
-        declaration = declaration.substring(0, declaration.length() - 1);  // Remove the semi-colon.
+        declaration = declaration.substring(0, declaration.length() - 1);
+
+        // Don't add "this" parameter to the main method.
+        if (!n.getString(3).equals("main")) {
+            declaration = SegHelper.getDeclarationWithNewThisParameter(declaration, className.substring(2) + " __this");  // String the "__".
+
+            // If there was originally more than one parameter, add a comma between the __this and the following parameters.
+            String delimiter = "__this";
+            if (declaration.split(delimiter)[1].length() > 2) {
+                declaration = declaration.split(delimiter)[0] + " __this, " + declaration.split(delimiter)[1];
+            }
+        }
+
         SegHelper.cpp_pln(declaration + " {");
         String body = SegHelper.getMethodBody(n);
         if (SegHelper.getMethodName(n).equals("main")) {
@@ -76,6 +107,18 @@ public class SegImp extends Visitor{
         SegHelper.cpp_pln("}\n");
         SegHelper.cpp_flush();
     }
+
+    /**
+     * This method writes the constructor to the implementation file.
+     *
+     * @param n The generic node representing a constructor declaration.
+     */
+//    public void visitConstructorDeclaration (GNode n) {
+//
+//
+//    }
+
+
 
     public void visit(Node n) { for (Object o : n) if (o instanceof Node) dispatch((Node)o); }
 

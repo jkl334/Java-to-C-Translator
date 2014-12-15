@@ -62,8 +62,11 @@ public class SegHead extends Visitor{
 
         visit(n);
     }
+
+
 	public void visitClassDeclaration(GNode n) {
         String className = n.getString(1);
+        SegHelper.currClass = className;
         SegHelper.classToAllAvailableMethodDeclarations.put(className, new ArrayList<String>());
 
         // Print the virtual table pointer data field.
@@ -101,6 +104,13 @@ public class SegHead extends Visitor{
                 SegHelper.classToAllAvailableMethodDeclarations.get(className).add(tailoredDeclaration);
             }
         }
+
+        // Print the init declaration.
+        SegHelper.hpp_pln("");
+        String constructorParameterList;
+        System.out.println(n +"\n\n\n");
+        SegHelper.hpp_pln("static " + className + " init(" + className + ");");
+        SegHelper.hpp_pln("");
 
         // Print this class's method declarations.
         SegHelper.hpp_pln("\t// This class's method declarations.");
