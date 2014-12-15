@@ -45,7 +45,7 @@ public class SegImp extends Visitor{
     public void visitClassDeclaration(GNode n) {
         className = SegHelper.getClassDeclaration(n).split(" ")[1];  // Set the SegHelper's curr_class, and returns the name of the current class.
         SegHelper.getGlobalVariables(n);
-        for (String gVar : SegHelper.currentClassGlobalVariables) SegHelper.cpp_pln(gVar + ";");
+//        for (String gVar : SegHelper.currentClassGlobalVariables) SegHelper.cpp_pln(gVar + ";");
         visit(n);
         SegHelper.currentClassGlobalVariables.clear();
     }
@@ -55,14 +55,13 @@ public class SegImp extends Visitor{
         try {
             returnType = n.getNode(2).getNode(0).getString(0);
         } catch (Exception e) {
-            returnType = "";  // This is the constructor, with no return type.
+            returnType = "";  // This is the constructor or main, with no return type.
         }
-        if (returnType.equals("")) {
-            //  Handle the constructor.
+        if (returnType.equals("") && (!n.getString(3).equals("main"))) {  // If this is a constructor, return.
+            System.out.println(n + "\n" + "returnType: " + returnType + "\n\n\n");
             return;
         }
 
-        System.out.println(n + "\n\n\n");
         String declaration = SegHelper.getMethodDeclaration(n, className);
         declaration = declaration.substring(0, declaration.length() - 1);  // Remove the semi-colon.
         SegHelper.cpp_pln(declaration + " {");

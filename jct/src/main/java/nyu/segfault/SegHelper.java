@@ -155,10 +155,6 @@ public class SegHelper {
      * @return  The entire body of the method declaration.
      */
     public static String getMethodBody(GNode n) {
-
-//        final StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-       // if (!stack[2].getClassName().contains("SegImp")) return;
-
         final StringBuilder mBod = new StringBuilder();  // The method body.
         String method_return_type = "";
         final boolean isPrivate = false;
@@ -169,7 +165,7 @@ public class SegHelper {
             method_return_type = n.getNode(2).getNode(0).getString(0);
         }
         catch (Exception e) { }
-        new Visitor(){
+        new Visitor() {
             public void visitFieldDeclaration(GNode n) {  // Need to add visitMethodDeclaration() to visitor for advanced FieldDeclarations.
                 /* Determine and print the declarator type. */
                 mBod.append("\t");  // Indent the field once (because it is within a method body).
@@ -647,6 +643,7 @@ public class SegHelper {
                 currentClassGlobalVariables.add(gVar.toString());
             }
             /* To prevent printing local fields, do not visit methodDeclaration nodes. */
+//            public void visitConstructorDeclaration(GNode n) { }
             public void visitMethodDeclaration(GNode n) { }
             public void visit(GNode n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
         }.dispatch(n);
