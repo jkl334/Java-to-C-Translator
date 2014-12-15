@@ -25,16 +25,7 @@ import xtc.util.Tool;
 import java.util.LinkedList;
 import xtc.util.SymbolTable;
 
-import java.util.logging.Logger;
-import java.util.logging.Handler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-import java.util.logging.SimpleFormatter;
-import java.util.logging.ConsoleHandler;
-
-
 public class Translator extends Tool {
-  private final static Logger LOGGER = Logger.getLogger(SegDependencyHandler.class .getName());
 
   public static String[] files; // an array used to store the files - args
   private static String file_name; /**@var name of input java source code */
@@ -109,26 +100,26 @@ public class Translator extends Tool {
         System.out.println(" -> " + nodeList.get(i).getLocation().toString());
       }
 
-      LOGGER.info("Building inheritance tree:");
+      //Builds inheritance tree
       SegInheritanceBuilder inheritanceTree = new SegInheritanceBuilder(nodeList);
-      LOGGER.info("Writing VTables to " + headFile);
-      writeInheritanceAsCPP(inheritanceTree,  inheritanceTree.getNodeList());
+      //Writes VTables
+      writeInheritance(inheritanceTree,  inheritanceTree.getNodeList());
       SymbolTable table = new SymbolTable();
-      LOGGER.info("Building AST:");
+      //Builds AST
       for (GNode listNode : nodeList){
         SegOverloadASTHelper oModifier = new SegOverloadASTHelper();
         oModifier.dispatch(listNode);
         LinkedList<String> overloadedNames = oModifier.getOverloadedList();
-        LOGGER.info("Building the Symbol Table:");
+        //Builds the Symbol Table
         new SymbolTableBuilder(runtime, table).dispatch(listNode);
         new SegASTHelper().dispatch(listNode);
         new SegOverloading(table, inheritanceTree, overloadedNames).dispatch(listNode);
       }
 
-        writeTreeAsCPP(nodeList, table, inheritanceTree);
+        writeTree(nodeList, table, inheritanceTree);
   }
 
-  private void writeInheritanceAsCPP(SegInheritanceBuilder inheritanceTree, LinkedList<GNode> nodeList){
+  private void writeInheritance(SegInheritanceBuilder inheritanceTree, LinkedList<GNode> nodeList){
     Writer outH = null;
     try {
       outH = new BufferedWriter(new OutputStreamWriter(
@@ -136,7 +127,7 @@ public class Translator extends Tool {
       Printer pH = new Printer(outH);
       initOutputHFile(pH);
       for (GNode listNode : nodeList){
-        LOGGER.info("Running SegTreePrinter on " + listNode.getLocation().toString());
+        //Runs SegTreePrinter on nodes
         LinkedList<GNode> listNodeTree = inheritanceTree.parseNodeToInheritance(listNode);
         for (GNode node : listNodeTree) {
           new SegTreePrinter(pH).dispatch(node);
@@ -144,13 +135,13 @@ public class Translator extends Tool {
       }
 
     } catch (IOException ex){
-      LOGGER.warning("IO Exception");
+
     } finally {
        try {outH.close();} catch (Exception ex) {LOGGER.warning("IO Exception");}
     }
   }
 
-  private void writeTreeAsCPP(LinkedList<GNode> nodeList,  SymbolTable table, SegInheritanceBuilder inh){
+  private void writeTree(LinkedList<GNode> nodeList,  SymbolTable table, SegInheritanceBuilder inh){
     Writer outCC = null;
 
     try {
@@ -162,7 +153,7 @@ public class Translator extends Tool {
       initMainFile(pCC);
 
       for (GNode listNode : nodeList){
-        LOGGER.info("Running SegImp on " + listNode.getLocation().toString());
+        // most of the implementation printing done here
         LinkedList<String> staticMethods = inh.getStaticMethods(listNode);
         new SegImp(pCC, table, inh, staticMethods).dispatch(listNode);
       }

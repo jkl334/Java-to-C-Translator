@@ -1,7 +1,5 @@
 package nyu.segfault;
-
-import java.util.logging.Logger;
-import java.util.logging.Level;
+;
 import java.lang.*;
 import java.io.IOException;
 import xtc.parser.ParseException;
@@ -26,8 +24,6 @@ import java.util.LinkedList;
 
 public class SegDependencyHandler extends Tool {
 
-  private final static Logger LOGGER = Logger.getLogger(SegDependencyHandler.class .getName());
-
   LinkedList<GNode> dependancyList = new LinkedList<GNode>();
 
   public SegDependencyHandler(LinkedList<GNode> ll){
@@ -49,12 +45,11 @@ public class SegDependencyHandler extends Tool {
     return (GNode)parser.value(result);
   }
 
-    /* Fills list the addresses of the dependencies */
+    // Fills list the addresses of the dependencies
   public void makeAddressList() {
-    LOGGER.setLevel(Level.INFO);
     for (int i = 0; i < dependancyList.size(); i++) {
       if (dependancyList.get(i) != null) {
-        LOGGER.info("Looping through the dependencies");
+        // Looping through the dependencies
         new Visitor() {
 
           public void visitPackageDeclaration(GNode n) {
@@ -62,23 +57,19 @@ public class SegDependencyHandler extends Tool {
             String packageName;
             String path = getRelativePath(n);
             packageName = path.substring(1).replace("/",".");
-            LOGGER.info("Package name: " + packageName);
-            LOGGER.info("Package path: " + rootDir + path);
             processDirectory(rootDir + path, packageName);
           }
 
           public void visitImportDeclaration(GNode n) {
-            LOGGER.setLevel(Level.INFO);
-            LOGGER.info("Visiting import declaration");
+            //Visiting package declarations"
             if (n.getString(2) == null){
-            LOGGER.info("Importing a file");
+            //Importing a file
               String path = getNodeLoc(n) + getRelativePath(n);
               File file = new File(path + ".java");
-              LOGGER.info("got file " + file.getAbsoluteFile());
               processFile(file);
             }
             else {
-              LOGGER.info("Importing an entire folder");
+              //Importing an entire folder
               String path = "examples/" + getRelativePath(n);
 
               processDirectory(path);
@@ -151,10 +142,8 @@ public class SegDependencyHandler extends Tool {
           }
         }
         catch (IOException e){
-          LOGGER.warning("IO Exception on " + files[i].getPath());
         }
         catch (ParseException e){
-          LOGGER.warning("Parse Exception");
         }
       }
     }
@@ -168,10 +157,8 @@ public class SegDependencyHandler extends Tool {
           processNode(node);
         }
         catch (IOException e){
-          LOGGER.warning("IO Exception on " + file.getPath());
         }
         catch (ParseException e){
-          LOGGER.warning("Parse Exception");
         }
   }
 
