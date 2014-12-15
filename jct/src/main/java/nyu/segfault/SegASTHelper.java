@@ -11,18 +11,13 @@ import xtc.tree.SourceIdentity;
 import xtc.tree.Token;
 import xtc.tree.Visitor;
 
-import java.util.logging.Logger;
-import java.util.logging.Level;
-
-public class SegASTHandler extends Visitor {
-	private final static Logger LOGGER = Logger.getLogger(SegDependencyHandler.class .getName());
-
+public class SegASTHelper extends Visitor {
 	public String className;
-	public SegASTHandler(){
+	
+	public SegASTHelper(){
 	}
 
 	public String getName(){
-
 		return className;
 	}
 
@@ -127,15 +122,15 @@ public class SegASTHandler extends Visitor {
 		  coutAdd.add(n.getNode(0).getNode(2));
 		  n.set(0,coutAdd);
 	}
-	else if(n.getNode(0).hasName("CallExpression")){
-		  GNode coutCall = GNode.create("CoutCallExpression");
-		  coutCall.add(n.getNode(0).getNode(0));
-		  coutCall.add(n.getNode(0).getString(2));
-		  coutCall.add(n.getNode(0).getNode(3));
-		  n.set(0,coutCall);
+		else if(n.getNode(0).hasName("CallExpression")){
+			  GNode coutCall = GNode.create("CoutCallExpression");
+			  coutCall.add(n.getNode(0).getNode(0));
+			  coutCall.add(n.getNode(0).getString(2));
+			  coutCall.add(n.getNode(0).getNode(3));
+			  n.set(0,coutCall);
+			}
+			visit(n);
 		}
-		visit(n);
-	}
 
 	public void visitBlock(GNode n){
 		  visit(n);
