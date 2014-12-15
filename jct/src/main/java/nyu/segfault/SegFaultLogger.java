@@ -13,7 +13,7 @@ public class SegFaultLogger {
   static private FileHandler fileTxt;
   static private SimpleFormatter formatterTxt;
 
-  static private FileHandler fh;
+  static private FileHandler fileHandler;
   static private Formatter formatterHTML;
 
   static private ConsoleHandler ch;
@@ -22,13 +22,9 @@ public class SegFaultLogger {
     LogManager.getLogManager().reset();
     Logger logger = Logger.getLogger("");
     logger.setLevel(Level.ALL);
-    fh = new FileHandler("SegFault.log");
+    fileHandler = new FileHandler("SegFault.log");
     SimpleFormatter simpleFormat = new SimpleFormatter();
-    fh.setFormatter(simpleFormat);
-    logger.addHandler(fh);
-
-    ch = new ConsoleHandler();
-    ch.setLevel(Level.WARNING);
-    logger.addHandler(ch);
+    fileHandler.setFormatter(simpleFormat);
+    logger.addHandler(fileHandler);
   }
 }
