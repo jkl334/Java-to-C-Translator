@@ -514,7 +514,7 @@ public class SegHelper {
         }
 
         // Determine the parameter types and names.
-        String methodDeclaration = returnType + " " + methodName + "(";
+        String methodDeclaration = returnType + " " + className + "::" + methodName + "(";
         if (n.getNode(4).size() == 0) {
             methodDeclaration += ");";
         } else {

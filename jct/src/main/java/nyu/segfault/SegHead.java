@@ -76,7 +76,7 @@ public class SegHead extends Visitor{
         SegHelper.hpp_pln("\t__" + className + "();");
 
         // Print the data fields.
-        SegHelper.hpp_pln("");
+        SegHelper.hpp_pln("\n\t// The data fields.");
         ArrayList<String> dataFields = SegHelper.getGlobalVariables(n);
         for (String field : dataFields) {
             SegHelper.hpp_pln("\t" + field + ";");

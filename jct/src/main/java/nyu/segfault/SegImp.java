@@ -43,14 +43,27 @@ public class SegImp extends Visitor{
     public String constructorProp; //global variable to store constructor property in class declaration and to use to assign arguments in struct initialization in visitFieldDeclaration -Jeff
 
     public void visitClassDeclaration(GNode n) {
-        String className = SegHelper.getClassDeclaration(n).split(" ")[1];  // Set the SegHelper's curr_class, and returns the name of the current class.
+        className = SegHelper.getClassDeclaration(n).split(" ")[1];  // Set the SegHelper's curr_class, and returns the name of the current class.
         SegHelper.getGlobalVariables(n);
         for (String gVar : SegHelper.currentClassGlobalVariables) SegHelper.cpp_pln(gVar + ";");
         visit(n);
+        SegHelper.currentClassGlobalVariables.clear();
     }
 
-    public void visitMethodDeclaration(GNode n){
-        String declaration = SegHelper.getMethodDeclaration(n, "SegImp");
+    public void visitMethodDeclaration(GNode n) {
+        String returnType = "";
+        try {
+            returnType = n.getNode(2).getNode(0).getString(0);
+        } catch (Exception e) {
+            returnType = "";  // This is the constructor, with no return type.
+        }
+        if (returnType.equals("")) {
+            //  Handle the constructor.
+            return;
+        }
+
+        System.out.println(n + "\n\n\n");
+        String declaration = SegHelper.getMethodDeclaration(n, className);
         declaration = declaration.substring(0, declaration.length() - 1);  // Remove the semi-colon.
         SegHelper.cpp_pln(declaration + " {");
         String body = SegHelper.getMethodBody(n);
