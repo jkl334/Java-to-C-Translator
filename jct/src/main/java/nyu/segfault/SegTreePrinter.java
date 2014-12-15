@@ -1,9 +1,7 @@
 package nyu.segfault;
 
 import java.lang.*;
-
 import java.util.Iterator;
-
 import java.util.LinkedList;
 import xtc.tree.LineMarker;
 import xtc.tree.Node;
@@ -17,12 +15,11 @@ import xtc.tree.Visitor;
 
 public class SegTreePrinter extends Visitor {
   protected Printer printer;
-  public GNode root;
-  public GNode dataLayout;
-
   private String packageName;
   private String className;
   private String javaClassName;
+  public GNode root;
+  public GNode dataLayout;
   private boolean isFirstVTMethod = true;
 
   public SegTreePrinter(Printer p){
@@ -30,19 +27,7 @@ public class SegTreePrinter extends Visitor {
     printer.register(this);
   }
 
-  public void visitHeaderDeclaration(GNode n){
-    packageName = n.getString(0);
-    if (packageName != null){
-      printer.pln("namespace " + n.getString(0) + " {");
-      className = n.getString(1);
-      visit(n);
-      printer.pln("}").pln();
-    }
-    else{
-      className = n.getString(1);
-      visit(n);
-    }
-  }
+
 
   public void visitDataLayout(GNode n){
     dataLayout = n;
@@ -62,11 +47,42 @@ public class SegTreePrinter extends Visitor {
 
   public void visitConstructorDeclaration(GNode n){
     printer.pln("__" + n.getString(0) + "();");
+    if (n.getNode(1).size() == 0){
+      printer.pln("static " + className + " init(" + className + ");");
+    }
+    else {
+      printer.p("static " + className + " init(" + className + ", ");
+      printer.p(n.getNode(1));
+      printer.pln(");");
+    }  
+  }
+  
+  public void visitHeaderDeclaration(GNode n){
+    packageName = n.getString(0);
+    if (packageName != null){
+      printer.pln("namespace " + n.getString(0) + " {");
+      className = n.getString(1);
+      visit(n);
+      printer.pln("}").pln();
+    }
+    else{
+      className = n.getString(1);
+      visit(n);
+    }
   }
 
   public void visitDataLayoutMethodDeclaration(GNode n){
-          if (!(n.get(0) == null)) printer.p(n.getNode(0));
-          if (!(n.get(1) == null)) printer.p(n.getString(1)).p(" ");
+        if (!(n.get(0) == null)) {
+          printer.p(n.getNode(0));
+        }
+        if (!(n.get(1) == null)) {
+          if (n.getString(1).equals("int")){
+            printer.p("int32_t").p(" ");
+          }
+          else{
+            printer.p(n.getString(1)).p(" ");
+          }
+        }
     String methodName = n.getString(2);
     printer.p(methodName);
     printer.p("(");
@@ -130,8 +146,16 @@ public class SegTreePrinter extends Visitor {
       printer.p(",");
       printer.pln();
       printer.p(n.getString(2)).p("(");
-      // Should make it more general than this.
-      if (n.get(1) != null) {printer.p("(").p(n.getString(1)).p("(*)(").p(n.getNode(4));}
+      if (n.get(1) != null) {
+        printer.p("(");
+        if(n.getString(1).equals("int")){
+          printer.p("int32_t");
+        }
+        else{
+          printer.p(n.getString(1));
+        }
+        printer.p("(*)(").p(n.getNode(4));
+      }
       if (n.getNode(4).size()==0){
         printer.p(className);
       }
@@ -147,7 +171,12 @@ public class SegTreePrinter extends Visitor {
   
   public void visitParameters(GNode n){
     for (int x = 0; x < n.size() ; x++){
-      printer.p(n.getString(x));
+      if (n.getString(x).equals("int")){
+        printer.p("int32_t");
+      }
+      else{
+        printer.p(n.getString(x));
+      }
       if (x != (n.size()-1)){
         printer.p(",");
       }

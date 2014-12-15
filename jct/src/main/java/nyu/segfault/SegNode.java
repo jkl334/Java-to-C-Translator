@@ -59,7 +59,7 @@ public class SegNode {
 						}
 						else {
 							inheritNode.getNode(inheritNode.size()-1).set(5, "New");
-							checkForOverloading(inheritNode, (GNode)inheritNode.getNode(inheritNode.size()-1), nodesToOverload);
+							checkOverloading(inheritNode, (GNode)inheritNode.getNode(inheritNode.size()-1), nodesToOverload);
 						}
 					}
 					else if (child.hasName("ConstructorDeclaration") && !isVTable) {
@@ -152,7 +152,7 @@ public class SegNode {
 		return temp;
 	}
 
-	protected void checkForOverloading(GNode masterNode, GNode currentNode, GNode nodesToOverload) {
+	protected void checkOverloading(GNode masterNode, GNode currentNode, GNode nodesToOverload) {
 		if (masterNode.size() > 0) {
 			for (int i=0;i<masterNode.size()-1;i++) {
 				if (masterNode.getNode(i).hasProperty("typeOfNode") && masterNode.getNode(i).getProperty("typeOfNode").equals("method")) {
@@ -225,8 +225,7 @@ public class SegNode {
 	}
 
 	// Parses a MethodDeclaration from JavaAST to a similar one
-	protected boolean handleMethodDeclaration(GNode inheritNode, GNode astNode,
-		boolean isVTable) {
+	protected boolean handleMethodDeclaration(GNode inheritNode, GNode astNode, boolean isVTable) {
 		String[] parameters = null, modifiers = null;
 		String classname = null;
 		boolean addToTree = true;
@@ -318,7 +317,6 @@ public class SegNode {
 		GNode constructor = GNode.create("ConstructorDeclaration");
 		GNode constructorParameters = GNode.create("Parameters");
 		constructor.add(classname);
-
 		if (parameters != null) {
 			for (String param : parameters) {
 				constructorParameters.add(param);
@@ -328,51 +326,49 @@ public class SegNode {
 		return constructor;
 	}
 
-	protected GNode createMethod(String modifiers[], String name, String[] args, String returnType, String className, boolean isVTable) {
-		// Create a GNode with method arguments and the returnType as children
+	protected GNode createMethod(String modifiers[], String name, String[] args, String returnType, String className, boolean isVTable) { 
+		Set<String> filteredMethods = new HashSet<String>();
+		filteredMethods.add("__class");
+		filteredMethods.add("main");
+		filteredMethods.add("__isa");
+
 		GNode methodDeclaration = null;
 		if(isVTable)
 			methodDeclaration = GNode.create("VTableMethodDeclaration");
 		else {
 			methodDeclaration = GNode.create("DataLayoutMethodDeclaration");
 		}
-
 		methodDeclaration.setProperty("typeOfNode", "method");
-
 		GNode modifierDeclaration = GNode.create("Modifiers");
 		GNode parameters = GNode.create("Parameters");
-
 		if (modifiers != null) {
 			for (String mod : modifiers) {
 				modifierDeclaration.add(mod);
 			}
 		}
 		methodDeclaration.add(modifierDeclaration);
-
 		if (returnType==null) {
 			returnType="void";
 		}
 		methodDeclaration.add(returnType);
-
+		if(!filteredMethods.contains(name))			
+			parameters.add(className);
 		if (args != null) {
 			for (String arg : args) {
 				parameters.add(arg);
 			}
 		}
-
 		methodDeclaration.add(name);
 		if(className != null){
 			methodDeclaration.add(className);
 		}
-
-		methodDeclaration.add(parameters);
-
-		//For overwritten and overloaded specification
+		methodDeclaration.add(parameters);		
 		methodDeclaration.add("null");
 		methodDeclaration.add("null");
 
 		return methodDeclaration;
 	}
+
 
 	protected GNode createDataFieldEntry(String modifier, String type, String name, String declarator) {
 		GNode node = GNode.create("FieldDeclaration");
@@ -397,9 +393,6 @@ public class SegNode {
 
 	protected String convertType(String javaType) {
 		String cppType = javaType;
-		if (javaType.equals("int")){
-			cppType = "int32_t";
-		}
 		return cppType;
 	}
 }
