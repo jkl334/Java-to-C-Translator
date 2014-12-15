@@ -320,8 +320,12 @@ public class SegHelper {
                                 else {
                                     Node arguments = n.getNode(3);
                                     for (int i = 0; i < arguments.size(); i++) {
-                                        if (i == 0) method += arguments.getNode(0).getString(i);
-                                        else method += ", " + arguments.getNode(0).getString(i);
+                                        try {
+                                            if (i == 0) method += arguments.getNode(0).getString(i);
+                                            else method += ", " + arguments.getNode(0).getString(i);
+                                        } catch (Exception e) {
+
+                                        }
                                     }
                                     method += ")";
                                 }

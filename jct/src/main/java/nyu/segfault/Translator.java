@@ -163,6 +163,26 @@ public class Translator extends xtc.util.Tool {
                 }
             }
 
+            if (SegHelper.classNameToMethodDeclarations.get(className) != null) {
+                int methodNameLength = methodName.length();  // to do: make less sloppy
+                boolean encountered = false;
+                for (String declaration : SegHelper.classNameToMethodDeclarations.get(className)) {
+                    if (!encountered) {
+                        int x = 2;
+                        int counter = 0;  // to do: make less sloppy
+                        while (declaration.contains(methodName + "(")) {
+                            if (counter == 0) {
+                                methodName += x;
+                                counter++;
+                            } else {
+                                methodName = methodName.substring(0, methodNameLength) + x;
+                            }
+                            x++;
+                        }
+                        encountered = true;
+                    }
+                }
+            }
             // Create the method declaration string.
             String methodDeclaration = "static " + returnType + " " + methodName + "(";
 
