@@ -277,7 +277,6 @@ public class SegImp extends Visitor {
     printer.pln();
   }
 
-  boolean visitedSelectionExpression = false;
   public void visitSelectionExpression(GNode n){
     visit(n);
     printer.p("->" + n.getString(1));
@@ -288,7 +287,7 @@ public class SegImp extends Visitor {
     if (n.getNode(2).hasName("Declarators")){
       GNode decl = (GNode)n.getNode(2).getNode(0);
       if (decl.getNode(2) != null){
-        if (declaration.getNode(2).hasName("StringLiteral")){
+        if (decl.getNode(2).hasName("StringLiteral")){
           printer.p("__this->" + decl.getString(0));
           printer.p(" = ");
           printer.p(decl.getNode(2));

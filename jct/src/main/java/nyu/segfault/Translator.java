@@ -137,7 +137,7 @@ public class Translator extends Tool {
     } catch (IOException ex){
 
     } finally {
-       try {outH.close();} catch (Exception ex) {LOGGER.warning("IO Exception");}
+       try {outH.close();} catch (Exception ex) {}
     }
   }
 
