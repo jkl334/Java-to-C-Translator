@@ -110,11 +110,11 @@ public class Translator extends xtc.util.Tool {
 
             // Handle classes that extend other (non-object) classes.
             String superclass = "";
-            boolean superclassIsObject = false;
+            boolean superclassIsObject = true;
             try {
-                superclass = n.getNode(3).getNode(0).getNode(0).getString(0);
+                superclass = n.getNode(3).getNode(0).getNode(0).getString(0);  // If there is an error, object is the super class.
+                superclassIsObject = false;
             } catch (Exception e) {
-                superclassIsObject = true;
                 System.out.println("Class " + currentClass + " directly extends class Object.");
             }
 
@@ -123,6 +123,7 @@ public class Translator extends xtc.util.Tool {
                 SegHelper.classToSuperclass.put(currentClass, "Object");
             } else {
                 SegHelper.classToSuperclass.put(currentClass, superclass);
+                System.out.println();
             }
             visit(n);
         }

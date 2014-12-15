@@ -68,7 +68,8 @@ public class SegImp extends Visitor{
             // Note: Substring(2) removes the "__".
             SegHelper.cpp_p(className.substring(2) + " " + className + "::init(" + className.substring(2) + " __this) {");
             SegHelper.cpp_pln("\t//  Make implicit call to constructor of " + className + " explicit.");
-            SegHelper.cpp_pln("\t" + SegHelper.classToSuperclass.get(className) + "::init(__this)");
+            SegHelper.cpp_pln("\t" + SegHelper.classToSuperclass.get(className.substring(2)) + "::init(__this);");
+            System.out.println("Getting the super class of " + className);
 
             SegHelper.cpp_pln("\t// Translation of " + className + "'s constructor body.");
             String constructorBody = SegHelper.getMethodBody(n);

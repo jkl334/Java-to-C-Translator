@@ -237,6 +237,7 @@ public class SegHelper {
                     public void visitPrimaryIdentifier(GNode n) { mBod.append(n.getString(0)); }
                     public void visitThisExpression(GNode n) { }
                     public void visitAdditiveExpression(GNode n) { mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0)); }
+                    public void visitAssignmentOperator(GNode n) { mBod.append(" = "); System.out.println("\n\n\nAssignment operator " + n); };
                     public void visit(Node n) { for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
                 }.dispatch(n);
                 mBod.append(";").append("\n");
@@ -253,8 +254,9 @@ public class SegHelper {
                         public void visitCharacterLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitBooleanLiteral(GNode n) { mBod.append(n.getString(0)); }
                         public void visitNullLiteral(GNode n) { mBod.append("null"); }
-                        public void visitPrimaryIdentifier(GNode n) { mBod.append(n.getString(0)); }
+                        public void visitPrimaryIdentifier(GNode n) { mBod.append(n.getString(0)); visit(n); }
                         public void visitAdditiveExpression(GNode n) { mBod.append(n.getNode(0).getString(0) + " " + n.getString(1) + " " + n.getNode(2).getString(0)); }
+                        public void visitAssignmentOperator(GNode n) { mBod.append(" = "); System.out.println("\n\n\nAssignment operator " + n); };
                         public void visit(Node n){ for (Object o : n) if(o instanceof Node) dispatch((Node)o); }
                     }.dispatch(n);
                     mBod.append(";").append("\n");
