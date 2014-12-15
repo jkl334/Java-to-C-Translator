@@ -20,7 +20,7 @@ import xtc.util.SymbolTable.Scope;
 
 public class SegImp extends Visitor {
   final private SymbolTable table;
-  SegInheritanceHelper inheritanceTree;
+  SegInheritanceBuilder inheritanceTree;
 
   protected Printer printer;
   protected Printer header;
@@ -40,7 +40,7 @@ public class SegImp extends Visitor {
   LinkedList<GNode> classFields = new LinkedList<GNode>();
   LinkedList<String> constructorArgs = new LinkedList<String>();
 
-	public SegImp(Printer p, SymbolTable table, Inheritance inh, LinkedList<String> sNAmes){
+	public SegImp(Printer p, SymbolTable table, SegInheritanceBuilder inh, LinkedList<String> sNAmes){
     this.printer = p;
     this.table = table;
     printer.register(this);
@@ -376,7 +376,7 @@ public class SegImp extends Visitor {
   }
 
 
-  // gets distance from node to parent or root node in its heirchy
+  // gets distance from node to parent or root node in its heirarchy
   private int getDistance(String start, String target){
 
     if(start.equals(target)) return 0;
@@ -405,7 +405,7 @@ public class SegImp extends Visitor {
       return distance;
     }
     else{
-      return -1; //could not find
+      return -1; 
     }
   }
 
