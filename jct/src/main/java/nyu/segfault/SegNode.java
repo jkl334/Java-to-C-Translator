@@ -3,9 +3,9 @@ package nyu.segfault;
 import xtc.tree.GNode;
 import xtc.tree.Node;
 import xtc.tree.Visitor;
-
 import xtc.util.Tool;
-
+import java.util.Set;
+import java.util.HashSet;
 
 public class SegNode {
 

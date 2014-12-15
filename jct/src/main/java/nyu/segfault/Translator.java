@@ -100,10 +100,7 @@ public class Translator extends Tool {
     this.setFileName(filePath[indexOfFileName]);
 
     LinkedList<GNode> nodeList = new LinkedList<GNode>();
-
       nodeList.add((GNode)node);
-
-      LOGGER.info("Calling SegDependencyHandler.java on " + node.getName());
       SegDependencyHandler dep = new SegDependencyHandler(nodeList);
       dep.makeAddressList();
       // Store dependencies on the AST
@@ -137,8 +134,6 @@ public class Translator extends Tool {
       outH = new BufferedWriter(new OutputStreamWriter(
               new FileOutputStream("output/" + headFile), "utf-8"));
       Printer pH = new Printer(outH);
-
-      LOGGER.info("calling initOutputHFile()");
       initOutputHFile(pH);
       for (GNode listNode : nodeList){
         LOGGER.info("Running SegTreePrinter on " + listNode.getLocation().toString());
@@ -167,8 +162,9 @@ public class Translator extends Tool {
       initMainFile(pCC);
 
       for (GNode listNode : nodeList){
-        LOGGER.info("Running SegCPrinter on " + listNode.getLocation().toString());
-        new SegCPrinter(pCC, table, inh).dispatch(listNode);
+        LOGGER.info("Running SegImp on " + listNode.getLocation().toString());
+        LinkedList<String> staticMethods = inh.getStaticMethods(listNode);
+        new SegImp(pCC, table, inh, staticMethods).dispatch(listNode);
       }
 
     } catch (IOException ex){
