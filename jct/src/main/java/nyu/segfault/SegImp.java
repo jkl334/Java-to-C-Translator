@@ -787,6 +787,19 @@ public class SegImp extends Visitor {
     }
     return buf.toString();
   }
+  private void printDefaultMainMethod(){
+    printer.pln("int main(int argc, char* argv[]) {");
+    printer.pln("__rt::Ptr<__rt::Array<String> > args = new __rt::Array<String>(argc - 1);");
+    printer.pln();
+    printer.pln("for (int32_t i = 1; i < argc; i++) {");
+    printer.pln("(*args)[i-1] = __rt::literal(argv[i]);");
+    printer.pln("}");
+    printer.pln();
+    printer.pln(className + "::main(args);");
+    printer.pln("return 0;");
+    printer.pln("}");
+  }
+
 
   /* Unless the string is null, print it out as a line */
   private void printlnUnlessNull(String s){
