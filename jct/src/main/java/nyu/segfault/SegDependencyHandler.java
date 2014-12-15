@@ -1,5 +1,7 @@
 package nyu.segfault;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
 import java.lang.*;
 import java.io.IOException;
 import xtc.parser.ParseException;
@@ -7,9 +9,7 @@ import xtc.lang.JavaFiveParser;
 import xtc.parser.Result;
 import java.io.File;
 import java.io.Reader;
-
 import java.util.Iterator;
-
 import xtc.tree.LineMarker;
 import xtc.tree.Node;
 import xtc.tree.GNode;
@@ -19,11 +19,8 @@ import xtc.tree.SourceIdentity;
 import xtc.tree.Token;
 import xtc.tree.Visitor;
 import xtc.util.Tool;
-
 import java.util.LinkedList;
 
-import java.util.logging.Logger;
-import java.util.logging.Level;
 
 /* Handles dependency checking and adding */
 
@@ -31,24 +28,35 @@ public class SegDependencyHandler extends Tool {
 
   private final static Logger LOGGER = Logger.getLogger(SegDependencyHandler.class .getName());
 
-  LinkedList<GNode> depList = new LinkedList<GNode>();
+  LinkedList<GNode> dependancyList = new LinkedList<GNode>();
 
   public SegDependencyHandler(LinkedList<GNode> ll){
-    depList = ll;
+    dependancyList = ll;
   }
 
   public String getName(){
     return "SegDependencyHandler";
   }
 
-  /* fills the addresslist with the addresses of the dependencies */
+  public LinkedList<GNode> makeNodeList() {
+    return dependancyList;
+  }
+
+  public GNode parse(Reader in, File file) throws IOException, ParseException {
+    JavaFiveParser parser =
+      new JavaFiveParser(in, file.toString(), (int)file.length());
+    Result result = parser.pCompilationUnit(0);
+    return (GNode)parser.value(result);
+  }
+
+    /* Fills list the addresses of the dependencies */
   public void makeAddressList() {
     LOGGER.setLevel(Level.INFO);
-    for (int i = 0; i < depList.size(); i++) {
-      if (depList.get(i) != null) {
+    for (int i = 0; i < dependancyList.size(); i++) {
+      if (dependancyList.get(i) != null) {
         LOGGER.info("Looping through the dependencies");
         new Visitor() {
-          /* visit the package and get all the files and then their nodes */
+
           public void visitPackageDeclaration(GNode n) {
             String rootDir = System.getProperty("user.dir") + "/examples";
             String packageName;
@@ -56,14 +64,9 @@ public class SegDependencyHandler extends Tool {
             packageName = path.substring(1).replace("/",".");
             LOGGER.info("Package name: " + packageName);
             LOGGER.info("Package path: " + rootDir + path);
-
             processDirectory(rootDir + path, packageName);
-
-            /* Pass a path to processPath() */
-
           }
-          /* Visit the import statements and either get a single file or
-             an entire folder */
+
           public void visitImportDeclaration(GNode n) {
             LOGGER.setLevel(Level.INFO);
             LOGGER.info("Visiting import declaration");
@@ -86,23 +89,12 @@ public class SegDependencyHandler extends Tool {
             for (Object o : n) if (o instanceof Node) dispatch((Node) o);
           }
 
-        }.dispatch(depList.get(i));
+        }.dispatch(dependancyList.get(i));
       }
     }
   }
 
-  public LinkedList<GNode> makeNodeList() {
-    return depList;
-  }
-
-  public GNode parse(Reader in, File file) throws IOException, ParseException {
-    JavaFiveParser parser =
-      new JavaFiveParser(in, file.toString(), (int)file.length());
-    Result result = parser.pCompilationUnit(0);
-    return (GNode)parser.value(result);
-  }
-
-  /* Returns the name of the packge given the package declaration GNode */
+  /* Returns the name of the packge */
   private String getPackageName(GNode n){
     GNode qualId = (GNode)n.getNode(1);
     String name = "";
@@ -115,7 +107,7 @@ public class SegDependencyHandler extends Tool {
     return name;
   }
 
-  /* Returns the path of the package or import statement given a GNode */
+  /* Returns the path of the package or import statement */
   private String getRelativePath(GNode n){
     String path = "";
     Node qualId = n.getNode(1);
@@ -132,19 +124,15 @@ public class SegDependencyHandler extends Tool {
     return nodeLoc;
   }
 
-  /* Calls processDirectory with an empty
-     package declaration to import an entire folder */
   private void processDirectory(String path){
     processDirectory(path, "");
   }
 
-  /* Get all the files in the directory and obtain their Java AST's  and then
-     put them in the deplist by calling processNode(node)*/
+  /* Gets all the files in the directory and retrieves their Java AST's and then 
+  run processNode on it  */
   private void processDirectory(String path, String packageName){
     File folder = new File(path);
     File[] files = folder.listFiles();
-    if (files == null) {LOGGER.warning("Found no files in directory path");}
-    LOGGER.info("Scanning for java files in " + folder.toString());
 
     for (int i = 0; i < files.length; i++) {
       if (files[i].isFile() && files[i].getName().endsWith(".java")) {
@@ -189,8 +177,8 @@ public class SegDependencyHandler extends Tool {
 
   /* Check to see if the node is already in the list. if not then add it */
   private void processNode(GNode n){
-    if (!depList.contains(n)){
-      depList.add(n);
+    if (!dependancyList.contains(n)){
+      dependancyList.add(n);
     }
   }
 }
