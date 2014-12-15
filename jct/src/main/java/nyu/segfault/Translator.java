@@ -190,13 +190,6 @@ public class Translator extends Tool {
 
   public static void main(String[] args) {
   try {
-    SegFaultLogger.setup();
-    } catch (IOException e){
-      e.printStackTrace();
-    }
-    ConsoleHandler consoleHandler = new ConsoleHandler();
-    consoleHandler.setLevel(Level.WARNING);
-    LOGGER.addHandler(consoleHandler);
     Translator t = new Translator();
     t.files = args;
     t.run(args);

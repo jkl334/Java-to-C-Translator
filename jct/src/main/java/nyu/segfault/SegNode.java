@@ -6,11 +6,13 @@ import xtc.tree.Visitor;
 import xtc.util.Tool;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.*;
 
 public class SegNode {
 
 	String className = "";
-
+	LinkedList<GNode> overloadedMethods = new LinkedList<GNode>();
+	LinkedList<GNode> comparedMethods = new LinkedList<GNode>();
 	public SegNode() {
 	}
 
@@ -43,10 +45,6 @@ public class SegNode {
 						for (int j = 0; j < inheritNode.size() - 1; j++) {
 							if (inheritNode.getNode(j).hasProperty("typeOfNode") && inheritNode.getNode(j).getProperty("typeOfNode").equals("method")) {
 								if (nodeEquals((GNode)inheritNode.getNode(j), (GNode)inheritNode.getNode(inheritNode.size()-1), true)) {
-									if (inheritNode.getNode(j).getString(6).equals("Overloaded")) {
-										nodesToOverload.add(inheritNode.getNode(inheritNode.size()-1));
-										inheritNode.getNode(inheritNode.size()-1).set(6, "Overloaded");
-									}
 									inheritNode.set(j, inheritNode.getNode(inheritNode.size()-1));
 									inheritNode.getNode(j).set(5, "Overwritten");
 									isOverwritten = true;
@@ -59,7 +57,6 @@ public class SegNode {
 						}
 						else {
 							inheritNode.getNode(inheritNode.size()-1).set(5, "New");
-							checkOverloading(inheritNode, (GNode)inheritNode.getNode(inheritNode.size()-1), nodesToOverload);
 						}
 					}
 					else if (child.hasName("ConstructorDeclaration") && !isVTable) {
@@ -74,6 +71,8 @@ public class SegNode {
 			inheritNode.add(2,createConstructor(className, null));
 		}
 		executeOverloading(nodesToOverload);
+		mangleNames();
+
 		return inheritNode;
 	}
 
@@ -91,8 +90,7 @@ public class SegNode {
 	}
 
 	// Check node1 & node2's subtree and check if they're equal to one another.
-	private boolean nodeEquals(GNode node1, GNode node2, boolean methodOverwriting) {
-
+	private boolean nodeEquals(GNode node1, GNode node2, boolean overwritingMethod) {
 		boolean temp = true;
 
 		if (!node1.getName().equals(node2.getName())) {
@@ -104,18 +102,21 @@ public class SegNode {
 		else {
 			for (int i=0;i<node1.size();i++) {
 
-				if (methodOverwriting && i==0) {
+				if (overwritingMethod && i==0) {
 					continue;
 				}
-				if (methodOverwriting && i==2) {
+
+				if (overwritingMethod && i==2) {
 					if (getOriginalMethodName(node1.getString(2)).equals(getOriginalMethodName(node2.getString(2)))) {
 						continue;
 					}
 				}
-				if (methodOverwriting && i==3) {
+
+				if (overwritingMethod && i==3) {
 					continue;
 				}
-				if (methodOverwriting && i==4) {
+
+				if (overwritingMethod && i==4) {
 					if ((node1.getNode(i).size()==0 && node2.getNode(i).size() == 0)) {
 						continue;
 					}
@@ -130,7 +131,8 @@ public class SegNode {
 						}
 					}
 				}
-				if (methodOverwriting && i>4) {
+
+				if (overwritingMethod && i>4) {
 					break;
 				}
 
@@ -161,9 +163,11 @@ public class SegNode {
 					if (masterString.equals(currentString)) {
 						boolean addCurrentNode = true;
 						boolean addMasterNode = true;
+						System.out.println(currentNode.getString(2)+ " "+currentNode.getNode(4));
 						if (nodesToOverload.size() > 0) {
 							for (int j=0;j<nodesToOverload.size();j++) {
 								if (currentNode.equals(nodesToOverload.getNode(j))) {
+									System.out.println(currentNode.getNode(2));
 									addCurrentNode = false;
 								}
 								if (masterNode.getNode(i).equals(nodesToOverload.getNode(j))) {
@@ -187,21 +191,48 @@ public class SegNode {
 	}
 
 	protected void executeOverloading(GNode nodesToOverload) {
-		if (nodesToOverload.size()==0) {
-			return;
-		}
-
-		for (int i=0;i<nodesToOverload.size();i++) {
-			String newNodeString = nodesToOverload.getNode(i).getString(2);
-			if (nodesToOverload.getNode(i).getNode(4).size() > 0) {
-				for (int j=0;j<nodesToOverload.getNode(i).getNode(4).size();j++) {
-					String typeToAppend = nodesToOverload.getNode(i).getNode(4).getString(j);
-					typeToAppend = typeToAppend.replace(" ", "_");
-					newNodeString = newNodeString+"_"+typeToAppend;
-				}
-				nodesToOverload.getNode(i).set(2, newNodeString);
+		new Visitor() {
+			public void visitVTable(GNode n) {
+				visit(n);
 			}
-		}
+
+			public void visitDataLayout(GNode n) {
+				visit(n);
+			}
+
+			public void visitVTableMethodDeclaration(GNode n) {
+				for (GNode o : comparedMethods) {
+					if (n.getString(6).equals(o.getString(6))) {
+						if (o.getString(6).equals(o.getString(2))) {
+							overloadedMethods.add(o);
+						}
+						if (n.getString(6).equals(n.getString(2))) {
+							overloadedMethods.add(n);
+						}
+						return;
+					}
+				}
+				comparedMethods.add(n);
+			}
+			public void visitDataLayoutMethodDeclaration(GNode n) {
+				for (GNode o : comparedMethods) {
+					if (n.getString(6).equals(o.getString(6))) {
+						if (o.getString(6).equals(o.getString(2))) {
+							overloadedMethods.add(o);
+						}
+						if (n.getString(6).equals(n.getString(2))) {
+							overloadedMethods.add(n);
+						}
+						return;
+					}
+				}
+				comparedMethods.add(n);
+			}
+
+  			public void visit(Node n) {
+    			for (Object o : n) if (o instanceof Node) dispatch((Node) o);
+  			}
+		}.dispatch(nodesToOverload);
 	}
 
 	protected GNode handleFieldDeclaration(GNode inheritNode, GNode astNode) {
@@ -338,33 +369,42 @@ public class SegNode {
 		else {
 			methodDeclaration = GNode.create("DataLayoutMethodDeclaration");
 		}
+
 		methodDeclaration.setProperty("typeOfNode", "method");
+
 		GNode modifierDeclaration = GNode.create("Modifiers");
 		GNode parameters = GNode.create("Parameters");
+		
+	
 		if (modifiers != null) {
 			for (String mod : modifiers) {
 				modifierDeclaration.add(mod);
 			}
 		}
 		methodDeclaration.add(modifierDeclaration);
+
 		if (returnType==null) {
 			returnType="void";
 		}
 		methodDeclaration.add(returnType);
+
 		if(!filteredMethods.contains(name))			
 			parameters.add(className);
+	
 		if (args != null) {
 			for (String arg : args) {
 				parameters.add(arg);
 			}
 		}
+
 		methodDeclaration.add(name);
 		if(className != null){
 			methodDeclaration.add(className);
 		}
-		methodDeclaration.add(parameters);		
+
+		methodDeclaration.add(parameters);
 		methodDeclaration.add("null");
-		methodDeclaration.add("null");
+		methodDeclaration.add(name);
 
 		return methodDeclaration;
 	}
@@ -389,6 +429,24 @@ public class SegNode {
 
 		node.add(declarators);
 		return node;
+	}
+
+	protected void mangleNames() {
+		for (GNode o : overloadedMethods) {
+			String newNodeString = o.getString(2);
+			if (newNodeString.equals(o.getString(6))) {
+				if (o.getNode(4).size() > 0) {
+					for (int j=1;j<o.getNode(4).size();j++) {
+						String typeToAppend = o.getNode(4).getString(j);
+						typeToAppend = typeToAppend.replace(" ", "_");
+						newNodeString = newNodeString+"_"+typeToAppend;
+					}
+					o.set(2, newNodeString);
+				}
+			}
+		}
+		comparedMethods = new LinkedList<GNode>();
+		overloadedMethods = new LinkedList<GNode>();
 	}
 
 	protected String convertType(String javaType) {

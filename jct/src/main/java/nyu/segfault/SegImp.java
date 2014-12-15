@@ -108,7 +108,7 @@ public class SegImp extends Visitor {
     visitedConstructor = false;
     visit(n);
     if (visitedConstructor == false) {
-      printFallbackinit();
+      printSecondinit();
     }
     printClassMethod(); 
 

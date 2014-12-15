@@ -84,6 +84,11 @@ public class SegTreePrinter extends Visitor {
           }
         }
     String methodName = n.getString(2);
+    if (methodName.equals("main")){
+      printer.pln("main(__rt::Ptr<__rt::Array<String> > args);");
+      return;
+    }
+
     printer.p(methodName);
     printer.p("(");
     
