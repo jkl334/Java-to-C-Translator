@@ -189,10 +189,13 @@ public class Translator extends Tool {
   }
 
   public static void main(String[] args) {
-  try {
-    Translator t = new Translator();
-    t.files = args;
-    t.run(args);
-  }
+	  try {
+	    Translator t = new Translator();
+	    t.files = args;
+	    t.run(args);
+	  } catch (Exception e) {
+
+	  }
+	}
 
 }
