@@ -140,9 +140,7 @@ public class SymbolTableBuilder extends Visitor {
     if (null == table.current().lookupLocally(id)) {
       table.current().define(id, result);
       result.scope(table.current().getQualifiedName());
-    } else
-      runtime.error("duplicate parameter declaration " + id, n);
-    assert JavaEntities.isParameterT(result);
+    }
     return result;
   }
 

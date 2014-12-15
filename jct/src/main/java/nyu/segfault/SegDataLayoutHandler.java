@@ -1,21 +1,16 @@
 package nyu.segfault;
 
 import xtc.tree.GNode;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-
 import xtc.lang.JavaFiveParser;
 import xtc.lang.JavaPrinter;
-
 import xtc.parser.ParseException;
 import xtc.parser.Result;
-
 import xtc.tree.GNode;
 import xtc.tree.Node;
 import xtc.tree.Visitor;
-
 import xtc.util.Tool;
 import java.util.LinkedList;
 
@@ -32,7 +27,6 @@ public class SegDataLayoutHandler extends SegNode {
 		classDataLayout = setClassDataLayout();
   }
 
-  //Based on the AST we create a layout.
   public GNode getNodeDataLayout(GNode astNode, GNode parentNode) {
 		GNode dataLayout = parentNode;
 		String parent = astNode.getString(1);
@@ -71,16 +65,17 @@ public class SegDataLayoutHandler extends SegNode {
 		objectDataLayout.add(createDataFieldEntry("static", "__Object_VT",
 					"vtable", null));
 		objectDataLayout.add(createConstructor("Object", null));
-		String arg[] = { "__Object" };
+		String arg[] = { "Object" };
 		String modifier[] = { "static" };
-		objectDataLayout.add(createMethod(modifier, "toString", arg, "String",
-					"Object", isVTable));
-		objectDataLayout.add(createMethod(modifier, "hashCode", arg, "int32_t",
-					"Object",isVTable));
-		objectDataLayout.add(createMethod(modifier, "getClass", arg, "Class",
+		objectDataLayout.add(createMethod(modifier, "hashCode", null, "int",
 					"Object",isVTable));
 		objectDataLayout.add(createMethod(modifier, "equals", new String[] {
-					"Object", "Object" }, "bool", "Object",isVTable));
+					"Object" }, "bool", "Object",isVTable));
+		objectDataLayout.add(createMethod(modifier, "getClass", null, "Class",
+					"Object",isVTable));
+		objectDataLayout.add(createMethod(modifier, "toString", null, "String",
+					"Object", isVTable));
+
 		objectDataLayout.add(createMethod(modifier, "__class", null, "Class",
 					"Object",isVTable));
 		return objectDataLayout;
@@ -95,22 +90,21 @@ public class SegDataLayoutHandler extends SegNode {
 		stringDataLayout.add(createDataFieldEntry("static", "__String_VT",
 					"vtable", null));
 		stringDataLayout.add(createConstructor("String", null));
-		String arg[] = { "__String" };
 		String modifier[] = { "static" };
-		stringDataLayout.add(createMethod(modifier, "toString", arg, "String",
-					"String",isVTable));
-		stringDataLayout.add(createMethod(modifier, "hashCode", arg, "int32_t",
-					"String",isVTable));
-		stringDataLayout.add(createMethod(modifier, "getClass", arg, "Class",
+		stringDataLayout.add(createMethod(modifier, "hashCode", null, "int",
 					"String",isVTable));
 		stringDataLayout.add(createMethod(modifier, "equals", new String[] {
-					"__String", "__Object" }, "bool", "String",isVTable));
+					"Object" }, "bool", "String",isVTable));
+		stringDataLayout.add(createMethod(modifier, "getClass", null, "Class",
+					"String",isVTable));
+		stringDataLayout.add(createMethod(modifier, "toString", null, "String",
+					"String",isVTable));
 		stringDataLayout.add(createMethod(modifier, "__class", null, "Class",
 					"String",isVTable));
 		stringDataLayout.add(createMethod(new String[] { "static" }, "length",
-					new String[] { "__String" }, "int32_t", "String",isVTable));
+					null, "int", "String",isVTable));
 		stringDataLayout.add(createMethod(new String[] { "static" }, "charAt",
-					new String[] { "__String", "int32_t" }, "int32_t", "String",isVTable));
+					new String[] { "int" }, "int", "String",isVTable));
 		return stringDataLayout;
   }
 
@@ -126,10 +120,10 @@ public class SegDataLayoutHandler extends SegNode {
 					"vtable", null));
 		classDataLayout.add(createConstructor("Class", new String[] { "name",
 					"parent" }));
-		String arg[] = { "__Object" };
+		String arg[] = { "Object" };
 		String modifier[] = { "static" };
-		classDataLayout.add(createMethod(modifier, "toString", arg, "String",
-					"Class",isVTable));
+		classDataLayout.add(createMethod(modifier, "toString", null, "String",
+					"String",isVTable));
 		classDataLayout.add(createMethod(modifier, "getName", null, "String",
 					"Class",isVTable));
 		classDataLayout.add(createMethod(modifier, "getSuperclass", null,
