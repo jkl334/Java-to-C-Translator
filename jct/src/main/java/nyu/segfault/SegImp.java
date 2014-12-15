@@ -17,6 +17,8 @@ import xtc.tree.Visitor;
 import xtc.type.*;
 import xtc.util.SymbolTable;
 import xtc.util.SymbolTable.Scope;
+ 
+ // Uses visitor pattern to handle different conditions for printing nodes
 
 public class SegImp extends Visitor {
   final private SymbolTable table;
@@ -30,12 +32,16 @@ public class SegImp extends Visitor {
   private String packageName;
   private String className;     // c++ style
   private String javaClassName;
-  private boolean visitedConstructor;
-  private boolean visitedNewClassExp;
-  private boolean visitedConstructorFormalParam;
-  private boolean createdInitMethod;
-  private boolean insideConstBlock;
+  private boolean visitedConstructor = false;
+  private boolean visitedNewClassExp = false;
+  private boolean visitedConstructorFormalParam = false;
+  private boolean createdInitMethod = false;
+  private boolean insideConstBlock = false;
   private boolean inForControl = false;
+  private boolean inMainMethod = false;
+  private boolean inInitMethod = false;
+  private boolean visitedSelectionExpression = false;
+  private boolean inField = false;
 
   LinkedList<GNode> classFields = new LinkedList<GNode>();
   LinkedList<String> constructorArgs = new LinkedList<String>();
@@ -48,6 +54,8 @@ public class SegImp extends Visitor {
     this.staticMethods = sNAmes;
 
 	}
+
+  // visit the AST
 
   public void visitSegFieldDeclaration(GNode n){
     classFields.add(n);
@@ -96,9 +104,11 @@ public class SegImp extends Visitor {
 	public void visitClassBody(GNode n) {
     printer.incr();
     printlnUnlessNull("namespace " + packageName + " {", packageName);
+    classFields = new LinkedList<GNode>();
+    visitedConstructor = false;
     visit(n);
     if (visitedConstructor == false) {
-      printSecondinit();
+      printFallbackinit();
     }
     printClassMethod(); 
 
@@ -110,10 +120,13 @@ public class SegImp extends Visitor {
     table.enter(n);
     String methodName = n.getString(3);
     if (methodName.equals("main")) {
-      printer.pln("int main(void){");
+      inMainMethod = true;
+      printer.pln("void " + className + "::main(__rt::Ptr<__rt::Array<String> > args) {");
+      printer.pln(javaClassName + " __this = " + className + "::init(new " + className + "());");
       printer.p(n.getNode(7));
-      printer.pln("return 0;");
+      inMainMethod = false;
       printer.pln("}");
+      printDefaultMainMethod();
     }
     else {
     printer.p(n.getNode(2));
@@ -139,8 +152,27 @@ public class SegImp extends Visitor {
 
   /** Visit the specified type. */
   public void visitType(GNode n) {
-    printer.p(n.getNode(0));
-  }
+    String dimensions = null;
+
+    if(null != n.getNode(1)){
+      dimensions = n.getNode(1).getString(0);
+    }
+    if(dimensions != null && dimensions.equals("[")){ //create an array
+      if(n.getNode(0).hasName("QualifiedIdentifier")){
+        //__rt::Ptr<__rt::Array<String> > 
+        printer.p("__rt::Ptr<__rt::Array<");
+        printer.p(n.getNode(0).getString(0));
+        printer.p("> >");
+      }
+      else{
+        printer.p("__rt::Array<");
+        printer.p(n.getNode(0));
+        printer.p(">*");
+      }
+    }
+    else{
+      printer.p(n.getNode(0));
+    }  }
 
   /** Visit the specified primitive type. */
   public void visitPrimitiveType(GNode n) {
@@ -201,6 +233,7 @@ public class SegImp extends Visitor {
 
   public void visitSubscriptExpression(GNode n){
     dispatch(n.getNode(0));
+    printer.p("->__data");
     printer.p("[");
     dispatch(n.getNode(1));
     printer.p("]");
@@ -218,12 +251,16 @@ public class SegImp extends Visitor {
       visitedConstructorFormalParam = true;
       printer.p(javaClassName + " " + className + "::init(" +javaClassName + " __this, " );
     }
+
     printer.p(n.getNode(3));
+
     for (int i = 0; i < n.getNode(3).size(); i++){
       constructorArgs.add(n.getNode(3).getNode(i).getString(3));
     }
+
     printer.pln("){");
     String parent = inheritanceTree.getParentOfNode(javaClassName);
+    inInitMethod = true;
     if (parent != null){
       printer.pln("__"+ parent + "::init(__this);");
     }
@@ -234,10 +271,12 @@ public class SegImp extends Visitor {
       printSegField(classFields.get(i));
     }
     printer.pln("return __this;");
+    inInitMethod = false;
     printer.p("}");
     printer.pln();
     printer.pln();
   }
+
   boolean visitedSelectionExpression = false;
   public void visitSelectionExpression(GNode n){
     visit(n);
@@ -247,15 +286,22 @@ public class SegImp extends Visitor {
 
   private void printSegField(GNode n){
     if (n.getNode(2).hasName("Declarators")){
-      GNode declaration = (GNode)n.getNode(2).getNode(0);
-      if (declaration.getNode(2) != null){
-        printer.p("__this->" + declaration.getString(0));
-        printer.p(" = ");
+      GNode decl = (GNode)n.getNode(2).getNode(0);
+      if (decl.getNode(2) != null){
         if (declaration.getNode(2).hasName("StringLiteral")){
-          printer.p("__String::init(new __String(");
-          printer.p(declaration.getNode(2));
-          printer.p("));");
+          printer.p("__this->" + decl.getString(0));
+          printer.p(" = ");
+          printer.p(decl.getNode(2));
+          printer.p(";");
           printer.pln();  
+        }
+        else{
+          printer.p("__this->");
+          inField = true;
+          visit(n);
+          inField = false;
+          printer.p(";");
+          printer.pln();
         }
       }
     }
@@ -268,6 +314,9 @@ public class SegImp extends Visitor {
     String parent = inheritanceTree.getParentOfNode(javaClassName);
     if (parent != null){
       printer.pln("__"+ parent + "::init(__this);");
+    }
+    for (int i = 0; i < classFields.size(); i++){
+      printSegField(classFields.get(i));
     }
     printer.pln("return __this;");
     printer.p("}");
@@ -288,6 +337,7 @@ public class SegImp extends Visitor {
       visitedNewClassExp = false;
     }
   }
+
   public void visitReturnStatement(GNode n){
     printer.p("return ");
     if (n.getNode(0).getName().equals("StringLiteral")){
@@ -311,42 +361,70 @@ public class SegImp extends Visitor {
       String parent = inheritanceTree.getParentOfNode(javaClassName);
       printer.pln(parent +" tmp = __"+ parent + "::init(new __"+ parent+"());");
     }
-    String variableName = "";
-    if (n.getNode(0).hasName("PrimaryIdentifier")){
-      variableName = n.getNode(0).getString(0);
-    }
-    boolean static_name = false;
-    boolean using_static_class_name = false;
-    if (staticMethods.contains(n.getString(2))){
-      static_name = true;
-      if (!(table.current().isDefined(variableName))){
-        using_static_class_name = true;
+    if (n.getNode(0).hasName("CallExpression")){
+      String methodName = "";
+      printer.p(n.getNode(0));
+      String variableName = "_empty";
+      String name_of_class = "_empty";
+      if (n.getNode(0).getNode(0).hasName("PrimaryIdentifier")){
+        methodName = n.getNode(0).getString(2);
+        variableName = n.getNode(0).getNode(0).getString(0);
+        if (table.current().isDefined(variableName)) {
+          Type type = (Type) table.current().lookup(variableName);
+          name_of_class = type.toAlias().getName();
+        }
       }
+      String returntype = "";
+      if (!(name_of_class.equals("_empty"))){
+        returntype = inheritanceTree.getReturnType(methodName, name_of_class);
+      }
+      printer.p("->__vptr->");
+      printer.p(n.getString(2) + "(");
+      printer.p("__" + returntype + "::init(new __" + returntype + "())");
+      if(n.getNode(3).size() > 0)
+      printer.p(", ");  
+      printer.p(n.getNode(3));    
+      printer.p(")");
+
     }
-    if (static_name){
-      if(using_static_class_name){
-        printer.p("__"+n.getNode(0).getString(0)+"::");
+    else {
+      String variableName = "";
+      if (n.getNode(0).hasName("PrimaryIdentifier")){
+        variableName = n.getNode(0).getString(0);
+      }
+      boolean static_name = false;
+      boolean using_static_class_name = false;
+      if (staticMethods.contains(n.getString(2))){
+        static_name = true;
+        if (!(table.current().isDefined(variableName))){
+          using_static_class_name = true;
+        }
+      }
+      if (static_name){
+        if(using_static_class_name){
+          printer.p("__"+n.getNode(0).getString(0)+"::");
+        }
+        else{
+          printer.p(n.getNode(0));
+          printer.p("->");
+        }
       }
       else{
         printer.p(n.getNode(0));
-        printer.p("->");
+        printer.p("->__vptr->");
       }
+      printer.p(n.getString(2) + "(");
+      if (using_static_class_name){
+        printer.p("__" + variableName + "::init(new __" + variableName + "())");
+      }
+      else{
+        printer.p(n.getNode(0));
+      }
+      if(n.getNode(3).size() > 0)
+      printer.p(", ");  
+      printer.p(n.getNode(3));    
+      printer.p(")");
     }
-    else{
-      printer.p(n.getNode(0));
-      printer.p("->__vptr->");
-    }
-    printer.p(n.getString(2) + "(");
-    if (using_static_class_name){
-      printer.p("__" + variableName + "::init(new __" + variableName + "())");
-    }
-    else{
-      printer.p(n.getNode(0));
-    }
-    if(n.getNode(3).size() > 0)
-    printer.p(", ");	
-    printer.p(n.getNode(3));    
-    printer.p(")");
   }
 
   public void visitSuperExpression(GNode n){
@@ -445,15 +523,30 @@ public class SegImp extends Visitor {
   }
 
   public void visitCoutCallExpression(GNode n){
-    printer.p(n.getNode(0));
-    printer.p("->__vptr->");
     String functionName = n.getString(1);
-    printer.p(functionName);
-    printer.p("(");
-    visit(n);
-    printer.p(")");
+    if (inMainMethod && (table.current().isDefined(functionName))){
+      printer.p(className + "::"  + functionName);
+      printer.p("(");
+      printer.p("new " + className);
 
+      Node arguments = n.getNode(2);
+      if(arguments.size() > 0){
+        printer.p(",");
+      }
+
+      visit(n);
+      printer.p(")");
+    }
+    else{   
+      printer.p(n.getNode(0));
+      printer.p("->__vptr->");
+      printer.p(functionName);
+      printer.p("(");
+      visit(n);
+      printer.p(")");
+    }
   }
+
   public void visitCoutAdditiveExpression(GNode n){
     String variableName = n.getNode(2).getString(0);
     if (n.getNode(0).hasName("visitCoutAdditiveExpression")){
@@ -560,23 +653,36 @@ public class SegImp extends Visitor {
     }
   }
 
-  public void visitThisExpression(GNode n){
-    printer.p("__this");
-  }
-
   public void visitDeclarator(GNode n){
-    printer.p(" " + n.getString(0));
-    if (n.getNode(2) != null){
+    String decName = n.getString(0);
+    if (null != n.getNode(2) && n.getNode(2).hasName("NewArrayExpression")){
+      String arrayType = n.getNode(2).getNode(0).getString(0);
+      if (arrayType.equals("int")){
+        arrayType = "int32_t";
+      }
+      printer.p(decName + " = new __rt::Array<");
+      printer.p(arrayType);
+      printer.p(">(");
+      dispatch(n.getNode(2).getNode(1)); //usually IntegerLiteral
+      printer.p(")");
+    }
+    else if (n.getNode(2) != null){
+      printer.p(" " + decName);
       printer.p(" = ");
       visit(n);
     }
     else{
+      printer.p(" " + decName);
       visit(n);
     }
   }
 
   public void visitIntegerLiteral(GNode n){
     printer.p(n.getString(0));
+  }
+
+  public void visitThisExpression(GNode n){
+    printer.p("__this");
   }
 
   public void visitCastExpression (GNode n){
@@ -601,6 +707,16 @@ public class SegImp extends Visitor {
       printer.p(n.getNode(3)); 
     }      
     printer.p(")");
+  }
+
+  public void visitNewArrayExpression(GNode n){
+    String arrayType = n.getNode(0).getString(0);
+    printer.p("__rt::Array<");
+    printer.p(arrayType);
+    printer.p(">* a = new __rt::Array<");
+    printer.p(">(");
+    dispatch(n.getNode(1));
+    printer.p(");");
   }
 
   /** Visit the specified formal parameter. */
