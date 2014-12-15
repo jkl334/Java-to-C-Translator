@@ -29,6 +29,8 @@ public class SegInheritanceBuilder {
    	SegVTableHandler segVTable = new SegVTableHandler();
    	SegDataLayoutHandler segDataLayout = new SegDataLayoutHandler();
    	LinkedList<String> staticMethods = new LinkedList<String>();
+    LinkedList<String> nodeOrder = new LinkedList<String>();
+   	LinkedList<String> finalNodeOrder = new LinkedList<String>();
 
 	public SegInheritanceBuilder(LinkedList<GNode> nodeList) {
 
@@ -81,16 +83,21 @@ public class SegInheritanceBuilder {
 		    buildTreeHeaders((GNode)root.getNode(i));
 		}
 
+		while (nodeOrder.size()>0) {
+			GNode inherit = searchForNode(root, nodeOrder.peek());
+			GNode ast = (GNode)inherit.getProperty("javaAST");
+			modifyNodeOrder(ast);
+		}
+
 	}
 
 	public LinkedList<GNode> getNodeList() {
 		LinkedList<GNode> nodeList = new LinkedList<GNode>();
-		if (root.size() < 2) {
-			return nodeList;
-		}
 
-		for (int i=3;i<root.size();i++) {
-			getNodeList(nodeList, (GNode)root.getNode(i));
+		for (String s : finalNodeOrder) {
+			GNode g = searchForNode(root, s);
+			GNode gAST = (GNode)g.getProperty("javaAST");
+			nodeList.add(gAST);
 		}
 
 		return nodeList;
@@ -383,19 +390,70 @@ public class SegInheritanceBuilder {
 			}
 		}.dispatch(node);
 	}
+	
+	//Sets an initial ordering of nodes to be the order in the java file
+
+	public void setNodeOrderToJava(GNode ast) {
+		new Visitor () {
+			public void visitCompilationUnit(GNode n) {
+				visit(n);
+			}
+			public void visitClassDeclaration(GNode n) {
+				nodeOrder.add(n.getString(1));
+			}
+			public void visit (Node n) {
+				for (Object o : n) {
+					if (o instanceof Node)
+						dispatch((Node) o);
+				}
+			}
+		}.dispatch(ast);
+	}
+	
+	//Modifies the order of java nodes depending on what is in the AST
+
+	public void modifyNodeOrder(GNode ast) {
+		new Visitor() {
+			public void visitClassDeclaration(GNode n) {
+				nodeOrder.remove(n.getString(1));
+				visit(n);
+				finalNodeOrder.add(n.getString(1));
+			}
+			public void visitQualifiedIdentifier(GNode n) {
+				if (n.get(0) instanceof String) {
+					if (nodeOrder.contains(n.getString(0))) {
+						if (!(n.getString(0).equals("Object") || n.getString(0).equals("String") || n.getString(0).equals("Class"))) {
+							GNode innerClass = searchForNode(root, n.getString(0));
+							GNode innerAST = (GNode)innerClass.getProperty("javaAST");
+							modifyNodeOrder(innerAST);
+						}
+					}
+				}
+			}
+			public void visit (Node n) {
+				for (Object o : n) {
+					if (o instanceof Node)
+						dispatch((Node) o);
+				}
+			}
+		}.dispatch(ast);
+	}
 
     private GNode copyNode(GNode oldNode) {
-	GNode newNode = GNode.create(oldNode.getName());
-	if (oldNode.size() > 0) {
-	    for (int i=0;i<oldNode.size();i++) {
-		if (oldNode.get(i) instanceof String) {
-		    newNode.add(oldNode.get(i));
+		GNode newNode = GNode.create(oldNode.getName());
+		if (oldNode.hasProperty("typeOfNode")) {
+			newNode.setProperty("typeOfNode", oldNode.getProperty("typeOfNode"));
 		}
-		else {
-		    newNode.add(copyNode((GNode)oldNode.get(i)));
+		if (oldNode.size() > 0) {
+	    	for (int i=0;i<oldNode.size();i++) {
+				if (oldNode.get(i) instanceof String) {
+		    		newNode.add(oldNode.get(i));
+				}
+				else {		    
+		    		newNode.add(copyNode((GNode)oldNode.get(i)));
+				}
+	    	}
 		}
-	    }
-	}
-	return newNode;
+		return newNode;
     }
 }
