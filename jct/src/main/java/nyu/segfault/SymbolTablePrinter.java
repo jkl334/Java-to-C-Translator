@@ -30,7 +30,7 @@ public class SymbolTablePrinter {
 
   public void print() {
     Scope curr = table.current();
-    
+
     printer.indent();
     printer.p("scope: ").pln(curr.getName());
     printer.incr();

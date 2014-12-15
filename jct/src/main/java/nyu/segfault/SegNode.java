@@ -19,7 +19,6 @@ public class SegNode {
 		GNode nodesToOverload = GNode.create("NodesToOverload");
 		className = inheritNode.getProperty("parent").toString();
 
-		// Resetting the parent methods
 		if (inheritNode.size() > 0) {
 			for (int k=0;k<inheritNode.size();k++) {
 				if (inheritNode.getNode(k).hasProperty("typeOfNode") && inheritNode.getNode(k).getProperty("typeOfNode").equals("method")) {
@@ -72,7 +71,7 @@ public class SegNode {
 
 		if (!isVTable && !foundConstructor){
 			String className = inheritNode.getProperty("parent").toString();
-			inheritNode.add(2,createConstructor(className, null));	
+			inheritNode.add(2,createConstructor(className, null));
 		}
 		executeOverloading(nodesToOverload);
 		return inheritNode;
@@ -91,8 +90,7 @@ public class SegNode {
 		return returnString;
 	}
 
-	//Traverses two subtrees rooted by node1 and node2 and 
-	//returns if they are equal or not.
+	// Check node1 & node2's subtree and check if they're equal to one another.
 	private boolean nodeEquals(GNode node1, GNode node2, boolean methodOverwriting) {
 
 		boolean temp = true;
@@ -343,7 +341,7 @@ public class SegNode {
 
 		GNode modifierDeclaration = GNode.create("Modifiers");
 		GNode parameters = GNode.create("Parameters");
-		
+
 		if (modifiers != null) {
 			for (String mod : modifiers) {
 				modifierDeclaration.add(mod);
@@ -368,7 +366,7 @@ public class SegNode {
 		}
 
 		methodDeclaration.add(parameters);
-		
+
 		//For overwritten and overloaded specification
 		methodDeclaration.add("null");
 		methodDeclaration.add("null");
